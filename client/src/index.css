@@ -24,14 +24,16 @@
   --ring: hsl(20, 14.3%, 4.1%);
   --radius: 0.5rem;
   
-  /* Facebook 2007 colors */
-  --fb-blue: hsl(215, 91%, 52%);
-  --fb-blue-light: hsl(215, 82%, 64%);
-  --fb-blue-accent: hsl(215, 71%, 74%);
-  --fb-gray: hsl(0, 0%, 97%);
-  --fb-border: hsl(212, 18%, 85%);
-  --fb-text: hsl(0, 0%, 11%);
-  --fb-text-light: hsl(220, 5%, 40%);
+  /* Discord purple + YouTube red colors */
+  --discord-purple: hsl(235, 86%, 65%);
+  --discord-purple-light: hsl(235, 76%, 75%);
+  --discord-purple-accent: hsl(235, 66%, 85%);
+  --youtube-red: hsl(0, 100%, 50%);
+  --youtube-red-light: hsl(0, 90%, 60%);
+  --app-gray: hsl(0, 0%, 97%);
+  --app-border: hsl(212, 18%, 85%);
+  --app-text: hsl(0, 0%, 11%);
+  --app-text-light: hsl(220, 5%, 40%);
 }
 
 .dark {
@@ -69,23 +71,23 @@
 }
 
 @layer components {
-  .fb-gradient {
-    background: linear-gradient(to bottom, hsl(215, 82%, 64%), hsl(215, 91%, 52%));
+  .app-gradient {
+    background: linear-gradient(to bottom, var(--discord-purple-light), var(--discord-purple));
   }
   
   .content-box {
-    border: 1px solid var(--fb-border);
+    border: 1px solid var(--app-border);
     background: white;
     box-shadow: 0 1px 2px rgba(0,0,0,0.1);
   }
   
   .profile-pic {
-    border: 2px solid var(--fb-border);
+    border: 2px solid var(--app-border);
     object-fit: cover;
   }
   
   .notification-badge {
-    background: hsl(0, 84%, 57%);
+    background: var(--youtube-red);
     color: white;
     border-radius: 10px;
     padding: 2px 6px;
@@ -93,23 +95,36 @@
     font-weight: bold;
   }
   
-  .fb-blue {
-    color: var(--fb-blue);
+  .discord-purple {
+    color: var(--discord-purple);
   }
   
-  .fb-blue-bg {
-    background-color: var(--fb-blue);
+  .discord-purple-bg {
+    background-color: var(--discord-purple);
   }
   
-  .fb-text {
-    color: var(--fb-text);
+  .youtube-red-bg {
+    background-color: var(--youtube-red);
   }
   
-  .fb-text-light {
-    color: var(--fb-text-light);
+  .app-text {
+    color: var(--app-text);
   }
   
-  .fb-gray-bg {
-    background-color: var(--fb-gray);
+  .app-text-light {
+    color: var(--app-text-light);
+  }
+  
+  .app-gray-bg {
+    background-color: var(--app-gray);
+  }
+  
+  .loading-spinner {
+    animation: spin 1s linear infinite;
+  }
+  
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
   }
 }

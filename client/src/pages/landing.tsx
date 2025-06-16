@@ -9,20 +9,20 @@ export default function Landing() {
   return (
     <div className="min-h-screen bg-white">
       {/* Header */}
-      <header className="fb-gradient text-white shadow-md">
+      <header className="app-gradient text-white shadow-md">
         <div className="max-w-6xl mx-auto px-4">
           <div className="flex items-center justify-between h-16">
             <h1 className="text-3xl font-bold">Wrickit</h1>
             <div className="space-x-4">
               <Button
                 variant="outline"
-                className="text-white border-white hover:bg-white hover:text-blue-600"
+                className="text-white border-white hover:bg-white hover:text-purple-600"
                 onClick={() => setLocation("/login")}
               >
                 Login
               </Button>
               <Button
-                className="bg-white text-blue-600 hover:bg-gray-100"
+                className="bg-white text-purple-600 hover:bg-gray-100"
                 onClick={() => setLocation("/register")}
               >
                 Sign Up
@@ -35,15 +35,15 @@ export default function Landing() {
       {/* Main Content */}
       <main className="max-w-6xl mx-auto px-4 py-12">
         <div className="text-center mb-12">
-          <h2 className="text-4xl font-bold text-fb-text mb-4">
-            Connect with Your 9th Grade Classmates
+          <h2 className="text-4xl font-bold app-text mb-4">
+            Connect with Your Classmates
           </h2>
-          <p className="text-xl text-fb-text-light mb-8">
-            Build friendships, discover mutual crushes, and stay connected with your grade!
+          <p className="text-xl app-text-light mb-8">
+            Build friendships, discover mutual crushes, and stay connected with your class!
           </p>
           <Button
             size="lg"
-            className="fb-blue-bg hover:bg-blue-700 text-white"
+            className="discord-purple-bg hover:bg-purple-700 text-white"
             onClick={() => setLocation("/register")}
           >
             Join Wrickit Today

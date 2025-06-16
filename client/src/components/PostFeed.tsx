@@ -4,13 +4,18 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { ThumbsUp, MessageCircle } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import { useState } from "react";
 
 export default function PostFeed() {
   const queryClient = useQueryClient();
+  const [showAll, setShowAll] = useState(false);
   
-  const { data: posts = [], isLoading } = useQuery({
+  const { data: allPosts = [], isLoading } = useQuery({
     queryKey: ["/api/posts"],
   });
+
+  // Show only 5 most recent posts unless "View More" is clicked
+  const posts = showAll ? allPosts : allPosts.slice(0, 5);
 
   const likePostMutation = useMutation({
     mutationFn: async (postId: number) => {
@@ -73,23 +78,23 @@ export default function PostFeed() {
                 </div>
               )}
               <div>
-                <h4 className="font-bold text-fb-text">{post.author?.name || 'Unknown User'}</h4>
-                <p className="text-xs text-fb-text-light">
+                <h4 className="font-bold app-text">{post.author?.name || 'Unknown User'}</h4>
+                <p className="text-xs app-text-light">
                   {post.createdAt ? formatDistanceToNow(new Date(post.createdAt), { addSuffix: true }) : 'Unknown time'} • 
-                  Shared with {post.audience === 'class' ? 'Class' : 'Grade'}
+                  Shared with {post.audience === 'class' ? 'Class' : 'All Students'}
                 </p>
               </div>
             </div>
             
-            <p className="text-fb-text mb-3">{post.content}</p>
+            <p className="app-text mb-3">{post.content}</p>
             
-            <div className="flex items-center space-x-4 text-sm text-fb-text-light">
+            <div className="flex items-center space-x-4 text-sm app-text-light">
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => likePostMutation.mutate(post.id)}
                 disabled={likePostMutation.isPending}
-                className="hover:text-blue-600 p-0 h-auto"
+                className="hover:text-purple-600 p-0 h-auto"
               >
                 <ThumbsUp className="w-4 h-4 mr-1" />
                 <span>{post.likes || 0}</span>
@@ -97,7 +102,7 @@ export default function PostFeed() {
               <Button
                 variant="ghost"
                 size="sm"
-                className="hover:text-blue-600 p-0 h-auto"
+                className="hover:text-purple-600 p-0 h-auto"
               >
                 <MessageCircle className="w-4 h-4 mr-1" />
                 <span>Comment</span>
@@ -106,6 +111,30 @@ export default function PostFeed() {
           </CardContent>
         </Card>
       ))}
+      
+      {!showAll && allPosts.length > 5 && (
+        <div className="text-center pt-4">
+          <Button
+            variant="outline"
+            onClick={() => setShowAll(true)}
+            className="discord-purple border-purple-300 hover:bg-purple-50"
+          >
+            View More Posts ({allPosts.length - 5} more)
+          </Button>
+        </div>
+      )}
+      
+      {showAll && allPosts.length > 5 && (
+        <div className="text-center pt-4">
+          <Button
+            variant="outline"
+            onClick={() => setShowAll(false)}
+            className="discord-purple border-purple-300 hover:bg-purple-50"
+          >
+            Show Less
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
