@@ -71,13 +71,13 @@ export default function RelationshipForm() {
   return (
     <Card className="content-box rounded">
       <CardHeader>
-        <CardTitle className="text-fb-text">Add Social Relationship</CardTitle>
+        <CardTitle className="app-text">Add Social Relationship</CardTitle>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <Label htmlFor="search" className="text-fb-text-light">
-              Classmate Admission Number:
+            <Label htmlFor="search" className="app-text-light">
+              Student Admission Number:
             </Label>
             <div className="flex space-x-2">
               <Input
@@ -104,7 +104,7 @@ export default function RelationshipForm() {
           </div>
           
           <div>
-            <Label htmlFor="relationshipType" className="text-fb-text-light">
+            <Label htmlFor="relationshipType" className="app-text-light">
               Relationship Type:
             </Label>
             <Select value={relationshipType} onValueChange={setRelationshipType}>
@@ -123,7 +123,7 @@ export default function RelationshipForm() {
           <Button
             type="submit"
             disabled={addRelationshipMutation.isPending}
-            className="fb-blue-bg hover:bg-blue-700 text-white"
+            className="discord-purple-bg hover:bg-purple-700 text-white"
           >
             {addRelationshipMutation.isPending ? "Adding..." : "Add Relationship"}
           </Button>

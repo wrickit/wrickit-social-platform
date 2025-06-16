@@ -13,7 +13,7 @@ export default function Header({ user, notifications }: HeaderProps) {
   const unreadCount = notifications.filter(n => !n.isRead).length;
 
   return (
-    <header className="fb-gradient text-white shadow-md">
+    <header className="app-gradient text-white shadow-md">
       <div className="max-w-6xl mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center space-x-8">

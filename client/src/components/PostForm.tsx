@@ -57,7 +57,7 @@ export default function PostForm() {
   return (
     <Card className="content-box rounded">
       <CardHeader>
-        <CardTitle className="text-fb-text">Create Post</CardTitle>
+        <CardTitle className="app-text">Create Post</CardTitle>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -76,14 +76,14 @@ export default function PostForm() {
             >
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="class" id="class" />
-                <Label htmlFor="class" className="text-sm text-fb-text-light">
+                <Label htmlFor="class" className="text-sm app-text-light">
                   Share with Class
                 </Label>
               </div>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="grade" id="grade" />
-                <Label htmlFor="grade" className="text-sm text-fb-text-light">
-                  Share with Grade
+                <Label htmlFor="grade" className="text-sm app-text-light">
+                  Share with All Students
                 </Label>
               </div>
             </RadioGroup>
@@ -91,7 +91,7 @@ export default function PostForm() {
             <Button
               type="submit"
               disabled={createPostMutation.isPending}
-              className="fb-blue-bg hover:bg-blue-700 text-white"
+              className="discord-purple-bg hover:bg-purple-700 text-white"
             >
               {createPostMutation.isPending ? "Posting..." : "Post"}
             </Button>

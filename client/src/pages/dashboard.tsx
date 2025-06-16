@@ -46,7 +46,7 @@ export default function Dashboard() {
   );
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen app-gray-bg">
       <Header user={user} notifications={notifications} />
       
       <div className="max-w-6xl mx-auto px-4 py-6">
@@ -60,11 +60,11 @@ export default function Dashboard() {
                 <div className="flex items-center space-x-3">
                   <div className="text-2xl">💕</div>
                   <div>
-                    <h3 className="font-bold text-fb-text">You have a mutual crush!</h3>
-                    <p className="text-sm text-fb-text-light">{notification.message}</p>
+                    <h3 className="font-bold app-text">You have a mutual crush!</h3>
+                    <p className="text-sm app-text-light">{notification.message}</p>
                     <button
                       onClick={() => notification.relatedUserId && openChat(notification.relatedUserId)}
-                      className="mt-2 fb-blue-bg text-white px-4 py-1 rounded text-sm hover:bg-blue-700"
+                      className="mt-2 youtube-red-bg text-white px-4 py-1 rounded text-sm hover:bg-red-700"
                     >
                       Send Message
                     </button>
