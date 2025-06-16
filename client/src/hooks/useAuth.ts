@@ -1,12 +1,15 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, getQueryFn } from "@/lib/queryClient";
 
 export function useAuth() {
   const queryClient = useQueryClient();
   
-  const { data: user, isLoading } = useQuery({
+  const { data: user, isLoading, error } = useQuery({
     queryKey: ["/api/user"],
+    queryFn: getQueryFn({ on401: "returnNull" }),
     retry: false,
+    refetchOnWindowFocus: false,
+    staleTime: Infinity,
   });
 
   const login = async (admissionNumber: string, password: string) => {
