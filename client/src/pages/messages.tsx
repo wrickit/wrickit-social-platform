@@ -45,11 +45,20 @@ interface User {
   id: number;
   name: string;
   admissionNumber: string;
+  class: string;
+  profileImageUrl?: string;
+}
+
+interface AuthUser {
+  id: number;
+  name: string;
+  admissionNumber: string;
+  class: string;
   profileImageUrl?: string;
 }
 
 export default function Messages() {
-  const { user } = useAuth();
+  const { user } = useAuth() as { user: AuthUser | null };
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -69,21 +78,27 @@ export default function Messages() {
   }, []);
 
   // Fetch recent conversations
-  const { data: conversations = [], isLoading: conversationsLoading } = useQuery({
+  const { data: conversations = [], isLoading: conversationsLoading } = useQuery<Conversation[]>({
     queryKey: ["/api/messages"],
     refetchInterval: 5000, // Refresh every 5 seconds
   });
 
   // Fetch messages for selected conversation
-  const { data: messages = [], isLoading: messagesLoading } = useQuery({
+  const { data: messages = [], isLoading: messagesLoading } = useQuery<Conversation[]>({
     queryKey: ["/api/messages", selectedConversation],
     enabled: !!selectedConversation,
     refetchInterval: 2000, // Refresh every 2 seconds
   });
 
   // Search users for new conversations
-  const { data: searchResults = [] } = useQuery({
+  const { data: searchResults = [] } = useQuery<User[]>({
     queryKey: ["/api/users/search-all", searchQuery],
+    queryFn: async () => {
+      if (searchQuery.length < 2) return [];
+      const response = await fetch(`/api/users/search-all?q=${encodeURIComponent(searchQuery)}`);
+      if (!response.ok) return [];
+      return response.json();
+    },
     enabled: searchQuery.length > 2,
   });
 
@@ -130,7 +145,8 @@ export default function Messages() {
   };
 
   const getConversationPartner = (conversation: Conversation) => {
-    return conversation.fromUserId === user?.id ? conversation.toUser : conversation.fromUser;
+    if (!user) return conversation.fromUser;
+    return conversation.fromUserId === (user as any).id ? conversation.toUser : conversation.fromUser;
   };
 
   const formatTime = (dateString: string) => {
@@ -197,7 +213,7 @@ export default function Messages() {
                         </Avatar>
                         <div>
                           <p className="text-sm font-medium app-text">{searchUser.name}</p>
-                          <p className="text-xs app-text-light">{searchUser.admissionNumber}</p>
+                          <p className="text-xs app-text-light">Class {searchUser.class}</p>
                         </div>
                       </div>
                     ))}
@@ -258,9 +274,9 @@ export default function Messages() {
                         </div>
                         <div className="flex items-center justify-between">
                           <p className="text-sm app-text-light truncate">
-                            {conversation.fromUserId === user?.id ? "You: " : ""}{conversation.content}
+                            {conversation.fromUserId === (user as any)?.id ? "You: " : ""}{conversation.content}
                           </p>
-                          {!conversation.isRead && conversation.toUserId === user?.id && (
+                          {!conversation.isRead && conversation.toUserId === (user as any)?.id && (
                             <Badge className="bg-blue-500 text-white text-xs">new</Badge>
                           )}
                         </div>
@@ -334,7 +350,7 @@ export default function Messages() {
             ) : (
               <div className="space-y-4">
                 {messages.map((message: any) => {
-                  const isOwnMessage = message.fromUserId === user?.id;
+                  const isOwnMessage = message.fromUserId === (user as any)?.id;
                   
                   return (
                     <div key={message.id} className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'}`}>

@@ -58,26 +58,44 @@ export default function RelationshipForm() {
     });
   };
 
-  // Search for user by admission number and get their actual user ID
-  const handleAdmissionNumberSearch = async () => {
+  // Search for user by name and get their actual user ID
+  const handleNameSearch = async () => {
+    if (!searchTerm.trim()) {
+      toast({
+        title: "Search Error",
+        description: "Please enter a name to search",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
-      const response = await fetch(`/api/users/search?admissionNumber=${searchTerm}`);
+      const response = await fetch(`/api/users/search?query=${encodeURIComponent(searchTerm.trim())}`);
       if (response.ok) {
-        const user = await response.json();
-        if (user) {
+        const users = await response.json();
+        if (users && users.length > 0) {
+          const user = users[0]; // Take the first match
           setSelectedUserId(user.id);
           toast({
             title: "User Found",
-            description: `Found ${user.name} (${user.admissionNumber})`,
+            description: `Found ${user.name} from Class ${user.class}`,
           });
         } else {
           toast({
             title: "User Not Found",
-            description: "No user found with that admission number",
+            description: "No user found with that name",
             variant: "destructive",
           });
           setSelectedUserId(null);
         }
+      } else {
+        const errorData = await response.json();
+        toast({
+          title: "Search Error",
+          description: errorData.message || "Failed to search for user",
+          variant: "destructive",
+        });
+        setSelectedUserId(null);
       }
     } catch (error) {
       toast({
@@ -98,13 +116,13 @@ export default function RelationshipForm() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <Label htmlFor="search" className="app-text-light">
-              Student Admission Number:
+              Student Name:
             </Label>
             <div className="flex space-x-2">
               <Input
                 id="search"
                 type="text"
-                placeholder="Enter admission number..."
+                placeholder="Enter student name..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="flex-1"
@@ -112,14 +130,14 @@ export default function RelationshipForm() {
               <Button
                 type="button"
                 variant="outline"
-                onClick={handleAdmissionNumberSearch}
+                onClick={handleNameSearch}
               >
                 Find
               </Button>
             </div>
             {selectedUserId && (
               <p className="text-sm text-green-600 mt-1">
-                User with admission number {searchTerm} selected
+                Student {searchTerm} selected
               </p>
             )}
           </div>

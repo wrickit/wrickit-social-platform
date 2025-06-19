@@ -92,31 +92,8 @@
   
   .content-box {
     border: 1px solid var(--app-border);
-    background: white !important;
+    background: var(--card);
     box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-  }
-  
-  /* Force light mode for non-dashboard pages */
-  .force-light-mode {
-    background: white !important;
-    color: black !important;
-  }
-  
-  .force-light-mode * {
-    background: inherit;
-    color: inherit;
-  }
-  
-  .force-light-mode .content-box {
-    background: white !important;
-    color: black !important;
-  }
-  
-  .force-light-mode input,
-  .force-light-mode textarea {
-    background: white !important;
-    color: black !important;
-    border-color: #d1d5db !important;
   }
   
   .profile-pic {
