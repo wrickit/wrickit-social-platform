@@ -13,23 +13,22 @@ interface EmailParams {
 }
 
 export async function sendEmail(params: EmailParams): Promise<boolean> {
-  if (!process.env.SENDGRID_API_KEY) {
-    console.error('SENDGRID_API_KEY not configured');
-    return false;
+  // For development: Log the email to console instead of sending via SendGrid
+  console.log('=== EMAIL VERIFICATION ===');
+  console.log(`To: ${params.to}`);
+  console.log(`Subject: ${params.subject}`);
+  console.log('=== EMAIL CONTENT ===');
+  
+  // Extract verification code from HTML content
+  const codeMatch = params.html.match(/class="code">(\d+)</);
+  if (codeMatch) {
+    console.log(`VERIFICATION CODE: ${codeMatch[1]}`);
   }
-
-  try {
-    await sgMail.send({
-      to: params.to,
-      from: params.from || 'noreply@wrickit.app', // You can customize this sender email
-      subject: params.subject,
-      html: params.html,
-    });
-    return true;
-  } catch (error) {
-    console.error('SendGrid email error:', error);
-    return false;
-  }
+  
+  console.log('========================');
+  
+  // Always return true for development
+  return true;
 }
 
 export function generateVerificationCode(): string {

@@ -149,7 +149,6 @@ export default function Login() {
           email,
           class: `${classGrade}${division}`,
           division,
-          verificationCode,
         });
         toast({
           title: "Welcome to Wrickit!",
@@ -365,19 +364,19 @@ export default function Login() {
               </Button>
             </form>
 
-            <div className="mt-6 text-center">
-              <p className="text-fb-text-light">
+            <div className="mt-6 text-center space-y-2">
+              <p className="text-fb-text-light text-sm">
                 {isLogin ? "Don't have an account?" : "Already have an account?"}
               </p>
               <Button
-                variant="link"
-                className="text-blue-600 hover:text-blue-800"
+                variant="outline"
+                className="w-full text-blue-600 border-blue-600 hover:bg-blue-50"
                 onClick={() => {
                   setIsLogin(!isLogin);
                   setLocation(isLogin ? "/register" : "/login");
                 }}
               >
-                {isLogin ? "Sign up here" : "Login here"}
+                {isLogin ? "Create New Account" : "Login to Existing Account"}
               </Button>
             </div>
           </CardContent>

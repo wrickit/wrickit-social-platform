@@ -20,7 +20,7 @@ import {
   type Notification,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, or, desc, sql, inArray, count } from "drizzle-orm";
+import { eq, and, or, desc, sql, inArray, count, gt, lt } from "drizzle-orm";
 import bcrypt from "bcrypt";
 
 export interface IStorage {
@@ -156,24 +156,14 @@ export class DatabaseStorage implements IStorage {
   }
 
   async searchUsersByUsername(username: string): Promise<User[]> {
-    return await db
-      .select({
-        id: users.id,
-        admissionNumber: users.admissionNumber,
-        username: users.username,
-        firstName: users.firstName,
-        lastName: users.lastName,
-        name: users.name,
-        email: users.email,
-        class: users.class,
-        division: users.division,
-        profileImageUrl: users.profileImageUrl,
-        bio: users.bio,
-        createdAt: users.createdAt
-      })
+    const searchResults = await db
+      .select()
       .from(users)
       .where(sql`${users.username} ILIKE ${`%${username}%`}`)
       .limit(10);
+    
+    // Don't return passwords in search results
+    return searchResults.map(({ password, ...user }) => user) as User[];
   }
 
   async createRelationship(fromUserId: number, toUserId: number, type: string): Promise<Relationship> {
@@ -201,10 +191,7 @@ export class DatabaseStorage implements IStorage {
       }
     }
     
-    // Check for friend groups if type is best_friend
-    if (type === 'best_friend') {
-      await this.detectFriendGroups(fromUserId);
-    }
+    // Removed automatic friend group detection
     
     return relationship;
   }
@@ -317,14 +304,29 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getRecentMessagesByUserId(userId: number): Promise<(Message & { fromUser: User; toUser: User })[]> {
-    return await db
+    const recentMessages = await db
       .select()
       .from(messages)
-      .leftJoin(users, eq(messages.fromUserId, users.id))
-      .leftJoin(users, eq(messages.toUserId, users.id))
       .where(or(eq(messages.fromUserId, userId), eq(messages.toUserId, userId)))
       .orderBy(desc(messages.createdAt))
       .limit(10);
+
+    const result: (Message & { fromUser: User; toUser: User })[] = [];
+    
+    for (const message of recentMessages) {
+      const fromUser = await this.getUser(message.fromUserId);
+      const toUser = await this.getUser(message.toUserId);
+      
+      if (fromUser && toUser) {
+        result.push({
+          ...message,
+          fromUser,
+          toUser,
+        });
+      }
+    }
+    
+    return result;
   }
 
   async createFriendGroup(name: string, memberIds: number[]): Promise<FriendGroup> {
@@ -353,12 +355,35 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getFriendGroupsByUserId(userId: number): Promise<(FriendGroup & { members: (typeof friendGroupMembers.$inferSelect & { user: User })[] })[]> {
-    return await db
+    const userGroups = await db
       .select()
-      .from(friendGroups)
-      .leftJoin(friendGroupMembers, eq(friendGroups.id, friendGroupMembers.groupId))
-      .leftJoin(users, eq(friendGroupMembers.userId, users.id))
+      .from(friendGroupMembers)
+      .leftJoin(friendGroups, eq(friendGroupMembers.groupId, friendGroups.id))
       .where(eq(friendGroupMembers.userId, userId));
+
+    const result: (FriendGroup & { members: (typeof friendGroupMembers.$inferSelect & { user: User })[] })[] = [];
+    
+    for (const userGroup of userGroups) {
+      if (userGroup.friend_groups) {
+        const members = await db
+          .select()
+          .from(friendGroupMembers)
+          .leftJoin(users, eq(friendGroupMembers.userId, users.id))
+          .where(eq(friendGroupMembers.groupId, userGroup.friend_groups.id));
+        
+        const membersWithUsers = members.map(member => ({
+          ...member.friend_group_members!,
+          user: member.users!,
+        }));
+        
+        result.push({
+          ...userGroup.friend_groups,
+          members: membersWithUsers,
+        });
+      }
+    }
+    
+    return result;
   }
 
   async detectFriendGroups(userId: number): Promise<void> {

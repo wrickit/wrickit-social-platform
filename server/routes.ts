@@ -222,6 +222,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/users/search-username", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const { username } = req.query;
+      if (!username || typeof username !== 'string') {
+        return res.json([]);
+      }
+      const users = await storage.searchUsersByUsername(username);
+      res.json(users);
+    } catch (error) {
+      console.error("Search users by username error:", error);
+      res.status(500).json({ message: "Failed to search users by username" });
+    }
+  });
+
   // Get specific user profile
   app.get("/api/users/:id", requireAuth, async (req: Request, res: Response) => {
     try {
@@ -411,6 +425,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Friend group routes
+  app.post("/api/friend-groups", requireAuth, async (req: any, res: Response) => {
+    try {
+      const { name, memberIds } = req.body;
+      if (!name || !Array.isArray(memberIds) || memberIds.length === 0) {
+        return res.status(400).json({ message: "Name and member IDs are required" });
+      }
+      
+      // Add the current user to the group and remove duplicates
+      const allMemberIds = [req.session.userId];
+      for (const id of memberIds) {
+        if (!allMemberIds.includes(id)) {
+          allMemberIds.push(id);
+        }
+      }
+      
+      const friendGroup = await storage.createFriendGroup(name, allMemberIds);
+      res.json(friendGroup);
+    } catch (error) {
+      console.error("Create friend group error:", error);
+      res.status(500).json({ message: "Failed to create friend group" });
+    }
+  });
+
   app.get("/api/friend-groups", requireAuth, async (req: any, res: Response) => {
     try {
       const groups = await storage.getFriendGroupsByUserId(req.session.userId);

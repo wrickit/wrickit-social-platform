@@ -3,8 +3,9 @@ import { useAuth } from "@/hooks/useAuth";
 import { ThemeToggle } from "@/components/theme-toggle";
 import NotificationDropdown from "@/components/NotificationDropdown";
 import UserSearchDialog from "@/components/UserSearchDialog";
-import ProfileSettings from "@/components/ProfileSettings";
-import { Home, Users, MessageCircle, Bell, LogOut, UserPlus } from "lucide-react";
+import HamburgerMenu from "@/components/HamburgerMenu";
+import CreateChatGroupDialog from "@/components/CreateChatGroupDialog";
+import { Home, Users, MessageCircle, Bell, LogOut, UserPlus, Search } from "lucide-react";
 
 interface HeaderProps {
   user: any;
@@ -38,15 +39,28 @@ export default function Header({ user, notifications }: HeaderProps) {
             </nav>
           </div>
           <div className="flex items-center space-x-2 sm:space-x-4">
-            <UserSearchDialog 
-              trigger={
-                <Button variant="ghost" size="sm" className="text-white hover:text-gray-200">
-                  <UserPlus className="w-4 h-4" />
-                </Button>
-              }
-            />
+            {/* Desktop Search and Group Creation */}
+            <div className="hidden md:flex items-center space-x-2">
+              <UserSearchDialog 
+                trigger={
+                  <Button variant="ghost" size="sm" className="text-white hover:text-gray-200">
+                    <Search className="w-4 h-4 mr-1" />
+                    <span className="hidden lg:inline">Find</span>
+                  </Button>
+                }
+              />
+              <CreateChatGroupDialog
+                trigger={
+                  <Button variant="ghost" size="sm" className="text-white hover:text-gray-200">
+                    <Users className="w-4 h-4 mr-1" />
+                    <span className="hidden lg:inline">Group</span>
+                  </Button>
+                }
+              />
+            </div>
+            
             <NotificationDropdown />
-            <ThemeToggle />
+            
             <div className="flex items-center space-x-2">
               {user.profileImageUrl ? (
                 <img
@@ -56,19 +70,13 @@ export default function Header({ user, notifications }: HeaderProps) {
                 />
               ) : (
                 <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
-                  <span className="text-sm font-bold">{user.name.charAt(0)}</span>
+                  <span className="text-sm font-bold">{user.name?.charAt(0) || user.firstName?.charAt(0)}</span>
                 </div>
               )}
-              <span>{user.name}</span>
+              <span className="hidden sm:inline">{user.name || user.firstName}</span>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={logout}
-              className="hover:text-gray-200"
-            >
-              <LogOut className="w-4 h-4" />
-            </Button>
+            
+            <HamburgerMenu user={user} />
           </div>
         </div>
       </div>

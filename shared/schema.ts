@@ -179,6 +179,7 @@ export const insertUserSchema = createInsertSchema(users).pick({
   division: true,
 }).extend({
   name: z.string().optional(), // Will be auto-generated from firstName + lastName
+  verificationCode: z.string().optional(), // For email verification during registration
 });
 
 export const loginSchema = z.object({
