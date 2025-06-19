@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
-import { Menu, User, Settings, Shield, MessageSquare, Users, LogOut, Moon, Sun } from "lucide-react";
+import { Menu, User, Settings, Shield, MessageSquare, Users, LogOut, Moon, Sun, Home, Scale, Heart } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useTheme } from "@/components/theme-provider";
 import { useLocation } from "wouter";
@@ -21,6 +21,12 @@ export default function HamburgerMenu({ user, relationships = [], friendGroups =
   const { logout } = useAuth();
   const { theme, setTheme } = useTheme();
   const [location, setLocation] = useLocation();
+
+  // Calculate relationship stats
+  const bestFriends = relationships.filter(r => r.type === 'best_friend').length;
+  const friends = relationships.filter(r => r.type === 'friend').length;  
+  const acquaintances = relationships.filter(r => r.type === 'acquaintance').length;
+  const crushes = relationships.filter(r => r.type === 'crush').length;
 
   const handleLogout = async () => {
     await logout();
@@ -74,6 +80,18 @@ export default function HamburgerMenu({ user, relationships = [], friendGroups =
             {/* Navigation Section */}
             <div className="py-3">
               <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Navigation</h3>
+              <Button
+                variant="ghost"
+                className="w-full justify-start p-3 h-auto"
+                onClick={() => navigateTo("/")}
+              >
+                <Home className="w-4 h-4 mr-3" />
+                <div className="text-left">
+                  <div className="font-medium">Dashboard</div>
+                  <div className="text-xs text-gray-500">Home page</div>
+                </div>
+              </Button>
+              
               <Button
                 variant="ghost"
                 className="w-full justify-start p-3 h-auto"
