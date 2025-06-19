@@ -13,9 +13,7 @@ import { useAuth } from "@/hooks/useAuth";
 
 interface User {
   id: number;
-  firstName: string;
-  lastName: string;
-  email: string;
+  name: string;
   bio?: string;
   profileImageUrl?: string;
   securityQuestion?: string;
@@ -29,9 +27,6 @@ interface ProfileSettingsProps {
 export default function ProfileSettings({ user }: ProfileSettingsProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [formData, setFormData] = useState({
-    firstName: user.firstName || "",
-    lastName: user.lastName || "",
-    email: user.email || "",
     bio: user.bio || "",
     profileImageUrl: user.profileImageUrl || "",
   });
@@ -196,38 +191,6 @@ export default function ProfileSettings({ user }: ProfileSettingsProps) {
             <DialogTitle>Edit Profile</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <Label htmlFor="firstName">First Name</Label>
-                <Input
-                  id="firstName"
-                  value={formData.firstName}
-                  onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                  required
-                />
-              </div>
-              <div>
-                <Label htmlFor="lastName">Last Name</Label>
-                <Input
-                  id="lastName"
-                  value={formData.lastName}
-                  onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                  required
-                />
-              </div>
-            </div>
-
-            <div>
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                required
-              />
-            </div>
-
             <div>
               <Label htmlFor="bio">Bio</Label>
               <Textarea

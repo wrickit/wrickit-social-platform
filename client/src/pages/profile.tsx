@@ -150,7 +150,7 @@ export default function Profile() {
                       ) : (
                         <CardTitle className="text-2xl app-text">{profileUser.name}</CardTitle>
                       )}
-                      <p className="app-text-light">Student #{profileUser.admissionNumber}</p>
+                      <p className="app-text-light">Class {profileUser.class}</p>
                       {relationshipTypes.length > 0 && !isOwnProfile && (
                         <div className="flex flex-wrap gap-1 mt-2">
                           {relationshipTypes.includes('best_friend') && <Badge className="discord-purple-bg">Best Friend</Badge>}
@@ -161,35 +161,7 @@ export default function Profile() {
                       )}
                     </div>
                   </div>
-                  {isOwnProfile && (
-                    <div className="flex space-x-2">
-                      {isEditing ? (
-                        <>
-                          <Button
-                            size="sm"
-                            onClick={handleSaveProfile}
-                            disabled={updateProfileMutation.isPending}
-                            className="discord-purple-bg hover:bg-purple-700"
-                          >
-                            <Save className="w-4 h-4 mr-1" />
-                            Save
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => setIsEditing(false)}
-                          >
-                            <X className="w-4 h-4" />
-                          </Button>
-                        </>
-                      ) : (
-                        <Button size="sm" onClick={startEditing} variant="outline">
-                          <Edit className="w-4 h-4 mr-1" />
-                          Edit Profile
-                        </Button>
-                      )}
-                    </div>
-                  )}
+
                 </div>
               </CardHeader>
               <CardContent>

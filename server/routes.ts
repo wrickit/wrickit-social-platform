@@ -168,22 +168,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // User search route (by admission number)
+  // User search route (by name)
   app.get("/api/users/search", requireAuth, async (req: Request, res: Response) => {
     try {
-      const { admissionNumber } = req.query;
-      if (!admissionNumber || typeof admissionNumber !== 'string') {
-        return res.status(400).json({ message: "Admission number required" });
+      const { q } = req.query;
+      if (!q || typeof q !== 'string') {
+        return res.status(400).json({ message: "Search query required" });
       }
       
-      const user = await storage.getUserByAdmissionNumber(admissionNumber);
-      if (user) {
-        // Don't return password in search results
-        const { password, ...userWithoutPassword } = user;
-        res.json(userWithoutPassword);
-      } else {
-        res.json(null);
-      }
+      const users = await storage.searchUsers(q);
+      // Don't return passwords in search results
+      const usersWithoutPasswords = users.map(foundUser => {
+        const { password, ...userWithoutPassword } = foundUser;
+        return userWithoutPassword;
+      });
+      res.json(usersWithoutPasswords);
     } catch (error) {
       console.error("Search users error:", error);
       res.status(500).json({ message: "Failed to search users" });

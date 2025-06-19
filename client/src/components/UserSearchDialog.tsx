@@ -31,7 +31,7 @@ export default function UserSearchDialog({ trigger }: UserSearchDialogProps) {
   const queryClient = useQueryClient();
 
   const { data: searchResults = [], isLoading: isSearching } = useQuery<User[]>({
-    queryKey: ["/api/users/search-username", searchQuery],
+    queryKey: ["/api/users/search", searchQuery],
     queryFn: getQueryFn({ on401: "throw" }),
     enabled: searchQuery.length > 0,
   });
@@ -78,7 +78,7 @@ export default function UserSearchDialog({ trigger }: UserSearchDialogProps) {
           <div className="flex space-x-2">
             <div className="flex-1">
               <Input
-                placeholder="Search by username..."
+                placeholder="Search by name..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full"
@@ -117,12 +117,12 @@ export default function UserSearchDialog({ trigger }: UserSearchDialogProps) {
                   <div className="flex items-center space-x-3">
                     <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
                       <span className="text-sm font-semibold text-blue-600">
-                        {user.firstName[0]}{user.lastName[0]}
+                        {user.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
                       </span>
                     </div>
                     <div>
                       <p className="font-medium">{user.name}</p>
-                      <p className="text-sm text-gray-500">@{user.username} • {user.class}</p>
+                      <p className="text-sm text-gray-500">Class {user.class}</p>
                     </div>
                   </div>
                   <Button
@@ -140,7 +140,7 @@ export default function UserSearchDialog({ trigger }: UserSearchDialogProps) {
 
           {searchQuery.length > 0 && !isSearching && searchResults.length === 0 && (
             <div className="text-center py-4">
-              <p className="text-gray-500">No users found with that username.</p>
+              <p className="text-gray-500">No users found with that name.</p>
             </div>
           )}
         </div>
