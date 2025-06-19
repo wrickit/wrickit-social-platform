@@ -128,6 +128,8 @@ The application is configured for deployment on Replit with the following setup:
 - ✓ Implemented complete comment system with real-time updates
 - ✓ Created separate posts page accessible from dashboard with dedicated navigation
 - ✓ Limited dashboard to show maximum 10 recent posts with "View All Posts" button
+- ✓ Removed irritating toast notifications while preserving important social notifications
+- ✓ Added comprehensive post sorting system (recent, oldest, most liked, friends, crushes)
 
 ## Changelog
 

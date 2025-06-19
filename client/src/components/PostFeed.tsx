@@ -12,9 +12,11 @@ import { Link } from "wouter";
 interface PostFeedProps {
   showAll?: boolean;
   maxPosts?: number;
+  sortBy?: string;
+  relationships?: any[];
 }
 
-export default function PostFeed({ showAll = false, maxPosts = 5 }: PostFeedProps) {
+export default function PostFeed({ showAll = false, maxPosts = 5, sortBy = "recent", relationships = [] }: PostFeedProps) {
   const queryClient = useQueryClient();
   const [showAllLocal, setShowAllLocal] = useState(showAll);
   const [showComments, setShowComments] = useState<Record<number, boolean>>({});
@@ -25,8 +27,46 @@ export default function PostFeed({ showAll = false, maxPosts = 5 }: PostFeedProp
     refetchInterval: 5000, // Refetch every 5 seconds for real-time updates
   });
 
-  // Show posts based on props and local state
-  const posts = showAll || showAllLocal ? allPosts : allPosts.slice(0, maxPosts);
+  // Get friend and crush user IDs for filtering
+  const friendIds = relationships
+    .filter(r => r.type === 'friend' || r.type === 'best_friend')
+    .map(r => r.toUserId);
+  const crushIds = relationships
+    .filter(r => r.type === 'crush')
+    .map(r => r.toUserId);
+
+  // Sort and filter posts based on sortBy value
+  const getSortedPosts = () => {
+    let filteredPosts = [...allPosts];
+
+    // Apply filters first
+    if (sortBy === 'friends') {
+      filteredPosts = filteredPosts.filter(post => friendIds.includes(post.authorId));
+    } else if (sortBy === 'crushes') {
+      filteredPosts = filteredPosts.filter(post => crushIds.includes(post.authorId));
+    }
+
+    // Then apply sorting
+    switch (sortBy) {
+      case 'oldest':
+        filteredPosts.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+        break;
+      case 'likes':
+        filteredPosts.sort((a, b) => (b.likesCount || 0) - (a.likesCount || 0));
+        break;
+      case 'recent':
+      case 'friends':
+      case 'crushes':
+      default:
+        filteredPosts.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        break;
+    }
+
+    return filteredPosts;
+  };
+
+  const sortedPosts = getSortedPosts();
+  const posts = showAll || showAllLocal ? sortedPosts : sortedPosts.slice(0, maxPosts);
 
   const likePostMutation = useMutation({
     mutationFn: async (postId: number) => {
@@ -84,9 +124,20 @@ export default function PostFeed({ showAll = false, maxPosts = 5 }: PostFeedProp
   }
 
   if (posts.length === 0) {
+    const getEmptyMessage = () => {
+      switch (sortBy) {
+        case 'friends':
+          return "No posts from your friends yet. Add some friends to see their posts!";
+        case 'crushes':
+          return "No posts from your crushes yet. Maybe they're being shy! 💕";
+        default:
+          return "No posts yet. Be the first to share something!";
+      }
+    };
+
     return (
       <Card className="content-box rounded p-8 text-center">
-        <p className="text-fb-text-light">No posts yet. Be the first to share something!</p>
+        <p className="text-fb-text-light">{getEmptyMessage()}</p>
       </Card>
     );
   }
@@ -190,14 +241,14 @@ export default function PostFeed({ showAll = false, maxPosts = 5 }: PostFeedProp
         </Card>
       ))}
       
-      {!showAll && !showAllLocal && allPosts.length > maxPosts && (
+      {!showAll && !showAllLocal && sortedPosts.length > maxPosts && (
         <div className="text-center pt-4">
           <Link href="/posts">
             <Button
               variant="outline"
               className="discord-purple border-purple-300 hover:bg-purple-50"
             >
-              View More Posts ({allPosts.length - maxPosts} more)
+              View More Posts ({sortedPosts.length - maxPosts} more)
             </Button>
           </Link>
         </div>
