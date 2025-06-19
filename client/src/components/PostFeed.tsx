@@ -7,11 +7,17 @@ import { ThumbsUp, MessageCircle, Send } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { Link } from "wouter";
 
-export default function PostFeed() {
+interface PostFeedProps {
+  showAll?: boolean;
+  maxPosts?: number;
+}
+
+export default function PostFeed({ showAll = false, maxPosts = 5 }: PostFeedProps) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const [showAll, setShowAll] = useState(false);
+  const [showAllLocal, setShowAllLocal] = useState(showAll);
   const [showComments, setShowComments] = useState<Record<number, boolean>>({});
   const [commentTexts, setCommentTexts] = useState<Record<number, string>>({});
   
@@ -20,8 +26,8 @@ export default function PostFeed() {
     refetchInterval: 5000, // Refetch every 5 seconds for real-time updates
   });
 
-  // Show only 5 most recent posts unless "View More" is clicked
-  const posts = showAll ? allPosts : allPosts.slice(0, 5);
+  // Show posts based on props and local state
+  const posts = showAll || showAllLocal ? allPosts : allPosts.slice(0, maxPosts);
 
   const likePostMutation = useMutation({
     mutationFn: async (postId: number) => {
@@ -193,27 +199,16 @@ export default function PostFeed() {
         </Card>
       ))}
       
-      {!showAll && allPosts.length > 5 && (
+      {!showAll && !showAllLocal && allPosts.length > maxPosts && (
         <div className="text-center pt-4">
-          <Button
-            variant="outline"
-            onClick={() => setShowAll(true)}
-            className="discord-purple border-purple-300 hover:bg-purple-50"
-          >
-            View More Posts ({allPosts.length - 5} more)
-          </Button>
-        </div>
-      )}
-      
-      {showAll && allPosts.length > 5 && (
-        <div className="text-center pt-4">
-          <Button
-            variant="outline"
-            onClick={() => setShowAll(false)}
-            className="discord-purple border-purple-300 hover:bg-purple-50"
-          >
-            Show Less
-          </Button>
+          <Link href="/posts">
+            <Button
+              variant="outline"
+              className="discord-purple border-purple-300 hover:bg-purple-50"
+            >
+              View More Posts ({allPosts.length - maxPosts} more)
+            </Button>
+          </Link>
         </div>
       )}
     </div>

@@ -7,6 +7,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { useAuth } from "@/hooks/useAuth";
 import Landing from "@/pages/landing";
 import Dashboard from "@/pages/dashboard";
+import Posts from "@/pages/posts";
 import Login from "@/pages/login";
 import Profile from "@/pages/profile";
 import Messages from "@/pages/messages";
@@ -34,6 +35,7 @@ function Router() {
         <>
           <Route path="/" component={Dashboard} />
           <Route path="/dashboard" component={Dashboard} />
+          <Route path="/posts" component={Posts} />
           <Route path="/profile/:userId" component={Profile} />
           <Route path="/messages" component={Messages} />
           <Route path="/disciplinary" component={Disciplinary} />

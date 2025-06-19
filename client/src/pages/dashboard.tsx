@@ -8,6 +8,9 @@ import RelationshipForm from "@/components/RelationshipForm";
 import ChatWidget from "@/components/ChatWidget";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { FileText } from "lucide-react";
+import { Link } from "wouter";
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -78,8 +81,21 @@ export default function Dashboard() {
             ))}
 
             <RelationshipForm />
-            <PostForm />
-            <PostFeed />
+            
+            {/* Posts Section with Navigation */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold app-text">Recent Posts</h2>
+                <Link href="/posts">
+                  <Button variant="outline" size="sm" className="flex items-center space-x-2">
+                    <FileText className="w-4 h-4" />
+                    <span>View All Posts</span>
+                  </Button>
+                </Link>
+              </div>
+              <PostForm />
+              <PostFeed maxPosts={10} />
+            </div>
           </main>
           
           {/* Right sidebar - hidden on mobile and tablet */}
