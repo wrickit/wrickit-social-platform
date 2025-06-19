@@ -134,6 +134,7 @@ The application is configured for deployment on Replit with the following setup:
 - ✓ Enhanced hamburger menu with comprehensive sidebar content for mobile users
 - ✓ Added all relationship types to dashboard sidebar (friends, acquaintances, crushes)
 - ✓ Fixed hamburger menu scrolling and added complete sidebar functionality for responsive design
+- ✓ Prevented duplicate relationships by updating existing ones instead of creating duplicates
 
 ## Changelog
 

@@ -216,10 +216,37 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createRelationship(fromUserId: number, toUserId: number, type: string): Promise<Relationship> {
-    const [relationship] = await db
-      .insert(relationships)
-      .values({ fromUserId, toUserId, type })
-      .returning();
+    // Check if a relationship already exists between these users
+    const existingRelationship = await db
+      .select()
+      .from(relationships)
+      .where(and(
+        eq(relationships.fromUserId, fromUserId),
+        eq(relationships.toUserId, toUserId)
+      ))
+      .limit(1);
+
+    let relationship: Relationship;
+
+    if (existingRelationship.length > 0) {
+      // Update existing relationship
+      const [updatedRelationship] = await db
+        .update(relationships)
+        .set({ type })
+        .where(and(
+          eq(relationships.fromUserId, fromUserId),
+          eq(relationships.toUserId, toUserId)
+        ))
+        .returning();
+      relationship = updatedRelationship;
+    } else {
+      // Create new relationship
+      const [newRelationship] = await db
+        .insert(relationships)
+        .values({ fromUserId, toUserId, type })
+        .returning();
+      relationship = newRelationship;
+    }
     
     // Check for mutual crush
     if (type === 'crush') {
@@ -239,8 +266,6 @@ export class DatabaseStorage implements IStorage {
         );
       }
     }
-    
-    // Removed automatic friend group detection
     
     return relationship;
   }

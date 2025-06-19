@@ -15,6 +15,11 @@ export default function RelationshipForm() {
   
   const queryClient = useQueryClient();
 
+  // Get current user's relationships to check for existing ones
+  const { data: relationships = [] } = useQuery({
+    queryKey: ["/api/relationships"],
+  });
+
   const addRelationshipMutation = useMutation({
     mutationFn: async (data: { toUserId: number; type: string }) => {
       await apiRequest("POST", "/api/relationships", data);
