@@ -5,6 +5,7 @@ import NotificationDropdown from "@/components/NotificationDropdown";
 import UserSearchDialog from "@/components/UserSearchDialog";
 import HamburgerMenu from "@/components/HamburgerMenu";
 import CreateChatGroupDialog from "@/components/CreateChatGroupDialog";
+import ServiceBanner from "@/components/ServiceBanner";
 import { Home, Users, MessageCircle, Bell, LogOut, UserPlus, Search } from "lucide-react";
 
 interface HeaderProps {
@@ -18,8 +19,10 @@ export default function Header({ user, notifications }: HeaderProps) {
   const unreadCount = notifications.filter(n => !n.isRead).length;
 
   return (
-    <header className="app-gradient text-white shadow-md w-full">
-      <div className="w-full px-4 sm:px-6">
+    <>
+      <ServiceBanner />
+      <header className="app-gradient text-white shadow-md w-full">
+        <div className="w-full px-4 sm:px-6">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center space-x-8">
             <h1 className="text-2xl font-bold">Wrickit</h1>
@@ -79,7 +82,8 @@ export default function Header({ user, notifications }: HeaderProps) {
             <HamburgerMenu user={user} />
           </div>
         </div>
-      </div>
-    </header>
+        </div>
+      </header>
+    </>
   );
 }
