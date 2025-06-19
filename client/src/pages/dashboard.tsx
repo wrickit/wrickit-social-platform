@@ -6,6 +6,7 @@ import PostForm from "@/components/PostForm";
 import PostFeed from "@/components/PostFeed";
 import RelationshipForm from "@/components/RelationshipForm";
 import ChatWidget from "@/components/ChatWidget";
+import Banner from "@/components/Banner";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 
@@ -58,8 +59,15 @@ export default function Dashboard() {
             </div>
             
             <main className="flex-1 min-w-0 space-y-4 sm:space-y-6">
-            {/* Mutual Crush Notifications */}
-            {mutualCrushNotifications.map((notification: any) => (
+              {/* Welcome Banner */}
+              <Banner 
+                message="Welcome to Wrickit! Connect with classmates, share posts, and discover mutual connections." 
+                type="info"
+                dismissible={true}
+              />
+              
+              {/* Mutual Crush Notifications */}
+              {mutualCrushNotifications.map((notification: any) => (
               <div key={notification.id} className="content-box rounded p-4 bg-pink-50 border-pink-200">
                 <div className="flex items-center space-x-3">
                   <div className="text-2xl">💕</div>
