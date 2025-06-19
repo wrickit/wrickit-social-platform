@@ -1,6 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { Link, useLocation } from "wouter";
-import { Home, Heart, Users, MessageCircle, FileText, UserPen, Scale } from "lucide-react";
+import { Home, Heart, Users, MessageCircle, Scale } from "lucide-react";
 
 interface SidebarProps {
   user: any;
@@ -60,14 +60,7 @@ export default function Sidebar({ user, relationships, friendGroups }: SidebarPr
             </div>
           </Link>
           
-          <Link href={`/profile/${user?.id}`}>
-            <div className={`flex items-center space-x-2 px-3 py-2 rounded cursor-pointer transition-colors ${
-              location.startsWith("/profile") ? "discord-purple-bg text-white" : "hover:fb-gray-bg text-fb-text"
-            }`}>
-              <UserPen className="w-4 h-4 text-blue-600" />
-              <span>Edit Profile</span>
-            </div>
-          </Link>
+
           
           <Link href="/disciplinary">
             <div className={`flex items-center space-x-2 px-3 py-2 rounded cursor-pointer transition-colors ${
@@ -86,10 +79,7 @@ export default function Sidebar({ user, relationships, friendGroups }: SidebarPr
             <Users className="w-4 h-4 text-blue-600" />
             <span>Friend Groups</span>
           </div>
-          <div className="flex items-center space-x-2 px-3 py-2 rounded text-fb-text">
-            <FileText className="w-4 h-4 text-blue-600" />
-            <span>Posts</span>
-          </div>
+
         </nav>
       </Card>
 
