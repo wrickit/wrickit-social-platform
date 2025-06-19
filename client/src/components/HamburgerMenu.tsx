@@ -44,12 +44,12 @@ export default function HamburgerMenu({ user, relationships = [], friendGroups =
             <Menu className="w-5 h-5" />
           </Button>
         </SheetTrigger>
-        <SheetContent side="right" className="w-80">
+        <SheetContent side="right" className="w-80 overflow-y-auto">
           <SheetHeader>
             <SheetTitle className="text-left">Settings & More</SheetTitle>
           </SheetHeader>
           
-          <div className="mt-6 space-y-1">
+          <div className="mt-6 space-y-1 h-full overflow-y-auto pb-6">
             {/* Profile Section */}
             <div className="pb-3">
               <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Profile</h3>
