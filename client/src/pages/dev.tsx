@@ -75,13 +75,15 @@ export default function DevPage() {
         <header className="fb-gradient text-white shadow-md">
           <div className="max-w-6xl mx-auto px-4">
             <div className="flex items-center justify-between h-16">
-              <h1 className="text-3xl font-bold">Wrickit Dev Panel</h1>
+              <h1 className="text-lg sm:text-2xl lg:text-3xl font-bold">Wrickit Dev Panel</h1>
               <Button
                 variant="outline"
-                className="text-white border-white hover:bg-white hover:text-blue-600"
+                size="sm"
+                className="text-white border-white hover:bg-white hover:text-blue-600 text-xs sm:text-sm px-2 sm:px-4"
                 onClick={() => setLocation("/")}
               >
-                Back to Home
+                <span className="hidden sm:inline">Back to Home</span>
+                <span className="sm:hidden">Home</span>
               </Button>
             </div>
           </div>
