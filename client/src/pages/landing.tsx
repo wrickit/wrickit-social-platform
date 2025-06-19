@@ -12,22 +12,24 @@ export default function Landing() {
       <header className="app-gradient text-white shadow-md">
         <div className="max-w-6xl mx-auto px-4">
           <div className="flex items-center justify-between h-16">
-            <h1 className="text-3xl font-bold">Wrickit</h1>
-            <div className="space-x-4">
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold">Wrickit</h1>
+            <div className="flex space-x-2 sm:space-x-4">
               <Button
-                size="lg"
-                className="youtube-red-bg hover:youtube-red-dark text-white font-bold px-8 py-3 text-lg shadow-lg"
+                size="sm"
+                className="youtube-red-bg hover:youtube-red-dark text-white font-bold px-3 py-2 text-sm sm:px-6 sm:py-3 sm:text-base lg:px-8 lg:text-lg shadow-lg"
                 onClick={() => setLocation("/login")}
               >
-                Login Now
+                <span className="hidden sm:inline">Login Now</span>
+                <span className="sm:hidden">Login</span>
               </Button>
               <Button
-                size="lg"
+                size="sm"
                 variant="outline"
-                className="bg-white text-purple-600 border-2 border-white hover:bg-purple-50 font-bold px-8 py-3 text-lg"
+                className="bg-white text-purple-600 border-2 border-white hover:bg-purple-50 font-bold px-3 py-2 text-sm sm:px-6 sm:py-3 sm:text-base lg:px-8 lg:text-lg"
                 onClick={() => setLocation("/dev")}
               >
-                Dev Page
+                <span className="hidden sm:inline">Dev Page</span>
+                <span className="sm:hidden">Dev</span>
               </Button>
             </div>
           </div>
