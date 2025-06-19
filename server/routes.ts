@@ -8,6 +8,9 @@ import {
   insertRelationshipSchema,
   insertPostSchema,
   insertMessageSchema,
+  updateUserSchema,
+  changePasswordSchema,
+  searchUserSchema,
 } from "@shared/schema";
 import session from "express-session";
 import { ValidationError } from "zod-validation-error";
@@ -203,8 +206,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Cannot update other user's profile" });
       }
       
-      const { name, bio, profileImageUrl } = req.body;
-      const updatedUser = await storage.updateUser(userId, { name, bio, profileImageUrl });
+      const validatedData = updateUserSchema.parse(req.body);
+      const updatedUser = await storage.updateUser(userId, validatedData);
       
       // Don't send password to client
       const { password, ...userWithoutPassword } = updatedUser;
@@ -212,6 +215,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Update user profile error:", error);
       res.status(500).json({ message: "Failed to update profile" });
+    }
+  });
+
+  // Search users by username
+  app.get("/api/users/search-username", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const { username } = req.query;
+      if (!username) {
+        return res.status(400).json({ message: "Username query parameter is required" });
+      }
+      
+      const users = await storage.searchUsersByUsername(username as string);
+      res.json(users);
+    } catch (error) {
+      console.error("Search users by username error:", error);
+      res.status(500).json({ message: "Failed to search users by username" });
+    }
+  });
+
+  // Change password
+  app.post("/api/users/change-password", requireAuth, async (req: any, res: Response) => {
+    try {
+      const validatedData = changePasswordSchema.parse(req.body);
+      await storage.changePassword(req.session.userId, validatedData.currentPassword, validatedData.newPassword);
+      res.json({ message: "Password changed successfully" });
+    } catch (error) {
+      if (error instanceof ValidationError) {
+        return res.status(400).json({ message: error.message });
+      }
+      if (error instanceof Error && error.message === "Current password is incorrect") {
+        return res.status(400).json({ message: "Current password is incorrect" });
+      }
+      console.error("Change password error:", error);
+      res.status(500).json({ message: "Failed to change password" });
+    }
+  });
+
+  // Delete account
+  app.delete("/api/users/delete-account", requireAuth, async (req: any, res: Response) => {
+    try {
+      await storage.deleteUser(req.session.userId);
+      req.session.destroy((err: any) => {
+        if (err) {
+          console.error("Session destroy error:", err);
+        }
+      });
+      res.json({ message: "Account deleted successfully" });
+    } catch (error) {
+      console.error("Delete account error:", error);
+      res.status(500).json({ message: "Failed to delete account" });
     }
   });
 
@@ -248,9 +301,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/posts", requireAuth, async (req: Request, res: Response) => {
+  app.get("/api/posts", requireAuth, async (req: any, res: Response) => {
     try {
-      const posts = await storage.getPosts();
+      const currentUser = await storage.getUser(req.session.userId);
+      const posts = await storage.getPosts(20, currentUser?.class);
       res.json(posts);
     } catch (error) {
       console.error("Get posts error:", error);

@@ -110,9 +110,23 @@ The application is configured for deployment on Replit with the following setup:
 - WebSocket connections managed per server instance
 - Static asset serving optimized for CDN deployment
 
+## Recent Changes
+
+### June 19, 2025
+- ✓ Implemented Facebook-style notification system with real-time updates
+- ✓ Added class and division selection in signup for post filtering 
+- ✓ Created username-based social relationship connections
+- ✓ Enhanced post filtering to show posts by class when posted to class-specific feeds
+- ✓ Built comprehensive user search functionality with relationship management
+- ✓ Added profile settings page with account management features
+- ✓ Integrated WebSocket messaging system for real-time communication
+- ✓ Fixed database schema to support new user fields (username, firstName, lastName, class, division)
+- ✓ Updated API routes for complete user management including password changes and account deletion
+- ✓ Implemented disciplinary reporting system with community voting
+
 ## Changelog
 
-- June 19, 2025. Initial setup
+- June 19, 2025. Initial setup and comprehensive feature implementation
 
 ## User Preferences
 

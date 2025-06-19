@@ -22,13 +22,17 @@ export function useAuth() {
     return data.user;
   };
 
-  const register = async (admissionNumber: string, password: string, name: string, email?: string) => {
-    const response = await apiRequest("POST", "/api/register", {
-      admissionNumber,
-      password,
-      name,
-      email,
-    });
+  const register = async (userData: {
+    admissionNumber: string;
+    username: string;
+    password: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    class: string;
+    division: string;
+  }) => {
+    const response = await apiRequest("POST", "/api/register", userData);
     const data = await response.json();
     queryClient.setQueryData(["/api/user"], data.user);
     return data.user;

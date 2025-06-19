@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -10,9 +10,13 @@ import { useLocation } from "wouter";
 export default function Login() {
   const [isLogin, setIsLogin] = useState(true);
   const [admissionNumber, setAdmissionNumber] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [name, setName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
+  const [classGrade, setClassGrade] = useState("9");
+  const [division, setDivision] = useState("A");
   const [loading, setLoading] = useState(false);
   
   const { login, register } = useAuth();
@@ -20,7 +24,7 @@ export default function Login() {
   const [location, setLocation] = useLocation();
 
   // Check if we're on register route
-  useState(() => {
+  React.useEffect(() => {
     if (location === "/register") {
       setIsLogin(false);
     }
@@ -38,7 +42,16 @@ export default function Login() {
           description: "You've successfully logged in to Wrickit.",
         });
       } else {
-        await register(admissionNumber, password, name, email);
+        await register({
+          admissionNumber,
+          username,
+          password,
+          firstName,
+          lastName,
+          email,
+          class: `${classGrade}${division}`,
+          division
+        });
         toast({
           title: "Welcome to Wrickit!",
           description: "Your account has been created successfully.",
@@ -104,25 +117,82 @@ export default function Login() {
               {!isLogin && (
                 <>
                   <div>
-                    <Label htmlFor="name">Full Name</Label>
+                    <Label htmlFor="username">Username</Label>
                     <Input
-                      id="name"
+                      id="username"
                       type="text"
-                      placeholder="Enter your full name"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
+                      placeholder="Choose a username"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
                       required
                     />
                   </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <Label htmlFor="firstName">First Name</Label>
+                      <Input
+                        id="firstName"
+                        type="text"
+                        placeholder="First name"
+                        value={firstName}
+                        onChange={(e) => setFirstName(e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="lastName">Last Name</Label>
+                      <Input
+                        id="lastName"
+                        type="text"
+                        placeholder="Last name"
+                        value={lastName}
+                        onChange={(e) => setLastName(e.target.value)}
+                        required
+                      />
+                    </div>
+                  </div>
+
                   <div>
-                    <Label htmlFor="email">Email (Optional)</Label>
+                    <Label htmlFor="email">Email</Label>
                     <Input
                       id="email"
                       type="email"
                       placeholder="Enter your email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
+                      required
                     />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <Label htmlFor="class">Class</Label>
+                      <select
+                        id="class"
+                        value={classGrade}
+                        onChange={(e) => setClassGrade(e.target.value)}
+                        className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                        required
+                      >
+                        <option value="9">9th Grade</option>
+                      </select>
+                    </div>
+                    <div>
+                      <Label htmlFor="division">Division</Label>
+                      <select
+                        id="division"
+                        value={division}
+                        onChange={(e) => setDivision(e.target.value)}
+                        className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                        required
+                      >
+                        <option value="A">A</option>
+                        <option value="B">B</option>
+                        <option value="C">C</option>
+                        <option value="D">D</option>
+                      </select>
+                    </div>
                   </div>
                 </>
               )}

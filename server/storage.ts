@@ -10,6 +10,8 @@ import {
   disciplinaryVotes,
   type User,
   type InsertUser,
+  type UpdateUser,
+  type ChangePassword,
   type Relationship,
   type Post,
   type Message,
@@ -23,11 +25,15 @@ import bcrypt from "bcrypt";
 export interface IStorage {
   // User operations
   getUserByAdmissionNumber(admissionNumber: string): Promise<User | undefined>;
+  getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   authenticateUser(admissionNumber: string, password: string): Promise<User | null>;
   getUser(id: number): Promise<User | undefined>;
-  updateUser(id: number, userData: Partial<User>): Promise<User>;
+  updateUser(id: number, userData: UpdateUser): Promise<User>;
+  changePassword(id: number, currentPassword: string, newPassword: string): Promise<void>;
+  deleteUser(id: number): Promise<void>;
   searchUsers(query: string): Promise<User[]>;
+  searchUsersByUsername(username: string): Promise<User[]>;
   
   // Relationship operations
   createRelationship(fromUserId: number, toUserId: number, type: string): Promise<Relationship>;
@@ -36,7 +42,7 @@ export interface IStorage {
   
   // Post operations
   createPost(authorId: number, content: string, audience: string): Promise<Post>;
-  getPosts(limit?: number): Promise<(Post & { author: User })[]>;
+  getPosts(limit?: number, userClass?: string): Promise<(Post & { author: User })[]>;
   likePost(postId: number): Promise<void>;
   
   // Message operations
@@ -68,9 +74,15 @@ export class DatabaseStorage implements IStorage {
 
   async createUser(insertUser: InsertUser): Promise<User> {
     const hashedPassword = await bcrypt.hash(insertUser.password, 10);
+    const fullName = insertUser.name || `${insertUser.firstName} ${insertUser.lastName}`;
+    
     const [user] = await db
       .insert(users)
-      .values({ ...insertUser, password: hashedPassword })
+      .values({ 
+        ...insertUser, 
+        password: hashedPassword,
+        name: fullName
+      })
       .returning();
     return user;
   }
@@ -88,13 +100,74 @@ export class DatabaseStorage implements IStorage {
     return user || undefined;
   }
 
-  async updateUser(id: number, userData: Partial<User>): Promise<User> {
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user || undefined;
+  }
+
+  async updateUser(id: number, userData: UpdateUser): Promise<User> {
+    // If first name or last name is updated, update the full name too
+    const updateData: any = { ...userData };
+    if (userData.firstName || userData.lastName) {
+      const currentUser = await this.getUser(id);
+      if (currentUser) {
+        updateData.name = `${userData.firstName || currentUser.firstName} ${userData.lastName || currentUser.lastName}`;
+      }
+    }
+
     const [updatedUser] = await db
       .update(users)
-      .set(userData)
+      .set(updateData)
       .where(eq(users.id, id))
       .returning();
     return updatedUser;
+  }
+
+  async changePassword(id: number, currentPassword: string, newPassword: string): Promise<void> {
+    const user = await this.getUser(id);
+    if (!user) throw new Error("User not found");
+    
+    const isCurrentValid = await bcrypt.compare(currentPassword, user.password);
+    if (!isCurrentValid) throw new Error("Current password is incorrect");
+    
+    const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+    await db
+      .update(users)
+      .set({ password: hashedNewPassword })
+      .where(eq(users.id, id));
+  }
+
+  async deleteUser(id: number): Promise<void> {
+    // Delete related data first
+    await db.delete(relationships).where(or(eq(relationships.fromUserId, id), eq(relationships.toUserId, id)));
+    await db.delete(messages).where(or(eq(messages.fromUserId, id), eq(messages.toUserId, id)));
+    await db.delete(posts).where(eq(posts.authorId, id));
+    await db.delete(notifications).where(eq(notifications.userId, id));
+    await db.delete(friendGroupMembers).where(eq(friendGroupMembers.userId, id));
+    
+    // Delete the user
+    await db.delete(users).where(eq(users.id, id));
+  }
+
+  async searchUsersByUsername(username: string): Promise<User[]> {
+    return await db
+      .select({
+        id: users.id,
+        admissionNumber: users.admissionNumber,
+        username: users.username,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        name: users.name,
+        email: users.email,
+        class: users.class,
+        division: users.division,
+        profileImageUrl: users.profileImageUrl,
+        bio: users.bio,
+        createdAt: users.createdAt
+      })
+      .from(users)
+      .where(sql`${users.username} ILIKE ${`%${username}%`}`)
+      .limit(10);
   }
 
   async createRelationship(fromUserId: number, toUserId: number, type: string): Promise<Relationship> {
@@ -132,19 +205,18 @@ export class DatabaseStorage implements IStorage {
 
   async getRelationshipsByUserId(userId: number): Promise<(Relationship & { toUser: User; fromUser: User })[]> {
     const result = await db
-      .select({
-        relationship: relationships,
-        toUser: users,
-      })
+      .select()
       .from(relationships)
       .leftJoin(users, eq(relationships.toUserId, users.id))
       .where(eq(relationships.fromUserId, userId));
     
+    const currentUser = await this.getUser(userId);
+    
     return result.map(row => ({
-      ...row.relationship,
-      toUser: row.toUser!,
-      fromUser: row.toUser!, // Will be populated with proper user data in a real implementation
-    })) as any;
+      ...row.relationships,
+      toUser: row.users!,
+      fromUser: currentUser!,
+    }));
   }
 
   async checkMutualCrush(userId1: number, userId2: number): Promise<boolean> {
@@ -172,21 +244,33 @@ export class DatabaseStorage implements IStorage {
     return post;
   }
 
-  async getPosts(limit = 20): Promise<(Post & { author: User })[]> {
-    const result = await db
-      .select({
-        post: posts,
-        author: users,
-      })
+  async getPosts(limit = 20, userClass?: string): Promise<(Post & { author: User })[]> {
+    let query = db
+      .select()
       .from(posts)
       .leftJoin(users, eq(posts.authorId, users.id))
       .orderBy(desc(posts.createdAt))
       .limit(limit);
+
+    // Filter posts based on user's class if provided
+    if (userClass) {
+      query = query.where(
+        or(
+          eq(posts.audience, 'grade'), // Show all grade-level posts
+          and(
+            eq(posts.audience, 'class'),
+            eq(users.class, userClass) // Only show class posts from same class
+          )
+        )
+      ) as any;
+    }
+    
+    const result = await query;
     
     return result.map(row => ({
-      ...row.post,
-      author: row.author!,
-    })) as any;
+      ...row.posts,
+      author: row.users!,
+    }));
   }
 
   async likePost(postId: number): Promise<void> {
@@ -205,11 +289,9 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getMessagesBetweenUsers(userId1: number, userId2: number): Promise<(Message & { fromUser: User; toUser: User })[]> {
-    return await db
+    const result = await db
       .select()
       .from(messages)
-      .leftJoin(users, eq(messages.fromUserId, users.id))
-      .leftJoin(users, eq(messages.toUserId, users.id))
       .where(
         or(
           and(eq(messages.fromUserId, userId1), eq(messages.toUserId, userId2)),
@@ -217,6 +299,15 @@ export class DatabaseStorage implements IStorage {
         )
       )
       .orderBy(messages.createdAt);
+
+    const user1 = await this.getUser(userId1);
+    const user2 = await this.getUser(userId2);
+    
+    return result.map(row => ({
+      ...row,
+      fromUser: row.fromUserId === userId1 ? user1! : user2!,
+      toUser: row.toUserId === userId1 ? user1! : user2!,
+    }));
   }
 
   async getRecentMessagesByUserId(userId: number): Promise<(Message & { fromUser: User; toUser: User })[]> {
@@ -342,7 +433,7 @@ export class DatabaseStorage implements IStorage {
       .limit(10);
     
     // Don't return passwords in search results
-    return searchResults.map(({ password, ...user }) => user);
+    return searchResults.map(({ password, ...user }) => user) as User[];
   }
 
   async createDisciplinaryAction(reportedUserId: number, reporterUserId: number, reason: string, description: string, isAnonymous: boolean): Promise<any> {

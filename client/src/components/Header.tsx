@@ -1,7 +1,10 @@
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { Home, Users, MessageCircle, Bell, LogOut } from "lucide-react";
+import NotificationDropdown from "@/components/NotificationDropdown";
+import UserSearchDialog from "@/components/UserSearchDialog";
+import ProfileSettings from "@/components/ProfileSettings";
+import { Home, Users, MessageCircle, Bell, LogOut, UserPlus } from "lucide-react";
 
 interface HeaderProps {
   user: any;
@@ -32,16 +35,17 @@ export default function Header({ user, notifications }: HeaderProps) {
                 <MessageCircle className="w-4 h-4" />
                 <span>Messages</span>
               </a>
-              <a href="#" className="hover:text-gray-200 flex items-center space-x-1">
-                <Bell className="w-4 h-4" />
-                <span>Notifications</span>
-                {unreadCount > 0 && (
-                  <span className="notification-badge">{unreadCount}</span>
-                )}
-              </a>
             </nav>
           </div>
           <div className="flex items-center space-x-2 sm:space-x-4">
+            <UserSearchDialog 
+              trigger={
+                <Button variant="ghost" size="sm" className="text-white hover:text-gray-200">
+                  <UserPlus className="w-4 h-4" />
+                </Button>
+              }
+            />
+            <NotificationDropdown />
             <ThemeToggle />
             <div className="flex items-center space-x-2">
               {user.profileImageUrl ? (

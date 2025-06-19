@@ -6,9 +6,14 @@ import { z } from "zod";
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   admissionNumber: varchar("admission_number", { length: 20 }).notNull().unique(),
+  username: varchar("username", { length: 50 }).notNull().unique(),
   password: text("password").notNull(),
-  name: text("name").notNull(),
-  email: text("email"),
+  firstName: text("first_name").notNull(),
+  lastName: text("last_name").notNull(),
+  name: text("name").notNull(), // Full name for backward compatibility
+  email: text("email").notNull(),
+  class: varchar("class", { length: 10 }).notNull(), // e.g., "9A", "9B"
+  division: varchar("division", { length: 5 }).notNull(), // e.g., "A", "B"
   profileImageUrl: text("profile_image_url"),
   bio: text("bio"),
   createdAt: timestamp("created_at").defaultNow(),
@@ -156,14 +161,37 @@ export const notificationsRelations = relations(notifications, ({ one }) => ({
 // Schemas
 export const insertUserSchema = createInsertSchema(users).pick({
   admissionNumber: true,
+  username: true,
   password: true,
-  name: true,
+  firstName: true,
+  lastName: true,
   email: true,
+  class: true,
+  division: true,
+}).extend({
+  name: z.string().optional(), // Will be auto-generated from firstName + lastName
 });
 
 export const loginSchema = z.object({
   admissionNumber: z.string().min(1),
   password: z.string().min(1),
+});
+
+export const updateUserSchema = z.object({
+  firstName: z.string().min(1).optional(),
+  lastName: z.string().min(1).optional(),
+  email: z.string().email().optional(),
+  bio: z.string().optional(),
+  profileImageUrl: z.string().optional(),
+});
+
+export const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1),
+  newPassword: z.string().min(6),
+});
+
+export const searchUserSchema = z.object({
+  username: z.string().min(1),
 });
 
 export const insertRelationshipSchema = createInsertSchema(relationships).pick({
@@ -183,6 +211,9 @@ export const insertMessageSchema = createInsertSchema(messages).pick({
 
 // Types
 export type InsertUser = z.infer<typeof insertUserSchema>;
+export type UpdateUser = z.infer<typeof updateUserSchema>;
+export type ChangePassword = z.infer<typeof changePasswordSchema>;
+export type SearchUser = z.infer<typeof searchUserSchema>;
 export type User = typeof users.$inferSelect;
 export type Relationship = typeof relationships.$inferSelect;
 export type Post = typeof posts.$inferSelect;
