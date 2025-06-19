@@ -70,7 +70,7 @@ export default function RelationshipForm() {
     }
 
     try {
-      const response = await fetch(`/api/users/search?query=${encodeURIComponent(searchTerm.trim())}`);
+      const response = await fetch(`/api/users/search?q=${encodeURIComponent(searchTerm.trim())}`);
       if (response.ok) {
         const users = await response.json();
         if (users && users.length > 0) {

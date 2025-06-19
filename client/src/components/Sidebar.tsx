@@ -34,7 +34,7 @@ export default function Sidebar({ user, relationships, friendGroups }: SidebarPr
           )}
           <div>
             <h3 className="font-bold text-fb-text">{user.name}</h3>
-            <p className="text-sm text-fb-text-light">Admission: #{user.admissionNumber}</p>
+            <p className="text-sm text-fb-text-light">Class {user.class}</p>
           </div>
         </div>
       </Card>

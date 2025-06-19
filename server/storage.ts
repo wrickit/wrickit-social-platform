@@ -53,6 +53,7 @@ export interface IStorage {
   createMessage(fromUserId: number, toUserId: number, content: string): Promise<Message>;
   getMessagesBetweenUsers(userId1: number, userId2: number): Promise<(Message & { fromUser: User; toUser: User })[]>;
   getRecentMessagesByUserId(userId: number): Promise<(Message & { fromUser: User; toUser: User })[]>;
+  markMessagesAsRead(currentUserId: number, otherUserId: number): Promise<void>;
   
   // Friend group operations
   createFriendGroup(name: string, memberIds: number[]): Promise<FriendGroup>;
@@ -344,16 +345,27 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getRecentMessagesByUserId(userId: number): Promise<(Message & { fromUser: User; toUser: User })[]> {
-    const recentMessages = await db
+    // Get all messages for this user
+    const allMessages = await db
       .select()
       .from(messages)
       .where(or(eq(messages.fromUserId, userId), eq(messages.toUserId, userId)))
-      .orderBy(desc(messages.createdAt))
-      .limit(10);
+      .orderBy(desc(messages.createdAt));
+
+    // Group by conversation partner and keep only the most recent message
+    const conversationMap = new Map<number, Message>();
+    
+    for (const message of allMessages) {
+      const partnerId = message.fromUserId === userId ? message.toUserId : message.fromUserId;
+      
+      if (!conversationMap.has(partnerId)) {
+        conversationMap.set(partnerId, message);
+      }
+    }
 
     const result: (Message & { fromUser: User; toUser: User })[] = [];
     
-    for (const message of recentMessages) {
+    for (const message of Array.from(conversationMap.values())) {
       const fromUser = await this.getUser(message.fromUserId);
       const toUser = await this.getUser(message.toUserId);
       
@@ -366,7 +378,24 @@ export class DatabaseStorage implements IStorage {
       }
     }
     
-    return result;
+    // Sort by creation date, most recent first
+    return result.sort((a, b) => {
+      const aDate = a.createdAt ? new Date(a.createdAt as string | number | Date).getTime() : 0;
+      const bDate = b.createdAt ? new Date(b.createdAt as string | number | Date).getTime() : 0;
+      return bDate - aDate;
+    });
+  }
+
+  async markMessagesAsRead(currentUserId: number, otherUserId: number): Promise<void> {
+    await db
+      .update(messages)
+      .set({ isRead: true })
+      .where(
+        and(
+          eq(messages.toUserId, currentUserId),
+          eq(messages.fromUserId, otherUserId)
+        )
+      );
   }
 
   async createFriendGroup(name: string, memberIds: number[]): Promise<FriendGroup> {

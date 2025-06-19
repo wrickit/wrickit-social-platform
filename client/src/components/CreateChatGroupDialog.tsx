@@ -34,8 +34,13 @@ export default function CreateChatGroupDialog({ trigger }: CreateChatGroupDialog
 
   const { data: searchResults = [], isLoading: isSearching } = useQuery<User[]>({
     queryKey: ["/api/users/search-all", searchQuery],
-    queryFn: getQueryFn({ on401: "throw" }),
-    enabled: searchQuery.length > 0,
+    queryFn: async () => {
+      if (searchQuery.length < 2) return [];
+      const response = await fetch(`/api/users/search-all?q=${encodeURIComponent(searchQuery)}`);
+      if (!response.ok) return [];
+      return response.json();
+    },
+    enabled: searchQuery.length > 1,
   });
 
   const createGroupMutation = useMutation({

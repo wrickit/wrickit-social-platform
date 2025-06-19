@@ -142,6 +142,8 @@ export default function Messages() {
     setSelectedConversation(targetUser.id);
     setShowNewChat(false);
     setSearchQuery("");
+    // Refresh conversations to update read status
+    queryClient.invalidateQueries({ queryKey: ["/api/messages"] });
   };
 
   const getConversationPartner = (conversation: Conversation) => {

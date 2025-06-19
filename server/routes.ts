@@ -390,6 +390,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const otherUserId = parseInt(req.params.userId);
       const messages = await storage.getMessagesBetweenUsers(req.session.userId, otherUserId);
+      
+      // Mark messages as read when viewing conversation
+      await storage.markMessagesAsRead(req.session.userId, otherUserId);
+      
       res.json(messages);
     } catch (error) {
       console.error("Get messages error:", error);
