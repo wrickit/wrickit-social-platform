@@ -117,6 +117,29 @@ export default function ProfileSettings({ user }: ProfileSettingsProps) {
     },
   });
 
+  const updateSecurityMutation = useMutation({
+    mutationFn: async (data: typeof securityData) => {
+      const response = await apiRequest("PUT", `/api/users/${user.id}`, data);
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Security question updated",
+        description: "Your security question has been set successfully.",
+      });
+      setShowSecurityDialog(false);
+      setSecurityData({ ...securityData, securityAnswer: "" });
+      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update security question",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     updateProfileMutation.mutate(formData);
@@ -144,6 +167,19 @@ export default function ProfileSettings({ user }: ProfileSettingsProps) {
       currentPassword: passwordData.currentPassword,
       newPassword: passwordData.newPassword,
     });
+  };
+
+  const handleSecuritySubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!securityData.securityQuestion || !securityData.securityAnswer) {
+      toast({
+        title: "Error",
+        description: "Please fill in both fields",
+        variant: "destructive",
+      });
+      return;
+    }
+    updateSecurityMutation.mutate(securityData);
   };
 
   return (
@@ -231,6 +267,16 @@ export default function ProfileSettings({ user }: ProfileSettingsProps) {
                 Change Password
               </Button>
             </div>
+
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setShowSecurityDialog(true)}
+              className="w-full"
+            >
+              <Lock className="h-4 w-4 mr-2" />
+              {user.securityQuestion ? "Update Security Question" : "Set Security Question"}
+            </Button>
 
             <Button
               type="button"
@@ -339,6 +385,63 @@ export default function ProfileSettings({ user }: ProfileSettingsProps) {
               </Button>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Security Question Dialog */}
+      <Dialog open={showSecurityDialog} onOpenChange={setShowSecurityDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {user.securityQuestion ? "Update Security Question" : "Set Security Question"}
+            </DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleSecuritySubmit} className="space-y-4">
+            <div>
+              <Label htmlFor="securityQuestion">Security Question</Label>
+              <Input
+                id="securityQuestion"
+                placeholder="e.g., What is your mother's maiden name?"
+                value={securityData.securityQuestion}
+                onChange={(e) => setSecurityData({ ...securityData, securityQuestion: e.target.value })}
+                required
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="securityAnswer">Answer</Label>
+              <Input
+                id="securityAnswer"
+                type="password"
+                placeholder="Enter your answer"
+                value={securityData.securityAnswer}
+                onChange={(e) => setSecurityData({ ...securityData, securityAnswer: e.target.value })}
+                required
+              />
+            </div>
+
+            <div className="text-sm text-gray-600">
+              <p>This security question will help you recover your account if you forget your password.</p>
+            </div>
+
+            <div className="flex space-x-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowSecurityDialog(false)}
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={updateSecurityMutation.isPending}
+                className="flex-1"
+              >
+                {updateSecurityMutation.isPending ? "Saving..." : "Save"}
+              </Button>
+            </div>
+          </form>
         </DialogContent>
       </Dialog>
     </>
