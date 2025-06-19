@@ -53,6 +53,21 @@ export const friendGroups = pgTable("friend_groups", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const comments = pgTable("comments", {
+  id: serial("id").primaryKey(),
+  postId: integer("post_id").notNull().references(() => posts.id, { onDelete: "cascade" }),
+  authorId: integer("author_id").notNull().references(() => users.id),
+  content: text("content").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const postLikes = pgTable("post_likes", {
+  id: serial("id").primaryKey(),
+  postId: integer("post_id").notNull().references(() => posts.id, { onDelete: "cascade" }),
+  userId: integer("user_id").notNull().references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 export const friendGroupMembers = pgTable("friend_group_members", {
   id: serial("id").primaryKey(),
   groupId: integer("group_id").notNull().references(() => friendGroups.id),
@@ -123,11 +138,12 @@ export const relationshipsRelations = relations(relationships, ({ one }) => ({
   }),
 }));
 
-export const postsRelations = relations(posts, ({ one }) => ({
+export const postsRelations = relations(posts, ({ one, many }) => ({
   author: one(users, {
     fields: [posts.authorId],
     references: [users.id],
   }),
+  comments: many(comments),
 }));
 
 export const messagesRelations = relations(messages, ({ one }) => ({
@@ -154,6 +170,28 @@ export const friendGroupMembersRelations = relations(friendGroupMembers, ({ one 
   }),
   user: one(users, {
     fields: [friendGroupMembers.userId],
+    references: [users.id],
+  }),
+}));
+
+export const commentsRelations = relations(comments, ({ one }) => ({
+  post: one(posts, {
+    fields: [comments.postId],
+    references: [posts.id],
+  }),
+  author: one(users, {
+    fields: [comments.authorId],
+    references: [users.id],
+  }),
+}));
+
+export const postLikesRelations = relations(postLikes, ({ one }) => ({
+  post: one(posts, {
+    fields: [postLikes.postId],
+    references: [posts.id],
+  }),
+  user: one(users, {
+    fields: [postLikes.userId],
     references: [users.id],
   }),
 }));
@@ -229,6 +267,11 @@ export const insertPostSchema = createInsertSchema(posts).pick({
   audience: true,
 });
 
+export const insertCommentSchema = createInsertSchema(comments).pick({
+  postId: true,
+  content: true,
+});
+
 export const insertMessageSchema = createInsertSchema(messages).pick({
   toUserId: true,
   content: true,
@@ -253,8 +296,10 @@ export type SendVerification = z.infer<typeof sendVerificationSchema>;
 export type User = typeof users.$inferSelect;
 export type Relationship = typeof relationships.$inferSelect;
 export type Post = typeof posts.$inferSelect;
+export type Comment = typeof comments.$inferSelect;
 export type Message = typeof messages.$inferSelect;
 export type FriendGroup = typeof friendGroups.$inferSelect;
 export type Notification = typeof notifications.$inferSelect;
 export type LoginData = z.infer<typeof loginSchema>;
 export type DevRegisterData = z.infer<typeof devRegisterSchema>;
+export type InsertComment = z.infer<typeof insertCommentSchema>;

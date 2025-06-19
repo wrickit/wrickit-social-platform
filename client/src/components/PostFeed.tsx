@@ -1,14 +1,19 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { ThumbsUp, MessageCircle } from "lucide-react";
+import { ThumbsUp, MessageCircle, Send } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 export default function PostFeed() {
   const queryClient = useQueryClient();
+  const { toast } = useToast();
   const [showAll, setShowAll] = useState(false);
+  const [showComments, setShowComments] = useState<Record<number, boolean>>({});
+  const [commentTexts, setCommentTexts] = useState<Record<number, string>>({});
   
   const { data: allPosts = [], isLoading } = useQuery({
     queryKey: ["/api/posts"],
@@ -20,12 +25,42 @@ export default function PostFeed() {
 
   const likePostMutation = useMutation({
     mutationFn: async (postId: number) => {
-      await apiRequest("POST", `/api/posts/${postId}/like`);
+      const response = await apiRequest("POST", `/api/posts/${postId}/like`);
+      return response;
     },
-    onSuccess: () => {
+    onSuccess: (data, postId) => {
       queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
+      toast({
+        title: data.isLiked ? "Post Liked" : "Post Unliked",
+        description: data.isLiked ? "You liked this post!" : "You unliked this post!",
+      });
     },
   });
+
+  const createCommentMutation = useMutation({
+    mutationFn: async ({ postId, content }: { postId: number; content: string }) => {
+      await apiRequest("POST", `/api/posts/${postId}/comments`, { content });
+    },
+    onSuccess: (_, { postId }) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
+      setCommentTexts(prev => ({ ...prev, [postId]: "" }));
+      toast({
+        title: "Comment Added",
+        description: "Your comment has been posted!",
+      });
+    },
+  });
+
+  const toggleComments = (postId: number) => {
+    setShowComments(prev => ({ ...prev, [postId]: !prev[postId] }));
+  };
+
+  const handleCommentSubmit = (postId: number) => {
+    const content = commentTexts[postId]?.trim();
+    if (!content) return;
+    
+    createCommentMutation.mutate({ postId, content });
+  };
 
   if (isLoading) {
     return (
@@ -95,20 +130,65 @@ export default function PostFeed() {
                 size="sm"
                 onClick={() => likePostMutation.mutate(post.id)}
                 disabled={likePostMutation.isPending}
-                className="hover:text-purple-600 p-0 h-auto"
+                className={`p-0 h-auto ${post.isLikedByUser ? 'text-purple-600' : 'hover:text-purple-600'}`}
               >
-                <ThumbsUp className="w-4 h-4 mr-1" />
-                <span>{post.likes || 0}</span>
+                <ThumbsUp className={`w-4 h-4 mr-1 ${post.isLikedByUser ? 'fill-current' : ''}`} />
+                <span>{post.likesCount || 0}</span>
               </Button>
               <Button
                 variant="ghost"
                 size="sm"
+                onClick={() => toggleComments(post.id)}
                 className="hover:text-purple-600 p-0 h-auto"
               >
                 <MessageCircle className="w-4 h-4 mr-1" />
-                <span>Comment</span>
+                <span>{post.comments?.length || 0} Comments</span>
               </Button>
             </div>
+
+            {/* Comments Section */}
+            {showComments[post.id] && (
+              <div className="mt-4 space-y-3 border-t pt-4">
+                {/* Existing Comments */}
+                {post.comments && post.comments.length > 0 ? (
+                  <div className="space-y-2">
+                    {post.comments.map((comment: any) => (
+                      <div key={comment.id} className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
+                        <div className="flex items-center space-x-2 mb-1">
+                          <span className="font-medium text-sm text-gray-900 dark:text-gray-100">
+                            {comment.author.name}
+                          </span>
+                          <span className="text-xs text-gray-500">
+                            {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true })}
+                          </span>
+                        </div>
+                        <p className="text-sm text-gray-700 dark:text-gray-300">{comment.content}</p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-500 italic">No comments yet. Be the first to comment!</p>
+                )}
+
+                {/* Add Comment Form */}
+                <div className="flex space-x-2">
+                  <Textarea
+                    placeholder="Write a comment..."
+                    value={commentTexts[post.id] || ""}
+                    onChange={(e) => setCommentTexts(prev => ({ ...prev, [post.id]: e.target.value }))}
+                    className="flex-1 min-h-[80px] resize-none"
+                  />
+                  <Button
+                    onClick={() => handleCommentSubmit(post.id)}
+                    disabled={createCommentMutation.isPending || !commentTexts[post.id]?.trim()}
+                    size="sm"
+                    className="self-end"
+                  >
+                    <Send className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       ))}

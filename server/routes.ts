@@ -346,7 +346,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/posts", requireAuth, async (req: any, res: Response) => {
     try {
       const currentUser = await storage.getUser(req.session.userId);
-      const posts = await storage.getPosts(20, currentUser?.class);
+      const posts = await storage.getPosts(20, currentUser?.class, req.session.userId);
       res.json(posts);
     } catch (error) {
       console.error("Get posts error:", error);
@@ -354,14 +354,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/posts/:id/like", requireAuth, async (req: Request, res: Response) => {
+  app.post("/api/posts/:id/like", requireAuth, async (req: any, res: Response) => {
     try {
       const postId = parseInt(req.params.id);
-      await storage.likePost(postId);
-      res.json({ message: "Post liked" });
+      const result = await storage.likePost(postId, req.session.userId);
+      res.json(result);
     } catch (error) {
       console.error("Like post error:", error);
       res.status(500).json({ message: "Failed to like post" });
+    }
+  });
+
+  app.post("/api/posts/:id/comments", requireAuth, async (req: any, res: Response) => {
+    try {
+      const postId = parseInt(req.params.id);
+      const { content } = req.body;
+      
+      if (!content?.trim()) {
+        return res.status(400).json({ message: "Comment content is required" });
+      }
+      
+      const comment = await storage.createComment(postId, req.session.userId, content.trim());
+      res.json(comment);
+    } catch (error) {
+      console.error("Create comment error:", error);
+      res.status(500).json({ message: "Failed to create comment" });
+    }
+  });
+
+  app.get("/api/posts/:id/comments", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const postId = parseInt(req.params.id);
+      const comments = await storage.getCommentsByPostId(postId);
+      res.json(comments);
+    } catch (error) {
+      console.error("Get comments error:", error);
+      res.status(500).json({ message: "Failed to get comments" });
     }
   });
 

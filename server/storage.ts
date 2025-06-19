@@ -2,6 +2,8 @@ import {
   users,
   relationships,
   posts,
+  comments,
+  postLikes,
   messages,
   friendGroups,
   friendGroupMembers,
@@ -15,12 +17,13 @@ import {
   type ChangePassword,
   type Relationship,
   type Post,
+  type Comment,
   type Message,
   type FriendGroup,
   type Notification,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, or, desc, sql, inArray, count, gt, lt } from "drizzle-orm";
+import { eq, and, or, desc, sql, inArray, count, gt, lt, asc } from "drizzle-orm";
 import bcrypt from "bcrypt";
 
 export interface IStorage {
@@ -46,8 +49,13 @@ export interface IStorage {
   
   // Post operations
   createPost(authorId: number, content: string, audience: string): Promise<Post>;
-  getPosts(limit?: number, userClass?: string): Promise<(Post & { author: User })[]>;
-  likePost(postId: number): Promise<void>;
+  getPosts(limit?: number, userClass?: string): Promise<(Post & { author: User; comments: (Comment & { author: User })[]; likesCount: number; isLikedByUser?: boolean })[]>;
+  likePost(postId: number, userId: number): Promise<{ success: boolean; isLiked: boolean }>;
+  unlikePost(postId: number, userId: number): Promise<void>;
+  
+  // Comment operations
+  createComment(postId: number, authorId: number, content: string): Promise<Comment>;
+  getCommentsByPostId(postId: number): Promise<(Comment & { author: User })[]>;
   
   // Message operations
   createMessage(fromUserId: number, toUserId: number, content: string): Promise<Message>;
@@ -278,7 +286,7 @@ export class DatabaseStorage implements IStorage {
     return post;
   }
 
-  async getPosts(limit = 20, userClass?: string): Promise<(Post & { author: User })[]> {
+  async getPosts(limit = 20, userClass?: string, currentUserId?: number): Promise<(Post & { author: User; comments: (Comment & { author: User })[]; likesCount: number; isLikedByUser?: boolean })[]> {
     let query = db
       .select()
       .from(posts)
@@ -301,17 +309,74 @@ export class DatabaseStorage implements IStorage {
     
     const result = await query;
     
-    return result.map(row => ({
+    // Get posts with authors
+    const postsWithAuthors = result.map(row => ({
       ...row.posts,
       author: row.users!,
     }));
+
+    // Get comments and likes for each post
+    const postsWithCommentsAndLikes = await Promise.all(
+      postsWithAuthors.map(async (post) => {
+        const comments = await this.getCommentsByPostId(post.id);
+        
+        // Get likes count
+        const likesCountResult = await db
+          .select({ count: count() })
+          .from(postLikes)
+          .where(eq(postLikes.postId, post.id));
+        const likesCount = likesCountResult[0]?.count || 0;
+        
+        // Check if current user liked this post
+        let isLikedByUser = false;
+        if (currentUserId) {
+          const userLike = await db
+            .select()
+            .from(postLikes)
+            .where(and(eq(postLikes.postId, post.id), eq(postLikes.userId, currentUserId)))
+            .limit(1);
+          isLikedByUser = userLike.length > 0;
+        }
+        
+        return {
+          ...post,
+          comments,
+          likesCount,
+          isLikedByUser,
+        };
+      })
+    );
+
+    return postsWithCommentsAndLikes;
   }
 
-  async likePost(postId: number): Promise<void> {
+  async likePost(postId: number, userId: number): Promise<{ success: boolean; isLiked: boolean }> {
+    // Check if user already liked this post
+    const existingLike = await db
+      .select()
+      .from(postLikes)
+      .where(and(eq(postLikes.postId, postId), eq(postLikes.userId, userId)))
+      .limit(1);
+    
+    if (existingLike.length > 0) {
+      // Unlike the post
+      await db
+        .delete(postLikes)
+        .where(and(eq(postLikes.postId, postId), eq(postLikes.userId, userId)));
+      return { success: true, isLiked: false };
+    } else {
+      // Like the post
+      await db
+        .insert(postLikes)
+        .values({ postId, userId });
+      return { success: true, isLiked: true };
+    }
+  }
+
+  async unlikePost(postId: number, userId: number): Promise<void> {
     await db
-      .update(posts)
-      .set({ likes: sql`${posts.likes} + 1` })
-      .where(eq(posts.id, postId));
+      .delete(postLikes)
+      .where(and(eq(postLikes.postId, postId), eq(postLikes.userId, userId)));
   }
 
   async createMessage(fromUserId: number, toUserId: number, content: string): Promise<Message> {
@@ -668,6 +733,28 @@ export class DatabaseStorage implements IStorage {
     await db
       .delete(emailVerifications)
       .where(lt(emailVerifications.expiresAt, new Date()));
+  }
+
+  async createComment(postId: number, authorId: number, content: string): Promise<Comment> {
+    const [comment] = await db
+      .insert(comments)
+      .values({ postId, authorId, content })
+      .returning();
+    return comment;
+  }
+
+  async getCommentsByPostId(postId: number): Promise<(Comment & { author: User })[]> {
+    const result = await db
+      .select()
+      .from(comments)
+      .leftJoin(users, eq(comments.authorId, users.id))
+      .where(eq(comments.postId, postId))
+      .orderBy(asc(comments.createdAt));
+    
+    return result.map(row => ({
+      ...row.comments,
+      author: row.users!,
+    }));
   }
 }
 
