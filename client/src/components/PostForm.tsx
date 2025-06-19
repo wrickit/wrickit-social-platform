@@ -6,14 +6,13 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
+
 
 export default function PostForm() {
   const [content, setContent] = useState("");
   const [audience, setAudience] = useState("class");
   
   const queryClient = useQueryClient();
-  const { toast } = useToast();
 
   const createPostMutation = useMutation({
     mutationFn: async (data: { content: string; audience: string }) => {
@@ -21,18 +20,10 @@ export default function PostForm() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
-      toast({
-        title: "Post Created",
-        description: "Your post has been shared successfully!",
-      });
       setContent("");
     },
     onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to create post",
-        variant: "destructive",
-      });
+      console.error("Failed to create post:", error);
     },
   });
 

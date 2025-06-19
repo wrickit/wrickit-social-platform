@@ -26,16 +26,8 @@ export default function DevPage() {
     e.preventDefault();
     if (password === "callofdutywarzonewikipediaspotify") {
       setIsAuthenticated(true);
-      toast({
-        title: "Access granted",
-        description: "Welcome to the developer panel.",
-      });
     } else {
-      toast({
-        title: "Access denied",
-        description: "Invalid password.",
-        variant: "destructive",
-      });
+      // Access denied - do nothing
     }
   };
 

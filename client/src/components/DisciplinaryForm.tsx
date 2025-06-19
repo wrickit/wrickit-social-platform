@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
+
 import { AlertTriangle } from "lucide-react";
 
 interface DisciplinaryFormProps {
@@ -22,7 +22,6 @@ export default function DisciplinaryForm({ reportedUserId, reportedUserName, onC
   const [isAnonymous, setIsAnonymous] = useState(true);
   
   const queryClient = useQueryClient();
-  const { toast } = useToast();
 
   const submitReportMutation = useMutation({
     mutationFn: async (data: { reportedUserId: number; reason: string; description: string; isAnonymous: boolean }) => {
@@ -30,18 +29,10 @@ export default function DisciplinaryForm({ reportedUserId, reportedUserName, onC
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/disciplinary-actions"] });
-      toast({
-        title: "Report Submitted",
-        description: "Your disciplinary report has been submitted for peer review.",
-      });
       onClose();
     },
     onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to submit report",
-        variant: "destructive",
-      });
+      console.error("Failed to submit report:", error);
     },
   });
 
@@ -49,11 +40,6 @@ export default function DisciplinaryForm({ reportedUserId, reportedUserName, onC
     e.preventDefault();
     
     if (!reason || !description.trim()) {
-      toast({
-        title: "Missing Information",
-        description: "Please select a reason and provide a description",
-        variant: "destructive",
-      });
       return;
     }
 

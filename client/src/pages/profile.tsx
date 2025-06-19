@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Edit, Save, X, Camera } from "lucide-react";
 import { useState } from "react";
 import { apiRequest } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
+
 import { useLocation } from "wouter";
 
 export default function Profile() {
@@ -21,7 +21,6 @@ export default function Profile() {
   const [editedBio, setEditedBio] = useState("");
   const [editedName, setEditedName] = useState("");
   const queryClient = useQueryClient();
-  const { toast } = useToast();
 
   const { data: profileUser, isLoading } = useQuery({
     queryKey: ["/api/users", userId],
@@ -39,18 +38,10 @@ export default function Profile() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/users", userId] });
-      toast({
-        title: "Profile Updated",
-        description: "Your profile has been updated successfully!",
-      });
       setIsEditing(false);
     },
     onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to update profile",
-        variant: "destructive",
-      });
+      console.error("Failed to update profile:", error);
     },
   });
 

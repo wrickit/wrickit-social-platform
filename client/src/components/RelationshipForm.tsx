@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
+
 
 export default function RelationshipForm() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -14,7 +14,6 @@ export default function RelationshipForm() {
   const [relationshipType, setRelationshipType] = useState("");
   
   const queryClient = useQueryClient();
-  const { toast } = useToast();
 
   const addRelationshipMutation = useMutation({
     mutationFn: async (data: { toUserId: number; type: string }) => {
@@ -23,20 +22,12 @@ export default function RelationshipForm() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/relationships"] });
       queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
-      toast({
-        title: "Relationship Added",
-        description: "The relationship has been added successfully!",
-      });
       setSearchTerm("");
       setSelectedUserId(null);
       setRelationshipType("");
     },
     onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to add relationship",
-        variant: "destructive",
-      });
+      console.error("Failed to add relationship:", error);
     },
   });
 
@@ -44,11 +35,6 @@ export default function RelationshipForm() {
     e.preventDefault();
     
     if (!selectedUserId || !relationshipType) {
-      toast({
-        title: "Missing Information",
-        description: "Please select a classmate and relationship type",
-        variant: "destructive",
-      });
       return;
     }
 
@@ -61,11 +47,6 @@ export default function RelationshipForm() {
   // Search for user by name and get their actual user ID
   const handleNameSearch = async () => {
     if (!searchTerm.trim()) {
-      toast({
-        title: "Search Error",
-        description: "Please enter a name to search",
-        variant: "destructive",
-      });
       return;
     }
 
@@ -76,33 +57,13 @@ export default function RelationshipForm() {
         if (users && users.length > 0) {
           const user = users[0]; // Take the first match
           setSelectedUserId(user.id);
-          toast({
-            title: "User Found",
-            description: `Found ${user.name} from Class ${user.class}`,
-          });
         } else {
-          toast({
-            title: "User Not Found",
-            description: "No user found with that name",
-            variant: "destructive",
-          });
           setSelectedUserId(null);
         }
       } else {
-        const errorData = await response.json();
-        toast({
-          title: "Search Error",
-          description: errorData.message || "Failed to search for user",
-          variant: "destructive",
-        });
         setSelectedUserId(null);
       }
     } catch (error) {
-      toast({
-        title: "Search Error",
-        description: "Failed to search for user",
-        variant: "destructive",
-      });
       setSelectedUserId(null);
     }
   };

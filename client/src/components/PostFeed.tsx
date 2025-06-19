@@ -6,7 +6,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { ThumbsUp, MessageCircle, Send } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useState } from "react";
-import { useToast } from "@/hooks/use-toast";
+
 import { Link } from "wouter";
 
 interface PostFeedProps {
@@ -16,7 +16,6 @@ interface PostFeedProps {
 
 export default function PostFeed({ showAll = false, maxPosts = 5 }: PostFeedProps) {
   const queryClient = useQueryClient();
-  const { toast } = useToast();
   const [showAllLocal, setShowAllLocal] = useState(showAll);
   const [showComments, setShowComments] = useState<Record<number, boolean>>({});
   const [commentTexts, setCommentTexts] = useState<Record<number, string>>({});
@@ -36,10 +35,6 @@ export default function PostFeed({ showAll = false, maxPosts = 5 }: PostFeedProp
     },
     onSuccess: (data, postId) => {
       queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
-      toast({
-        title: data.isLiked ? "Post Liked" : "Post Unliked",
-        description: data.isLiked ? "You liked this post!" : "You unliked this post!",
-      });
     },
   });
 
@@ -50,10 +45,6 @@ export default function PostFeed({ showAll = false, maxPosts = 5 }: PostFeedProp
     onSuccess: (_, { postId }) => {
       queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
       setCommentTexts(prev => ({ ...prev, [postId]: "" }));
-      toast({
-        title: "Comment Added",
-        description: "Your comment has been posted!",
-      });
     },
   });
 

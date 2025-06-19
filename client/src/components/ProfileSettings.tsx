@@ -53,19 +53,11 @@ export default function ProfileSettings({ user }: ProfileSettingsProps) {
       return response.json();
     },
     onSuccess: () => {
-      toast({
-        title: "Profile updated",
-        description: "Your profile has been updated successfully.",
-      });
       queryClient.invalidateQueries({ queryKey: ["/api/user"] });
       setIsOpen(false);
     },
     onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to update profile",
-        variant: "destructive",
-      });
+      console.error("Failed to update profile:", error);
     },
   });
 
@@ -75,19 +67,11 @@ export default function ProfileSettings({ user }: ProfileSettingsProps) {
       return response.json();
     },
     onSuccess: () => {
-      toast({
-        title: "Password changed",
-        description: "Your password has been changed successfully.",
-      });
       setPasswordData({ currentPassword: "", newPassword: "", confirmPassword: "" });
       setShowPasswordDialog(false);
     },
     onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to change password",
-        variant: "destructive",
-      });
+      console.error("Failed to change password:", error);
     },
   });
 
@@ -97,18 +81,10 @@ export default function ProfileSettings({ user }: ProfileSettingsProps) {
       return response.json();
     },
     onSuccess: () => {
-      toast({
-        title: "Account deleted",
-        description: "Your account has been deleted successfully.",
-      });
       logout();
     },
     onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to delete account",
-        variant: "destructive",
-      });
+      console.error("Failed to delete account:", error);
     },
   });
 
@@ -118,20 +94,12 @@ export default function ProfileSettings({ user }: ProfileSettingsProps) {
       return response.json();
     },
     onSuccess: () => {
-      toast({
-        title: "Security question updated",
-        description: "Your security question has been set successfully.",
-      });
       setShowSecurityDialog(false);
       setSecurityData({ ...securityData, securityAnswer: "" });
       queryClient.invalidateQueries({ queryKey: ["/api/user"] });
     },
     onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to update security question",
-        variant: "destructive",
-      });
+      console.error("Failed to update security question:", error);
     },
   });
 
@@ -143,19 +111,9 @@ export default function ProfileSettings({ user }: ProfileSettingsProps) {
   const handlePasswordChange = (e: React.FormEvent) => {
     e.preventDefault();
     if (passwordData.newPassword !== passwordData.confirmPassword) {
-      toast({
-        title: "Error",
-        description: "New passwords do not match",
-        variant: "destructive",
-      });
       return;
     }
     if (passwordData.newPassword.length < 6) {
-      toast({
-        title: "Error",
-        description: "Password must be at least 6 characters long",
-        variant: "destructive",
-      });
       return;
     }
     changePasswordMutation.mutate({
@@ -167,11 +125,6 @@ export default function ProfileSettings({ user }: ProfileSettingsProps) {
   const handleSecuritySubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!securityData.securityQuestion || !securityData.securityAnswer) {
-      toast({
-        title: "Error",
-        description: "Please fill in both fields",
-        variant: "destructive",
-      });
       return;
     }
     updateSecurityMutation.mutate(securityData);

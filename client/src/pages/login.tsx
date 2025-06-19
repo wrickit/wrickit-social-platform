@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/useAuth";
-import { useToast } from "@/hooks/use-toast";
+
 import { useLocation } from "wouter";
 import { Mail, AlertCircle } from "lucide-react";
 
@@ -14,7 +14,6 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   
   const { login } = useAuth();
-  const { toast } = useToast();
   const [, setLocation] = useLocation();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -23,17 +22,9 @@ export default function Login() {
 
     try {
       await login(name, password);
-      toast({
-        title: "Welcome back!",
-        description: "You've successfully logged in to Wrickit.",
-      });
       setLocation("/");
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Something went wrong",
-        variant: "destructive",
-      });
+      console.error("Login failed:", error);
     } finally {
       setLoading(false);
     }
