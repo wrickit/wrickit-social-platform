@@ -9,7 +9,7 @@ import { useLocation } from "wouter";
 import { Mail, AlertCircle } from "lucide-react";
 
 export default function Login() {
-  const [admissionNumber, setAdmissionNumber] = useState("");
+  const [name, setName] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   
@@ -22,7 +22,7 @@ export default function Login() {
     setLoading(true);
 
     try {
-      await login(admissionNumber, password);
+      await login(name, password);
       toast({
         title: "Welcome back!",
         description: "You've successfully logged in to Wrickit.",
@@ -71,13 +71,13 @@ export default function Login() {
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <Label htmlFor="admissionNumber">Admission Number</Label>
+                <Label htmlFor="name">Name</Label>
                 <Input
-                  id="admissionNumber"
+                  id="name"
                   type="text"
-                  placeholder="Enter your admission number"
-                  value={admissionNumber}
-                  onChange={(e) => setAdmissionNumber(e.target.value)}
+                  placeholder="Enter your name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
                   required
                 />
               </div>

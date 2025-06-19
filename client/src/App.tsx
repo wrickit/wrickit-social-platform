@@ -11,6 +11,7 @@ import Login from "@/pages/login";
 import Profile from "@/pages/profile";
 import Messages from "@/pages/messages";
 import Disciplinary from "@/pages/disciplinary";
+import DevPage from "@/pages/dev";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -41,6 +42,7 @@ function Router() {
         <>
           <Route path="/" component={Landing} />
           <Route path="/login" component={Login} />
+          <Route path="/dev" component={DevPage} />
         </>
       )}
       <Route component={NotFound} />

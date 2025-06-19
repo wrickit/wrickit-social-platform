@@ -18,6 +18,8 @@ interface User {
   email: string;
   bio?: string;
   profileImageUrl?: string;
+  securityQuestion?: string;
+  securityAnswer?: string;
 }
 
 interface ProfileSettingsProps {
@@ -33,6 +35,10 @@ export default function ProfileSettings({ user }: ProfileSettingsProps) {
     bio: user.bio || "",
     profileImageUrl: user.profileImageUrl || "",
   });
+  const [securityData, setSecurityData] = useState({
+    securityQuestion: user.securityQuestion || "",
+    securityAnswer: "",
+  });
   const [passwordData, setPasswordData] = useState({
     currentPassword: "",
     newPassword: "",
@@ -40,6 +46,7 @@ export default function ProfileSettings({ user }: ProfileSettingsProps) {
   });
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showSecurityDialog, setShowSecurityDialog] = useState(false);
 
   const { toast } = useToast();
   const queryClient = useQueryClient();

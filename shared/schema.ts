@@ -16,6 +16,8 @@ export const users = pgTable("users", {
   division: varchar("division", { length: 5 }).notNull(), // e.g., "A", "B"
   profileImageUrl: text("profile_image_url"),
   bio: text("bio"),
+  securityQuestion: text("security_question"),
+  securityAnswer: text("security_answer"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -183,8 +185,14 @@ export const insertUserSchema = createInsertSchema(users).pick({
 });
 
 export const loginSchema = z.object({
-  admissionNumber: z.string().min(1),
+  name: z.string().min(1),
   password: z.string().min(1),
+});
+
+export const devRegisterSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  class: z.string().min(1, "Class is required"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
 export const updateUserSchema = z.object({
@@ -193,6 +201,13 @@ export const updateUserSchema = z.object({
   email: z.string().email().optional(),
   bio: z.string().optional(),
   profileImageUrl: z.string().optional(),
+  securityQuestion: z.string().optional(),
+  securityAnswer: z.string().optional(),
+});
+
+export const securityQuestionSchema = z.object({
+  securityQuestion: z.string().min(1, "Security question is required"),
+  securityAnswer: z.string().min(1, "Security answer is required"),
 });
 
 export const changePasswordSchema = z.object({
@@ -242,3 +257,4 @@ export type Message = typeof messages.$inferSelect;
 export type FriendGroup = typeof friendGroups.$inferSelect;
 export type Notification = typeof notifications.$inferSelect;
 export type LoginData = z.infer<typeof loginSchema>;
+export type DevRegisterData = z.infer<typeof devRegisterSchema>;

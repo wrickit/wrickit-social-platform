@@ -13,6 +13,7 @@ import {
   searchUserSchema,
   emailVerificationSchema,
   sendVerificationSchema,
+  devRegisterSchema,
 } from "@shared/schema";
 import { sendEmail, generateVerificationCode, createVerificationEmail } from "./emailService";
 import session from "express-session";
@@ -60,17 +61,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
+  // Dev registration endpoint
+  app.post("/api/dev-register", async (req: Request, res: Response) => {
+    try {
+      const validatedData = devRegisterSchema.parse(req.body);
+      
+      // Check if user already exists
+      const existingUser = await storage.getUserByName(validatedData.name);
+      if (existingUser) {
+        return res.status(400).json({ message: "User already exists with this name" });
+      }
+      
+      const user = await storage.createDevUser(
+        validatedData.name,
+        validatedData.class,
+        validatedData.password
+      );
+      
+      res.json({ 
+        message: "Account created successfully",
+        user: { ...user, password: undefined } 
+      });
+    } catch (error) {
+      if (error instanceof ValidationError) {
+        return res.status(400).json({ message: error.message });
+      }
+      console.error("Dev registration error:", error);
+      res.status(500).json({ message: "Failed to create account" });
+    }
+  });
+
   app.post("/api/login", async (req: Request, res: Response) => {
     try {
       const validatedData = loginSchema.parse(req.body);
       
-      const user = await storage.authenticateUser(
-        validatedData.admissionNumber,
+      const user = await storage.authenticateUserByName(
+        validatedData.name,
         validatedData.password
       );
       
       if (!user) {
-        return res.status(401).json({ message: "Invalid admission number or password" });
+        return res.status(401).json({ message: "Invalid name or password" });
       }
       
       (req.session as any).userId = user.id;

@@ -12,9 +12,9 @@ export function useAuth() {
     staleTime: Infinity,
   });
 
-  const login = async (admissionNumber: string, password: string) => {
+  const login = async (name: string, password: string) => {
     const response = await apiRequest("POST", "/api/login", {
-      admissionNumber,
+      name,
       password,
     });
     const data = await response.json();

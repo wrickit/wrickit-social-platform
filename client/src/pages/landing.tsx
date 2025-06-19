@@ -21,6 +21,14 @@ export default function Landing() {
               >
                 Login Now
               </Button>
+              <Button
+                size="lg"
+                variant="outline"
+                className="bg-white text-purple-600 border-2 border-white hover:bg-purple-50 font-bold px-8 py-3 text-lg"
+                onClick={() => setLocation("/dev")}
+              >
+                Dev Page
+              </Button>
             </div>
           </div>
         </div>
@@ -141,7 +149,7 @@ export default function Landing() {
       <footer className="bg-gray-100 py-8 mt-12">
         <div className="max-w-6xl mx-auto px-4 text-center">
           <p className="text-fb-text-light">
-            © 2024 Wrickit - Connecting 9th Graders, One Friendship at a Time
+            © 2024 Wrickit - Connecting Students, One Friendship at a Time
           </p>
         </div>
       </footer>
