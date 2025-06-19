@@ -17,6 +17,8 @@ export default function RightSidebar({
 }: RightSidebarProps) {
   // Filter relationships by type
   const bestFriends = relationships.filter(r => r.type === 'best_friend').slice(0, 3);
+  const friends = relationships.filter(r => r.type === 'friend').slice(0, 3);
+  const acquaintances = relationships.filter(r => r.type === 'acquaintance').slice(0, 2);
   const crushes = relationships.filter(r => r.type === 'crush');
   
   // Find friend group notifications

@@ -11,9 +11,11 @@ import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 
 interface HamburgerMenuProps {
   user: any;
+  relationships?: any[];
+  friendGroups?: any[];
 }
 
-export default function HamburgerMenu({ user }: HamburgerMenuProps) {
+export default function HamburgerMenu({ user, relationships = [], friendGroups = [] }: HamburgerMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [showProfileSettings, setShowProfileSettings] = useState(false);
   const { logout } = useAuth();

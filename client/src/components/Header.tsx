@@ -79,7 +79,7 @@ export default function Header({ user, notifications }: HeaderProps) {
               <span className="hidden sm:inline">{user.name || user.firstName}</span>
             </div>
             
-            <HamburgerMenu user={user} />
+            <HamburgerMenu user={user} relationships={user.relationships || []} friendGroups={user.friendGroups || []} />
           </div>
         </div>
         </div>

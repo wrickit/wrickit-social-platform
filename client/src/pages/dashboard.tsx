@@ -50,7 +50,10 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen app-gray-bg">
-      <Header user={user} notifications={notifications} />
+      <Header 
+        user={{...user, relationships, friendGroups}} 
+        notifications={notifications} 
+      />
       
       <div className="w-full">
         <div className="max-w-7xl mx-auto px-2 sm:px-4 py-4 sm:py-6">
