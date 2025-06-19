@@ -22,21 +22,7 @@ export function useAuth() {
     return data.user;
   };
 
-  const register = async (userData: {
-    admissionNumber: string;
-    username: string;
-    password: string;
-    firstName: string;
-    lastName: string;
-    email: string;
-    class: string;
-    division: string;
-  }) => {
-    const response = await apiRequest("POST", "/api/register", userData);
-    const data = await response.json();
-    queryClient.setQueryData(["/api/user"], data.user);
-    return data.user;
-  };
+
 
   const logout = async () => {
     await apiRequest("POST", "/api/logout");
@@ -49,7 +35,6 @@ export function useAuth() {
     isLoading,
     isAuthenticated: !!user,
     login,
-    register,
     logout,
   };
 }

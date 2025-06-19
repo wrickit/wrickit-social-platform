@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLocation } from "wouter";
-import { Heart, Users, MessageCircle, Bell } from "lucide-react";
+import { Heart, Users, MessageCircle, Bell, Mail, IdCard, CheckCircle } from "lucide-react";
 
 export default function Landing() {
   const [, setLocation] = useLocation();
@@ -21,14 +21,6 @@ export default function Landing() {
               >
                 Login Now
               </Button>
-              <Button
-                variant="outline"
-                size="lg"
-                className="bg-white text-purple-600 border-2 border-white hover:bg-purple-50 font-bold px-8 py-3 text-lg"
-                onClick={() => setLocation("/register")}
-              >
-                Sign Up
-              </Button>
             </div>
           </div>
         </div>
@@ -43,13 +35,20 @@ export default function Landing() {
           <p className="text-xl app-text-light mb-8">
             Build friendships, discover mutual crushes, and stay connected with your class!
           </p>
-          <Button
-            size="lg"
-            className="discord-purple-bg hover:bg-purple-700 text-white"
-            onClick={() => setLocation("/register")}
-          >
-            Join Wrickit Today
-          </Button>
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 mb-8 max-w-2xl mx-auto">
+            <h3 className="text-lg font-semibold text-yellow-800 mb-2">
+              New Account Creation Process
+            </h3>
+            <p className="text-yellow-700 mb-4">
+              To maintain security and prevent fake accounts, we now require ID verification. 
+              Please email a clear photo of your student ID card to get started.
+            </p>
+            <div className="bg-white rounded-md p-3 border">
+              <p className="text-gray-600 text-sm font-mono">
+                Email: [Contact admin for email address]
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* Features */}
@@ -105,33 +104,33 @@ export default function Landing() {
 
         {/* How it Works */}
         <section className="text-center">
-          <h3 className="text-2xl font-bold text-fb-text mb-8">How Wrickit Works</h3>
+          <h3 className="text-2xl font-bold text-fb-text mb-8">How to Join Wrickit</h3>
           <div className="grid md:grid-cols-3 gap-8">
             <div>
               <div className="bg-blue-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl font-bold text-blue-600">1</span>
+                <Mail className="w-8 h-8 text-blue-600" />
               </div>
-              <h4 className="font-semibold text-fb-text mb-2">Sign Up</h4>
+              <h4 className="font-semibold text-fb-text mb-2">Email Your ID</h4>
               <p className="text-fb-text-light">
-                Use your admission number to create your account and join your grade.
+                Send a clear photo of your student ID card to our verification email address.
               </p>
             </div>
             <div>
               <div className="bg-blue-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl font-bold text-blue-600">2</span>
+                <IdCard className="w-8 h-8 text-blue-600" />
               </div>
-              <h4 className="font-semibold text-fb-text mb-2">Build Relationships</h4>
+              <h4 className="font-semibold text-fb-text mb-2">ID Verification</h4>
               <p className="text-fb-text-light">
-                Add your classmates as friends, best friends, acquaintances, or crushes.
+                Our team will review your ID card to verify your identity and grade level.
               </p>
             </div>
             <div>
               <div className="bg-blue-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl font-bold text-blue-600">3</span>
+                <CheckCircle className="w-8 h-8 text-blue-600" />
               </div>
-              <h4 className="font-semibold text-fb-text mb-2">Connect & Share</h4>
+              <h4 className="font-semibold text-fb-text mb-2">Account Created</h4>
               <p className="text-fb-text-light">
-                Chat with friends, share posts, and get notified about mutual connections.
+                Once verified, we'll create your account and send you login credentials.
               </p>
             </div>
           </div>

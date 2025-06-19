@@ -41,70 +41,23 @@ const requireAuth = (req: any, res: Response, next: any) => {
 export async function registerRoutes(app: Express): Promise<Server> {
   app.use(sessionConfig);
 
-  // Email verification routes
+  // Registration disabled - users must be created manually after ID verification
+  app.post("/api/register", async (req: Request, res: Response) => {
+    res.status(403).json({ 
+      message: "Self-registration is disabled. Please email your student ID card for account creation." 
+    });
+  });
+
   app.post("/api/send-verification", async (req: Request, res: Response) => {
-    try {
-      const { email } = sendVerificationSchema.parse(req.body);
-      
-      const code = generateVerificationCode();
-      await storage.createEmailVerification(email, code);
-      
-      const emailSent = await sendEmail({
-        to: email,
-        subject: "Wrickit Email Verification",
-        html: createVerificationEmail(code),
-      });
-      
-      if (emailSent) {
-        res.json({ message: "Verification code sent to email" });
-      } else {
-        res.status(500).json({ message: "Failed to send verification email" });
-      }
-    } catch (error) {
-      console.error("Send verification error:", error);
-      res.status(500).json({ message: "Failed to send verification code" });
-    }
+    res.status(403).json({ 
+      message: "Email verification is no longer available. Please contact admin for account creation." 
+    });
   });
 
   app.post("/api/verify-email", async (req: Request, res: Response) => {
-    try {
-      const { email, code } = emailVerificationSchema.parse(req.body);
-      
-      const isValid = await storage.verifyEmailCode(email, code);
-      
-      if (isValid) {
-        res.json({ message: "Email verified successfully" });
-      } else {
-        res.status(400).json({ message: "Invalid or expired verification code" });
-      }
-    } catch (error) {
-      console.error("Email verification error:", error);
-      res.status(500).json({ message: "Failed to verify email" });
-    }
-  });
-
-  // Auth routes
-  app.post("/api/register", async (req: Request, res: Response) => {
-    try {
-      const validatedData = insertUserSchema.parse(req.body);
-      
-      // Check if user already exists
-      const existingUser = await storage.getUserByAdmissionNumber(validatedData.admissionNumber);
-      if (existingUser) {
-        return res.status(400).json({ message: "User already exists with this admission number" });
-      }
-      
-      const user = await storage.createUser(validatedData);
-      (req.session as any).userId = user.id;
-      
-      res.json({ user: { ...user, password: undefined } });
-    } catch (error) {
-      if (error instanceof ValidationError) {
-        return res.status(400).json({ message: error.message });
-      }
-      console.error("Registration error:", error);
-      res.status(500).json({ message: "Registration failed" });
-    }
+    res.status(403).json({ 
+      message: "Email verification is no longer available. Please contact admin for account creation." 
+    });
   });
 
   app.post("/api/login", async (req: Request, res: Response) => {
