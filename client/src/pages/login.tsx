@@ -40,7 +40,7 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white force-light-mode">
       {/* Header */}
       <header className="fb-gradient text-white shadow-md">
         <div className="max-w-6xl mx-auto px-4">

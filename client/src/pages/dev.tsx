@@ -79,7 +79,7 @@ export default function DevPage() {
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-white">
+      <div className="min-h-screen bg-white force-light-mode">
         <header className="fb-gradient text-white shadow-md">
           <div className="max-w-6xl mx-auto px-4">
             <div className="flex items-center justify-between h-16">
@@ -135,7 +135,7 @@ export default function DevPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white force-light-mode">
       <header className="fb-gradient text-white shadow-md">
         <div className="max-w-6xl mx-auto px-4">
           <div className="flex items-center justify-between h-16">
@@ -202,11 +202,15 @@ export default function DevPage() {
                 <Input
                   id="userPassword"
                   type="password"
-                  placeholder="Set password for user"
+                  placeholder="Set password (min 6 characters)"
                   value={userPassword}
                   onChange={(e) => setUserPassword(e.target.value)}
                   required
+                  minLength={6}
                 />
+                <p className="text-sm text-gray-500 mt-1">
+                  Password must be at least 6 characters long
+                </p>
               </div>
 
               <Button
