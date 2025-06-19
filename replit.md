@@ -130,6 +130,7 @@ The application is configured for deployment on Replit with the following setup:
 - ✓ Limited dashboard to show maximum 10 recent posts with "View All Posts" button
 - ✓ Removed irritating toast notifications while preserving important social notifications
 - ✓ Added comprehensive post sorting system (recent, oldest, most liked, friends, crushes)
+- ✓ Implemented visual relationship indicators on posts (friend/best friend/crush/acquaintance badges)
 
 ## Changelog
 

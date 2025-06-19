@@ -94,7 +94,7 @@ export default function Dashboard() {
                 </Link>
               </div>
               <PostForm />
-              <PostFeed maxPosts={10} />
+              <PostFeed maxPosts={10} relationships={relationships} />
             </div>
           </main>
           

@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { ThumbsUp, MessageCircle, Send } from "lucide-react";
+import { ThumbsUp, MessageCircle, Send, Users, Heart } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useState } from "react";
 
@@ -99,6 +99,52 @@ export default function PostFeed({ showAll = false, maxPosts = 5, sortBy = "rece
     createCommentMutation.mutate({ postId, content });
   };
 
+  // Function to get relationship status for a post author
+  const getAuthorRelationship = (authorId: number) => {
+    const relationship = relationships.find(r => r.toUserId === authorId);
+    return relationship?.type || null;
+  };
+
+  // Function to render relationship badge
+  const renderRelationshipBadge = (authorId: number) => {
+    const relationshipType = getAuthorRelationship(authorId);
+    
+    if (!relationshipType) return null;
+    
+    switch (relationshipType) {
+      case 'best_friend':
+        return (
+          <div className="flex items-center space-x-1 bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-xs font-medium">
+            <Users className="w-3 h-3" />
+            <span>Best Friend</span>
+          </div>
+        );
+      case 'friend':
+        return (
+          <div className="flex items-center space-x-1 bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-medium">
+            <Users className="w-3 h-3" />
+            <span>Friend</span>
+          </div>
+        );
+      case 'crush':
+        return (
+          <div className="flex items-center space-x-1 bg-pink-100 text-pink-700 px-2 py-1 rounded-full text-xs font-medium">
+            <Heart className="w-3 h-3" />
+            <span>Crush</span>
+          </div>
+        );
+      case 'acquaintance':
+        return (
+          <div className="flex items-center space-x-1 bg-gray-100 text-gray-700 px-2 py-1 rounded-full text-xs font-medium">
+            <Users className="w-3 h-3" />
+            <span>Acquaintance</span>
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="space-y-4">
@@ -161,8 +207,11 @@ export default function PostFeed({ showAll = false, maxPosts = 5, sortBy = "rece
                   </span>
                 </div>
               )}
-              <div>
-                <h4 className="font-bold app-text">{post.author?.name || 'Unknown User'}</h4>
+              <div className="flex-1">
+                <div className="flex items-center space-x-2 mb-1">
+                  <h4 className="font-bold app-text">{post.author?.name || 'Unknown User'}</h4>
+                  {renderRelationshipBadge(post.authorId)}
+                </div>
                 <p className="text-xs app-text-light">
                   {post.createdAt ? formatDistanceToNow(new Date(post.createdAt), { addSuffix: true }) : 'Unknown time'} • 
                   Shared with {post.audience === 'class' ? 'Class' : 'All Students'}
