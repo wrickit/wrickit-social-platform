@@ -1,0 +1,119 @@
+# Wrickit - Social Platform for Classmates
+
+## Overview
+
+Wrickit is a social networking platform designed for students to connect with classmates. The application facilitates relationship building, content sharing, messaging, and peer-to-peer disciplinary reporting. Built with a modern React frontend and Express backend, it provides real-time features through WebSocket connections and focuses on creating meaningful connections within academic environments.
+
+## System Architecture
+
+### Frontend Architecture
+- **Framework**: React 18 with TypeScript
+- **Routing**: Wouter for client-side routing
+- **State Management**: TanStack Query (React Query) for server state management
+- **UI Framework**: shadcn/ui components built on Radix UI primitives
+- **Styling**: Tailwind CSS with custom theme variables for Discord purple and YouTube red color schemes
+- **Build Tool**: Vite for development and production builds
+
+### Backend Architecture
+- **Framework**: Express.js with TypeScript
+- **Runtime**: Node.js 20
+- **Session Management**: Express sessions with PostgreSQL storage
+- **Authentication**: Custom session-based authentication with bcrypt password hashing
+- **Real-time Communication**: WebSocket server for live messaging
+- **API Design**: RESTful APIs with JSON responses
+
+### Database Architecture
+- **Database**: PostgreSQL 16
+- **ORM**: Drizzle ORM for type-safe database operations
+- **Migration Strategy**: Drizzle Kit for schema migrations
+- **Connection**: Neon Database serverless connection with connection pooling
+
+## Key Components
+
+### User Management
+- User registration and authentication with admission numbers
+- Profile management with bio, profile images, and personal information
+- User search functionality for finding classmates
+
+### Relationship System
+- Four-tier relationship classification: best friend, friend, acquaintance, crush
+- Mutual crush detection with automated notifications
+- Relationship management and visualization
+
+### Content Sharing
+- Post creation with audience targeting (class or grade level)
+- Like system for post engagement
+- Real-time post feed updates
+
+### Messaging System
+- Direct messaging between users
+- Real-time message delivery via WebSockets
+- Message read status tracking
+- Conversation history management
+
+### Social Features
+- Friend group detection and management
+- Notification system for social interactions
+- Activity feeds and social discovery
+
+### Disciplinary System
+- Peer reporting mechanism for disciplinary issues
+- Anonymous reporting options
+- Community voting on disciplinary actions
+- Democratic resolution process
+
+## Data Flow
+
+1. **Authentication Flow**: Users authenticate with admission number and password, creating server-side sessions
+2. **Real-time Updates**: WebSocket connections enable instant message delivery and notification updates
+3. **Social Interactions**: Relationship creation triggers mutual crush detection and notification generation
+4. **Content Distribution**: Posts are filtered by audience settings and delivered to appropriate user feeds
+5. **Disciplinary Process**: Reports are submitted, voted on by peers, and resolved through community consensus
+
+## External Dependencies
+
+### Core Dependencies
+- **@neondatabase/serverless**: PostgreSQL database connectivity
+- **drizzle-orm**: Type-safe database operations
+- **@tanstack/react-query**: Server state management
+- **express-session**: Session management
+- **bcrypt**: Password hashing
+- **ws**: WebSocket implementation
+
+### UI Dependencies
+- **@radix-ui/***: Primitive UI components for accessibility
+- **tailwindcss**: Utility-first CSS framework
+- **lucide-react**: Icon library
+- **date-fns**: Date formatting utilities
+
+### Development Dependencies
+- **typescript**: Type safety and development experience
+- **vite**: Build tool and development server
+- **tsx**: TypeScript execution for server development
+
+## Deployment Strategy
+
+The application is configured for deployment on Replit with the following setup:
+
+### Build Process
+- Frontend: Vite builds React app to `dist/public`
+- Backend: ESBuild bundles server code to `dist/index.js`
+- Static assets served from the build output directory
+
+### Environment Configuration
+- Development: Hot reload with Vite middleware integration
+- Production: Compiled static assets served by Express
+- Database: Environment variable-based PostgreSQL connection
+
+### Scaling Considerations
+- Session storage in PostgreSQL for horizontal scaling
+- WebSocket connections managed per server instance
+- Static asset serving optimized for CDN deployment
+
+## Changelog
+
+- June 19, 2025. Initial setup
+
+## User Preferences
+
+Preferred communication style: Simple, everyday language.
