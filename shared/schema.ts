@@ -88,6 +88,15 @@ export const disciplinaryVotes = pgTable("disciplinary_votes", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const emailVerifications = pgTable("email_verifications", {
+  id: serial("id").primaryKey(),
+  email: text("email").notNull(),
+  code: text("code").notNull(),
+  isUsed: boolean("is_used").default(false),
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   sentRelationships: many(relationships, { relationName: "fromUser" }),
@@ -209,11 +218,22 @@ export const insertMessageSchema = createInsertSchema(messages).pick({
   content: true,
 });
 
+export const emailVerificationSchema = z.object({
+  email: z.string().email(),
+  code: z.string().length(6),
+});
+
+export const sendVerificationSchema = z.object({
+  email: z.string().email(),
+});
+
 // Types
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type UpdateUser = z.infer<typeof updateUserSchema>;
 export type ChangePassword = z.infer<typeof changePasswordSchema>;
 export type SearchUser = z.infer<typeof searchUserSchema>;
+export type EmailVerification = z.infer<typeof emailVerificationSchema>;
+export type SendVerification = z.infer<typeof sendVerificationSchema>;
 export type User = typeof users.$inferSelect;
 export type Relationship = typeof relationships.$inferSelect;
 export type Post = typeof posts.$inferSelect;

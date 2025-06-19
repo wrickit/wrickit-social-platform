@@ -17,11 +17,100 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [classGrade, setClassGrade] = useState("9");
   const [division, setDivision] = useState("A");
+  const [verificationCode, setVerificationCode] = useState("");
+  const [isEmailVerified, setIsEmailVerified] = useState(false);
+  const [emailVerificationSent, setEmailVerificationSent] = useState(false);
   const [loading, setLoading] = useState(false);
   
   const { login, register } = useAuth();
   const { toast } = useToast();
   const [location, setLocation] = useLocation();
+
+  const sendVerificationCode = async () => {
+    if (!email) {
+      toast({
+        title: "Error",
+        description: "Please enter your email address first",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await fetch("/api/send-verification", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+
+      if (response.ok) {
+        setEmailVerificationSent(true);
+        toast({
+          title: "Verification code sent!",
+          description: "Check your email for the 6-digit verification code.",
+        });
+      } else {
+        const error = await response.json();
+        toast({
+          title: "Error",
+          description: error.message || "Failed to send verification code",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to send verification code",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const verifyEmailCode = async () => {
+    if (!verificationCode) {
+      toast({
+        title: "Error",
+        description: "Please enter the verification code",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await fetch("/api/verify-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, code: verificationCode }),
+      });
+
+      if (response.ok) {
+        setIsEmailVerified(true);
+        toast({
+          title: "Email verified!",
+          description: "You can now complete your registration.",
+        });
+      } else {
+        const error = await response.json();
+        toast({
+          title: "Error",
+          description: error.message || "Invalid verification code",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to verify email",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Check if we're on register route
   React.useEffect(() => {
@@ -42,6 +131,15 @@ export default function Login() {
           description: "You've successfully logged in to Wrickit.",
         });
       } else {
+        if (!isEmailVerified) {
+          toast({
+            title: "Email verification required",
+            description: "Please verify your email before registering",
+            variant: "destructive",
+          });
+          return;
+        }
+
         await register({
           admissionNumber,
           username,
@@ -50,7 +148,8 @@ export default function Login() {
           lastName,
           email,
           class: `${classGrade}${division}`,
-          division
+          division,
+          verificationCode,
         });
         toast({
           title: "Welcome to Wrickit!",
@@ -155,15 +254,63 @@ export default function Login() {
 
                   <div>
                     <Label htmlFor="email">Email</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="Enter your email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                    />
+                    <div className="flex gap-2">
+                      <Input
+                        id="email"
+                        type="email"
+                        placeholder="Enter your email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        required
+                        disabled={isEmailVerified}
+                      />
+                      {!emailVerificationSent && !isEmailVerified && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={sendVerificationCode}
+                          disabled={loading || !email}
+                          className="whitespace-nowrap"
+                        >
+                          Send Code
+                        </Button>
+                      )}
+                      {isEmailVerified && (
+                        <div className="flex items-center text-green-600 font-medium">
+                          ✓ Verified
+                        </div>
+                      )}
+                    </div>
                   </div>
+
+                  {emailVerificationSent && !isEmailVerified && (
+                    <div>
+                      <Label htmlFor="verificationCode">Verification Code</Label>
+                      <div className="flex gap-2">
+                        <Input
+                          id="verificationCode"
+                          type="text"
+                          placeholder="Enter 6-digit code"
+                          value={verificationCode}
+                          onChange={(e) => setVerificationCode(e.target.value)}
+                          maxLength={6}
+                          required
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={verifyEmailCode}
+                          disabled={loading || !verificationCode}
+                          className="whitespace-nowrap"
+                        >
+                          Verify
+                        </Button>
+                      </div>
+                      <p className="text-sm text-gray-500 mt-1">
+                        Check your email for the verification code. It expires in 10 minutes.
+                      </p>
+                    </div>
+                  )}
 
                   <div className="grid grid-cols-2 gap-2">
                     <div>

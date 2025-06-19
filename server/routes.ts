@@ -11,7 +11,10 @@ import {
   updateUserSchema,
   changePasswordSchema,
   searchUserSchema,
+  emailVerificationSchema,
+  sendVerificationSchema,
 } from "@shared/schema";
+import { sendEmail, generateVerificationCode, createVerificationEmail } from "./emailService";
 import session from "express-session";
 import { ValidationError } from "zod-validation-error";
 
@@ -37,6 +40,48 @@ const requireAuth = (req: any, res: Response, next: any) => {
 
 export async function registerRoutes(app: Express): Promise<Server> {
   app.use(sessionConfig);
+
+  // Email verification routes
+  app.post("/api/send-verification", async (req: Request, res: Response) => {
+    try {
+      const { email } = sendVerificationSchema.parse(req.body);
+      
+      const code = generateVerificationCode();
+      await storage.createEmailVerification(email, code);
+      
+      const emailSent = await sendEmail({
+        to: email,
+        subject: "Wrickit Email Verification",
+        html: createVerificationEmail(code),
+      });
+      
+      if (emailSent) {
+        res.json({ message: "Verification code sent to email" });
+      } else {
+        res.status(500).json({ message: "Failed to send verification email" });
+      }
+    } catch (error) {
+      console.error("Send verification error:", error);
+      res.status(500).json({ message: "Failed to send verification code" });
+    }
+  });
+
+  app.post("/api/verify-email", async (req: Request, res: Response) => {
+    try {
+      const { email, code } = emailVerificationSchema.parse(req.body);
+      
+      const isValid = await storage.verifyEmailCode(email, code);
+      
+      if (isValid) {
+        res.json({ message: "Email verified successfully" });
+      } else {
+        res.status(400).json({ message: "Invalid or expired verification code" });
+      }
+    } catch (error) {
+      console.error("Email verification error:", error);
+      res.status(500).json({ message: "Failed to verify email" });
+    }
+  });
 
   // Auth routes
   app.post("/api/register", async (req: Request, res: Response) => {
