@@ -58,13 +58,34 @@ export default function RelationshipForm() {
     });
   };
 
-  // For now, we'll use a simple approach where users enter admission numbers directly
-  // In a real app, you'd want proper user search
-  const handleAdmissionNumberSearch = () => {
-    // Simple validation - just check if it's a number
-    const admissionNumber = parseInt(searchTerm);
-    if (!isNaN(admissionNumber)) {
-      setSelectedUserId(admissionNumber);
+  // Search for user by admission number and get their actual user ID
+  const handleAdmissionNumberSearch = async () => {
+    try {
+      const response = await fetch(`/api/users/search?admissionNumber=${searchTerm}`);
+      if (response.ok) {
+        const user = await response.json();
+        if (user) {
+          setSelectedUserId(user.id);
+          toast({
+            title: "User Found",
+            description: `Found ${user.name} (${user.admissionNumber})`,
+          });
+        } else {
+          toast({
+            title: "User Not Found",
+            description: "No user found with that admission number",
+            variant: "destructive",
+          });
+          setSelectedUserId(null);
+        }
+      }
+    } catch (error) {
+      toast({
+        title: "Search Error",
+        description: "Failed to search for user",
+        variant: "destructive",
+      });
+      setSelectedUserId(null);
     }
   };
 

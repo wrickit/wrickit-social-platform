@@ -49,11 +49,15 @@ export default function Dashboard() {
     <div className="min-h-screen app-gray-bg">
       <Header user={user} notifications={notifications} />
       
-      <div className="max-w-6xl mx-auto px-4 py-6">
-        <div className="flex gap-6">
-          <Sidebar user={user} relationships={relationships} friendGroups={friendGroups} />
-          
-          <main className="flex-1 space-y-6">
+      <div className="w-full">
+        <div className="max-w-7xl mx-auto px-2 sm:px-4 py-4 sm:py-6">
+          <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
+            {/* Mobile: Hide sidebar by default, show with toggle */}
+            <div className="hidden lg:block lg:w-64 xl:w-72">
+              <Sidebar user={user} relationships={relationships} friendGroups={friendGroups} />
+            </div>
+            
+            <main className="flex-1 min-w-0 space-y-4 sm:space-y-6">
             {/* Mutual Crush Notifications */}
             {mutualCrushNotifications.map((notification: any) => (
               <div key={notification.id} className="content-box rounded p-4 bg-pink-50 border-pink-200">
@@ -78,12 +82,16 @@ export default function Dashboard() {
             <PostFeed />
           </main>
           
-          <RightSidebar 
-            relationships={relationships}
-            friendGroups={friendGroups}
-            notifications={notifications}
-            onOpenChat={openChat}
-          />
+          {/* Right sidebar - hidden on mobile and tablet */}
+          <div className="hidden xl:block xl:w-80">
+            <RightSidebar 
+              relationships={relationships}
+              friendGroups={friendGroups}
+              notifications={notifications}
+              onOpenChat={openChat}
+            />
+          </div>
+          </div>
         </div>
       </div>
 

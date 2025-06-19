@@ -136,22 +136,94 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // User search route
+  // User search route (by admission number)
   app.get("/api/users/search", requireAuth, async (req: Request, res: Response) => {
     try {
+      const { admissionNumber } = req.query;
+      if (!admissionNumber || typeof admissionNumber !== 'string') {
+        return res.status(400).json({ message: "Admission number required" });
+      }
+      
+      const user = await storage.getUserByAdmissionNumber(admissionNumber);
+      if (user) {
+        // Don't return password in search results
+        const { password, ...userWithoutPassword } = user;
+        res.json(userWithoutPassword);
+      } else {
+        res.json(null);
+      }
+    } catch (error) {
+      console.error("Search users error:", error);
+      res.status(500).json({ message: "Failed to search users" });
+    }
+  });
+
+  // Search all users route (for messaging)
+  app.get("/api/users/search-all", requireAuth, async (req: Request, res: Response) => {
+    try {
       const { q } = req.query;
-      if (!q || typeof q !== 'string') {
+      if (!q || typeof q !== 'string' || q.length < 2) {
         return res.json([]);
       }
       
-      // Simple search by admission number or name
-      // In a real app, you'd want proper text search
-      const allUsers = await storage.getPosts(100); // This is a placeholder
-      // For now, return empty array as we don't have a proper search method
-      res.json([]);
+      const users = await storage.searchUsers(q);
+      res.json(users);
     } catch (error) {
-      console.error("Search users error:", error);
-      res.status(500).json({ message: "Search failed" });
+      console.error("Search all users error:", error);
+      res.status(500).json({ message: "Failed to search users" });
+    }
+  });
+
+  // Get specific user profile
+  app.get("/api/users/:id", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userId = parseInt(req.params.id);
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Don't send password to client
+      const { password, ...userWithoutPassword } = user;
+      res.json(userWithoutPassword);
+    } catch (error) {
+      console.error("Get user profile error:", error);
+      res.status(500).json({ message: "Failed to get user profile" });
+    }
+  });
+
+  // Update user profile
+  app.put("/api/users/:id", requireAuth, async (req: any, res: Response) => {
+    try {
+      const userId = parseInt(req.params.id);
+      const currentUserId = req.session.userId;
+      
+      // Users can only update their own profile
+      if (userId !== currentUserId) {
+        return res.status(403).json({ message: "Cannot update other user's profile" });
+      }
+      
+      const { name, bio, profileImageUrl } = req.body;
+      const updatedUser = await storage.updateUser(userId, { name, bio, profileImageUrl });
+      
+      // Don't send password to client
+      const { password, ...userWithoutPassword } = updatedUser;
+      res.json(userWithoutPassword);
+    } catch (error) {
+      console.error("Update user profile error:", error);
+      res.status(500).json({ message: "Failed to update profile" });
+    }
+  });
+
+  // Get user relationships for profile
+  app.get("/api/users/:id/relationships", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userId = parseInt(req.params.id);
+      const relationships = await storage.getRelationshipsByUserId(userId);
+      res.json(relationships);
+    } catch (error) {
+      console.error("Get user relationships error:", error);
+      res.status(500).json({ message: "Failed to get relationships" });
     }
   });
 
@@ -258,6 +330,70 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Get notifications error:", error);
       res.status(500).json({ message: "Failed to get notifications" });
+    }
+  });
+
+  app.post("/api/notifications/:id/read", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const notificationId = parseInt(req.params.id);
+      await storage.markNotificationAsRead(notificationId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Mark notification as read error:", error);
+      res.status(500).json({ message: "Failed to mark notification as read" });
+    }
+  });
+
+  // Disciplinary action routes
+  app.post("/api/disciplinary-actions", requireAuth, async (req: any, res: Response) => {
+    try {
+      const { reportedUserId, reason, description, isAnonymous } = req.body;
+      const reporterUserId = req.session.userId;
+      
+      if (!reportedUserId || !reason || !description) {
+        return res.status(400).json({ message: "Missing required fields" });
+      }
+      
+      const action = await storage.createDisciplinaryAction(
+        reportedUserId,
+        reporterUserId,
+        reason,
+        description,
+        isAnonymous
+      );
+      
+      res.json(action);
+    } catch (error) {
+      console.error("Create disciplinary action error:", error);
+      res.status(500).json({ message: "Failed to create disciplinary action" });
+    }
+  });
+
+  app.get("/api/disciplinary-actions", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const actions = await storage.getDisciplinaryActions();
+      res.json(actions);
+    } catch (error) {
+      console.error("Get disciplinary actions error:", error);
+      res.status(500).json({ message: "Failed to get disciplinary actions" });
+    }
+  });
+
+  app.post("/api/disciplinary-actions/:id/vote", requireAuth, async (req: any, res: Response) => {
+    try {
+      const actionId = parseInt(req.params.id);
+      const { vote } = req.body;
+      const voterId = req.session.userId;
+      
+      if (!vote || !["support", "oppose"].includes(vote)) {
+        return res.status(400).json({ message: "Invalid vote" });
+      }
+      
+      await storage.voteDisciplinaryAction(actionId, voterId, vote);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Vote disciplinary action error:", error);
+      res.status(500).json({ message: "Failed to vote on disciplinary action" });
     }
   });
 

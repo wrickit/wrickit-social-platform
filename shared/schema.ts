@@ -10,6 +10,7 @@ export const users = pgTable("users", {
   name: text("name").notNull(),
   email: text("email"),
   profileImageUrl: text("profile_image_url"),
+  bio: text("bio"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -59,6 +60,26 @@ export const notifications = pgTable("notifications", {
   message: text("message").notNull(),
   isRead: boolean("is_read").default(false),
   relatedUserId: integer("related_user_id").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const disciplinaryActions = pgTable("disciplinary_actions", {
+  id: serial("id").primaryKey(),
+  reportedUserId: integer("reported_user_id").notNull().references(() => users.id),
+  reporterUserId: integer("reporter_user_id").notNull().references(() => users.id),
+  reason: varchar("reason", { length: 100 }).notNull(),
+  description: text("description").notNull(),
+  status: varchar("status", { length: 20 }).default("pending"),
+  votes: integer("votes").default(0),
+  isAnonymous: boolean("is_anonymous").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const disciplinaryVotes = pgTable("disciplinary_votes", {
+  id: serial("id").primaryKey(),
+  actionId: integer("action_id").notNull().references(() => disciplinaryActions.id),
+  voterId: integer("voter_id").notNull().references(() => users.id),
+  vote: varchar("vote", { length: 10 }).notNull(), // 'support', 'oppose'
   createdAt: timestamp("created_at").defaultNow(),
 });
 

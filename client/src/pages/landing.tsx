@@ -15,14 +15,16 @@ export default function Landing() {
             <h1 className="text-3xl font-bold">Wrickit</h1>
             <div className="space-x-4">
               <Button
-                variant="outline"
-                className="text-white border-white hover:bg-white hover:text-purple-600"
+                size="lg"
+                className="youtube-red-bg hover:youtube-red-dark text-white font-bold px-8 py-3 text-lg shadow-lg"
                 onClick={() => setLocation("/login")}
               >
-                Login
+                Login Now
               </Button>
               <Button
-                className="bg-white text-purple-600 hover:bg-gray-100"
+                variant="outline"
+                size="lg"
+                className="bg-white text-purple-600 border-2 border-white hover:bg-purple-50 font-bold px-8 py-3 text-lg"
                 onClick={() => setLocation("/register")}
               >
                 Sign Up

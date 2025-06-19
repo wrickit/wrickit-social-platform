@@ -8,6 +8,9 @@ import { useAuth } from "@/hooks/useAuth";
 import Landing from "@/pages/landing";
 import Dashboard from "@/pages/dashboard";
 import Login from "@/pages/login";
+import Profile from "@/pages/profile";
+import Messages from "@/pages/messages";
+import Disciplinary from "@/pages/disciplinary";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -30,6 +33,9 @@ function Router() {
         <>
           <Route path="/" component={Dashboard} />
           <Route path="/dashboard" component={Dashboard} />
+          <Route path="/profile/:userId" component={Profile} />
+          <Route path="/messages" component={Messages} />
+          <Route path="/disciplinary" component={Disciplinary} />
         </>
       ) : (
         <>

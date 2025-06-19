@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { Home, Users, MessageCircle, Bell, LogOut } from "lucide-react";
 
 interface HeaderProps {
@@ -13,8 +14,8 @@ export default function Header({ user, notifications }: HeaderProps) {
   const unreadCount = notifications.filter(n => !n.isRead).length;
 
   return (
-    <header className="app-gradient text-white shadow-md">
-      <div className="max-w-6xl mx-auto px-4">
+    <header className="app-gradient text-white shadow-md w-full">
+      <div className="w-full px-4 sm:px-6">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center space-x-8">
             <h1 className="text-2xl font-bold">Wrickit</h1>
@@ -40,7 +41,8 @@ export default function Header({ user, notifications }: HeaderProps) {
               </a>
             </nav>
           </div>
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2 sm:space-x-4">
+            <ThemeToggle />
             <div className="flex items-center space-x-2">
               {user.profileImageUrl ? (
                 <img

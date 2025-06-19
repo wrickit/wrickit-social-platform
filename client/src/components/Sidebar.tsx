@@ -1,5 +1,6 @@
 import { Card } from "@/components/ui/card";
-import { Home, Heart, Users, MessageCircle, FileText, UserPen } from "lucide-react";
+import { Link, useLocation } from "wouter";
+import { Home, Heart, Users, MessageCircle, FileText, UserPen, Scale } from "lucide-react";
 
 interface SidebarProps {
   user: any;
@@ -8,6 +9,8 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ user, relationships, friendGroups }: SidebarProps) {
+  const [location] = useLocation();
+  
   // Calculate relationship stats
   const bestFriends = relationships.filter(r => r.type === 'best_friend').length;
   const friends = relationships.filter(r => r.type === 'friend').length;  
@@ -39,30 +42,54 @@ export default function Sidebar({ user, relationships, friendGroups }: SidebarPr
       {/* Navigation Menu */}
       <Card className="content-box rounded mb-4">
         <nav className="p-2">
-          <a href="#" className="flex items-center space-x-2 px-3 py-2 rounded hover:fb-gray-bg text-fb-text">
-            <Home className="w-4 h-4 text-blue-600" />
-            <span>Dashboard</span>
-          </a>
-          <a href="#" className="flex items-center space-x-2 px-3 py-2 rounded hover:fb-gray-bg text-fb-text">
+          <Link href="/">
+            <div className={`flex items-center space-x-2 px-3 py-2 rounded cursor-pointer transition-colors ${
+              location === "/" ? "discord-purple-bg text-white" : "hover:fb-gray-bg text-fb-text"
+            }`}>
+              <Home className="w-4 h-4 text-blue-600" />
+              <span>Dashboard</span>
+            </div>
+          </Link>
+          
+          <Link href="/messages">
+            <div className={`flex items-center space-x-2 px-3 py-2 rounded cursor-pointer transition-colors ${
+              location === "/messages" ? "discord-purple-bg text-white" : "hover:fb-gray-bg text-fb-text"
+            }`}>
+              <MessageCircle className="w-4 h-4 text-green-500" />
+              <span>Messages</span>
+            </div>
+          </Link>
+          
+          <Link href={`/profile/${user?.id}`}>
+            <div className={`flex items-center space-x-2 px-3 py-2 rounded cursor-pointer transition-colors ${
+              location.startsWith("/profile") ? "discord-purple-bg text-white" : "hover:fb-gray-bg text-fb-text"
+            }`}>
+              <UserPen className="w-4 h-4 text-blue-600" />
+              <span>Edit Profile</span>
+            </div>
+          </Link>
+          
+          <Link href="/disciplinary">
+            <div className={`flex items-center space-x-2 px-3 py-2 rounded cursor-pointer transition-colors ${
+              location === "/disciplinary" ? "discord-purple-bg text-white" : "hover:fb-gray-bg text-fb-text"
+            }`}>
+              <Scale className="w-4 h-4 text-orange-500" />
+              <span>Disciplinary</span>
+            </div>
+          </Link>
+          
+          <div className="flex items-center space-x-2 px-3 py-2 rounded text-fb-text">
             <Heart className="w-4 h-4 text-red-500" />
             <span>My Relationships</span>
-          </a>
-          <a href="#" className="flex items-center space-x-2 px-3 py-2 rounded hover:fb-gray-bg text-fb-text">
+          </div>
+          <div className="flex items-center space-x-2 px-3 py-2 rounded text-fb-text">
             <Users className="w-4 h-4 text-blue-600" />
             <span>Friend Groups</span>
-          </a>
-          <a href="#" className="flex items-center space-x-2 px-3 py-2 rounded hover:fb-gray-bg text-fb-text">
-            <MessageCircle className="w-4 h-4 text-green-500" />
-            <span>Messages</span>
-          </a>
-          <a href="#" className="flex items-center space-x-2 px-3 py-2 rounded hover:fb-gray-bg text-fb-text">
+          </div>
+          <div className="flex items-center space-x-2 px-3 py-2 rounded text-fb-text">
             <FileText className="w-4 h-4 text-blue-600" />
             <span>Posts</span>
-          </a>
-          <a href="#" className="flex items-center space-x-2 px-3 py-2 rounded hover:fb-gray-bg text-fb-text">
-            <UserPen className="w-4 h-4 text-blue-600" />
-            <span>Edit Profile</span>
-          </a>
+          </div>
         </nav>
       </Card>
 

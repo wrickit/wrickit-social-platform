@@ -12,6 +12,7 @@ export default function PostFeed() {
   
   const { data: allPosts = [], isLoading } = useQuery({
     queryKey: ["/api/posts"],
+    refetchInterval: 5000, // Refetch every 5 seconds for real-time updates
   });
 
   // Show only 5 most recent posts unless "View More" is clicked

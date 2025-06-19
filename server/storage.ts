@@ -6,6 +6,8 @@ import {
   friendGroups,
   friendGroupMembers,
   notifications,
+  disciplinaryActions,
+  disciplinaryVotes,
   type User,
   type InsertUser,
   type Relationship,
@@ -15,7 +17,7 @@ import {
   type Notification,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, or, desc, sql, inArray } from "drizzle-orm";
+import { eq, and, or, desc, sql, inArray, count } from "drizzle-orm";
 import bcrypt from "bcrypt";
 
 export interface IStorage {
@@ -24,6 +26,8 @@ export interface IStorage {
   createUser(user: InsertUser): Promise<User>;
   authenticateUser(admissionNumber: string, password: string): Promise<User | null>;
   getUser(id: number): Promise<User | undefined>;
+  updateUser(id: number, userData: Partial<User>): Promise<User>;
+  searchUsers(query: string): Promise<User[]>;
   
   // Relationship operations
   createRelationship(fromUserId: number, toUserId: number, type: string): Promise<Relationship>;
@@ -49,6 +53,11 @@ export interface IStorage {
   createNotification(userId: number, type: string, message: string, relatedUserId?: number): Promise<Notification>;
   getNotificationsByUserId(userId: number): Promise<Notification[]>;
   markNotificationAsRead(notificationId: number): Promise<void>;
+  
+  // Disciplinary action operations
+  createDisciplinaryAction(reportedUserId: number, reporterUserId: number, reason: string, description: string, isAnonymous: boolean): Promise<any>;
+  getDisciplinaryActions(): Promise<any[]>;
+  voteDisciplinaryAction(actionId: number, voterId: number, vote: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -77,6 +86,15 @@ export class DatabaseStorage implements IStorage {
   async getUser(id: number): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
     return user || undefined;
+  }
+
+  async updateUser(id: number, userData: Partial<User>): Promise<User> {
+    const [updatedUser] = await db
+      .update(users)
+      .set(userData)
+      .where(eq(users.id, id))
+      .returning();
+    return updatedUser;
   }
 
   async createRelationship(fromUserId: number, toUserId: number, type: string): Promise<Relationship> {
@@ -309,6 +327,104 @@ export class DatabaseStorage implements IStorage {
       .update(notifications)
       .set({ isRead: true })
       .where(eq(notifications.id, notificationId));
+  }
+
+  async searchUsers(query: string): Promise<User[]> {
+    const searchResults = await db
+      .select()
+      .from(users)
+      .where(
+        or(
+          sql`${users.name} ILIKE ${`%${query}%`}`,
+          sql`${users.admissionNumber} ILIKE ${`%${query}%`}`
+        )
+      )
+      .limit(10);
+    
+    // Don't return passwords in search results
+    return searchResults.map(({ password, ...user }) => user);
+  }
+
+  async createDisciplinaryAction(reportedUserId: number, reporterUserId: number, reason: string, description: string, isAnonymous: boolean): Promise<any> {
+    const [action] = await db
+      .insert(disciplinaryActions)
+      .values({
+        reportedUserId,
+        reporterUserId,
+        reason,
+        description,
+        isAnonymous,
+      })
+      .returning();
+    return action;
+  }
+
+  async getDisciplinaryActions(): Promise<any[]> {
+    const actions = await db
+      .select()
+      .from(disciplinaryActions)
+      .leftJoin(users, eq(disciplinaryActions.reportedUserId, users.id))
+      .orderBy(desc(disciplinaryActions.createdAt));
+    
+    return actions.map(action => ({
+      ...action.disciplinary_actions,
+      reportedUser: action.users,
+    }));
+  }
+
+  async voteDisciplinaryAction(actionId: number, voterId: number, vote: string): Promise<void> {
+    // Check if user already voted
+    const existingVote = await db
+      .select()
+      .from(disciplinaryVotes)
+      .where(and(
+        eq(disciplinaryVotes.actionId, actionId),
+        eq(disciplinaryVotes.voterId, voterId)
+      ));
+
+    if (existingVote.length > 0) {
+      // Update existing vote
+      await db
+        .update(disciplinaryVotes)
+        .set({ vote })
+        .where(and(
+          eq(disciplinaryVotes.actionId, actionId),
+          eq(disciplinaryVotes.voterId, voterId)
+        ));
+    } else {
+      // Create new vote
+      await db
+        .insert(disciplinaryVotes)
+        .values({
+          actionId,
+          voterId,
+          vote,
+        });
+    }
+
+    // Update vote count on the action
+    const supportVotes = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(disciplinaryVotes)
+      .where(and(
+        eq(disciplinaryVotes.actionId, actionId),
+        eq(disciplinaryVotes.vote, 'support')
+      ));
+
+    const opposeVotes = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(disciplinaryVotes)
+      .where(and(
+        eq(disciplinaryVotes.actionId, actionId),
+        eq(disciplinaryVotes.vote, 'oppose')
+      ));
+
+    const netVotes = (supportVotes[0]?.count || 0) - (opposeVotes[0]?.count || 0);
+    
+    await db
+      .update(disciplinaryActions)
+      .set({ votes: netVotes })
+      .where(eq(disciplinaryActions.id, actionId));
   }
 }
 
