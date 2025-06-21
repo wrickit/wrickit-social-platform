@@ -330,7 +330,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const post = await storage.createPost(
         req.session.userId,
         validatedData.content,
-        validatedData.audience
+        validatedData.audience,
+        validatedData.mediaUrls || undefined,
+        validatedData.mediaTypes || undefined
       );
       
       res.json(post);

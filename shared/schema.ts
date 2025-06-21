@@ -35,6 +35,8 @@ export const posts = pgTable("posts", {
   content: text("content").notNull(),
   audience: varchar("audience", { length: 10 }).notNull(), // 'class' or 'grade'
   likes: integer("likes").default(0),
+  mediaUrls: text("media_urls").array(), // Array of image/video URLs
+  mediaTypes: text("media_types").array(), // Array of media types (image/video)
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -265,6 +267,8 @@ export const insertRelationshipSchema = createInsertSchema(relationships).pick({
 export const insertPostSchema = createInsertSchema(posts).pick({
   content: true,
   audience: true,
+  mediaUrls: true,
+  mediaTypes: true,
 });
 
 export const insertCommentSchema = createInsertSchema(comments).pick({

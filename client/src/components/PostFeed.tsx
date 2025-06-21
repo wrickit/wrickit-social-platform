@@ -220,6 +220,69 @@ export default function PostFeed({ showAll = false, maxPosts = 5, sortBy = "rece
             </div>
             
             <p className="app-text mb-3">{post.content}</p>
+
+            {/* Media Content */}
+            {post.mediaUrls && post.mediaUrls.length > 0 && (
+              <div className="mb-3">
+                {post.mediaUrls.length === 1 ? (
+                  <div className="w-full">
+                    {post.mediaTypes?.[0] === 'image' ? (
+                      <img
+                        src={post.mediaUrls[0]}
+                        alt="Post media"
+                        className="w-full max-h-96 object-cover rounded-lg border"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = 'none';
+                        }}
+                      />
+                    ) : (
+                      <video
+                        src={post.mediaUrls[0]}
+                        controls
+                        className="w-full max-h-96 rounded-lg border"
+                        onError={(e) => {
+                          const target = e.target as HTMLVideoElement;
+                          target.style.display = 'none';
+                        }}
+                      >
+                        Your browser does not support the video tag.
+                      </video>
+                    )}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-2">
+                    {post.mediaUrls.map((mediaUrl, index) => (
+                      <div key={index} className="aspect-square">
+                        {post.mediaTypes?.[index] === 'image' ? (
+                          <img
+                            src={mediaUrl}
+                            alt={`Post media ${index + 1}`}
+                            className="w-full h-full object-cover rounded-lg border"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.style.display = 'none';
+                            }}
+                          />
+                        ) : (
+                          <video
+                            src={mediaUrl}
+                            controls
+                            className="w-full h-full object-cover rounded-lg border"
+                            onError={(e) => {
+                              const target = e.target as HTMLVideoElement;
+                              target.style.display = 'none';
+                            }}
+                          >
+                            Your browser does not support the video tag.
+                          </video>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
             
             <div className="flex items-center space-x-4 text-sm app-text-light">
               <Button

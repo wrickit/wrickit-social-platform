@@ -48,7 +48,7 @@ export interface IStorage {
   checkMutualCrush(userId1: number, userId2: number): Promise<boolean>;
   
   // Post operations
-  createPost(authorId: number, content: string, audience: string): Promise<Post>;
+  createPost(authorId: number, content: string, audience: string, mediaUrls?: string[], mediaTypes?: string[]): Promise<Post>;
   getPosts(limit?: number, userClass?: string): Promise<(Post & { author: User; comments: (Comment & { author: User })[]; likesCount: number; isLikedByUser?: boolean })[]>;
   likePost(postId: number, userId: number): Promise<{ success: boolean; isLiked: boolean }>;
   unlikePost(postId: number, userId: number): Promise<void>;
@@ -303,10 +303,16 @@ export class DatabaseStorage implements IStorage {
     return crushes.length === 2;
   }
 
-  async createPost(authorId: number, content: string, audience: string): Promise<Post> {
+  async createPost(authorId: number, content: string, audience: string, mediaUrls?: string[], mediaTypes?: string[]): Promise<Post> {
     const [post] = await db
       .insert(posts)
-      .values({ authorId, content, audience })
+      .values({ 
+        authorId, 
+        content, 
+        audience,
+        mediaUrls: mediaUrls || null,
+        mediaTypes: mediaTypes || null
+      })
       .returning();
     return post;
   }
