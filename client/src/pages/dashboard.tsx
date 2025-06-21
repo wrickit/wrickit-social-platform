@@ -17,15 +17,15 @@ export default function Dashboard() {
   const [chatOpen, setChatOpen] = useState(false);
   const [chatUserId, setChatUserId] = useState<number | null>(null);
 
-  const { data: notifications = [] } = useQuery({
+  const { data: notifications = [] } = useQuery<any[]>({
     queryKey: ["/api/notifications"],
   });
 
-  const { data: relationships = [] } = useQuery({
+  const { data: relationships = [] } = useQuery<any[]>({
     queryKey: ["/api/relationships"],
   });
 
-  const { data: friendGroups = [] } = useQuery({
+  const { data: friendGroups = [] } = useQuery<any[]>({
     queryKey: ["/api/friend-groups"],
   });
 
@@ -44,12 +44,12 @@ export default function Dashboard() {
   }
 
   // Find mutual crush notifications
-  const mutualCrushNotifications = notifications.filter(
+  const mutualCrushNotifications = (notifications as any[]).filter(
     (n: any) => n.type === 'mutual_crush' && !n.isRead
   );
 
   return (
-    <div className="min-h-screen app-gray-bg">
+    <div className="min-h-screen gradient-secondary-bg">
       <Header 
         user={{...user, relationships, friendGroups}} 
         notifications={notifications} 
@@ -66,19 +66,20 @@ export default function Dashboard() {
             <main className="flex-1 min-w-0 space-y-4 sm:space-y-6">
             {/* Mutual Crush Notifications */}
             {mutualCrushNotifications.map((notification: any) => (
-              <div key={notification.id} className="content-box rounded p-4 bg-pink-50 border-pink-200">
-                <div className="flex items-center space-x-3">
-                  <div className="text-2xl">💕</div>
-                  <div>
-                    <h3 className="font-bold app-text">You have a mutual crush!</h3>
-                    <p className="text-sm app-text-light">{notification.message}</p>
+              <div key={notification.id} className="glass-effect rounded-xl p-6 sparkle-border slide-in-up teen-shadow">
+                <div className="flex items-center space-x-4">
+                  <div className="text-4xl pulse-glow">💕</div>
+                  <div className="flex-1">
+                    <h3 className="font-bold text-lg rainbow-text">OMG! You have a mutual crush! 🥰</h3>
+                    <p className="text-sm text-purple-700 mt-1">{notification.message}</p>
                     <button
                       onClick={() => notification.relatedUserId && openChat(notification.relatedUserId)}
-                      className="mt-2 youtube-red-bg text-white px-4 py-1 rounded text-sm hover:bg-red-700"
+                      className="mt-3 gradient-accent-bg text-white px-6 py-2 rounded-full text-sm hover:scale-105 transition-transform duration-300 bouncy teen-shadow"
                     >
-                      Send Message
+                      💌 Slide into DMs
                     </button>
                   </div>
+                  <div className="text-2xl wiggle">✨</div>
                 </div>
               </div>
             ))}
@@ -87,17 +88,17 @@ export default function Dashboard() {
             
             {/* Posts Section with Navigation */}
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold app-text">Recent Posts</h2>
+              <div className="flex items-center justify-between glass-effect rounded-lg p-4 sparkle-border">
+                <h2 className="text-xl font-bold rainbow-text">📝 What's the Tea? ☕</h2>
                 <Link href="/posts">
-                  <Button variant="outline" size="sm" className="flex items-center space-x-2">
+                  <Button variant="outline" size="sm" className="flex items-center space-x-2 gradient-bg text-white border-none hover:scale-105 transition-transform duration-300 bouncy">
                     <FileText className="w-4 h-4" />
-                    <span>View All Posts</span>
+                    <span>✨ See All Drama</span>
                   </Button>
                 </Link>
               </div>
               <PostForm />
-              <PostFeed maxPosts={10} relationships={relationships} />
+              <PostFeed maxPosts={10} relationships={relationships as any[]} />
             </div>
           </main>
           

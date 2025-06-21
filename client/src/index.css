@@ -24,18 +24,31 @@
   --ring: hsl(20, 14.3%, 4.1%);
   --radius: 0.5rem;
   
-  /* Discord purple + YouTube red colors */
-  --discord-purple: hsl(235, 86%, 65%);
-  --discord-purple-light: hsl(235, 76%, 75%);
-  --discord-purple-accent: hsl(235, 66%, 85%);
-  --discord-purple-dark: hsl(235, 96%, 55%);
-  --youtube-red: hsl(0, 100%, 50%);
-  --youtube-red-light: hsl(0, 90%, 60%);
-  --youtube-red-dark: hsl(0, 100%, 40%);
-  --app-gray: hsl(0, 0%, 97%);
-  --app-border: hsl(212, 18%, 85%);
-  --app-text: hsl(0, 0%, 11%);
-  --app-text-light: hsl(220, 5%, 40%);
+  /* Teen-oriented vibrant colors */
+  --teen-purple: hsl(270, 100%, 70%);
+  --teen-pink: hsl(330, 100%, 75%);
+  --teen-blue: hsl(200, 100%, 60%);
+  --teen-green: hsl(140, 70%, 60%);
+  --teen-orange: hsl(30, 100%, 65%);
+  --teen-yellow: hsl(50, 100%, 70%);
+  
+  /* Original colors for backwards compatibility */
+  --discord-purple: var(--teen-purple);
+  --discord-purple-light: hsl(270, 90%, 80%);
+  --discord-purple-accent: hsl(270, 80%, 85%);
+  --discord-purple-dark: hsl(270, 100%, 60%);
+  --youtube-red: hsl(0, 100%, 65%);
+  --youtube-red-light: hsl(0, 90%, 75%);
+  --youtube-red-dark: hsl(0, 100%, 55%);
+  --app-gray: hsl(270, 20%, 98%);
+  --app-border: hsl(270, 30%, 90%);
+  --app-text: hsl(270, 30%, 15%);
+  --app-text-light: hsl(270, 15%, 50%);
+  
+  /* Fun gradient backgrounds */
+  --gradient-primary: linear-gradient(135deg, var(--teen-purple), var(--teen-pink));
+  --gradient-secondary: linear-gradient(135deg, var(--teen-blue), var(--teen-green));
+  --gradient-accent: linear-gradient(135deg, var(--teen-orange), var(--teen-yellow));
 }
 
 .dark {
@@ -134,6 +147,69 @@
     background-color: var(--app-gray);
   }
   
+  /* Teen-oriented fun classes */
+  .gradient-bg {
+    background: var(--gradient-primary);
+  }
+  
+  .gradient-secondary-bg {
+    background: var(--gradient-secondary);
+  }
+  
+  .gradient-accent-bg {
+    background: var(--gradient-accent);
+  }
+  
+  .glass-effect {
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+  }
+  
+  .bouncy {
+    animation: bounce 0.6s ease-in-out;
+  }
+  
+  .pulse-glow {
+    animation: pulse-glow 2s infinite;
+  }
+  
+  .wiggle {
+    animation: wiggle 0.5s ease-in-out;
+  }
+  
+  .slide-in-up {
+    animation: slide-in-up 0.3s ease-out;
+  }
+  
+  .rainbow-text {
+    background: linear-gradient(45deg, 
+      var(--teen-purple), 
+      var(--teen-pink), 
+      var(--teen-blue), 
+      var(--teen-green), 
+      var(--teen-orange), 
+      var(--teen-yellow)
+    );
+    background-size: 400% 400%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: rainbow-flow 3s ease-in-out infinite;
+  }
+  
+  .sparkle-border {
+    position: relative;
+    border: 2px solid transparent;
+    background: linear-gradient(white, white) padding-box,
+                var(--gradient-primary) border-box;
+    border-radius: 12px;
+  }
+  
+  .teen-shadow {
+    box-shadow: 0 8px 32px rgba(135, 70, 245, 0.3);
+  }
+  
   .loading-spinner {
     animation: spin 1s linear infinite;
   }
@@ -141,5 +217,129 @@
   @keyframes spin {
     from { transform: rotate(0deg); }
     to { transform: rotate(360deg); }
+  }
+  
+  @keyframes bounce {
+    0%, 20%, 53%, 80%, 100% {
+      transform: translate3d(0,0,0);
+    }
+    40%, 43% {
+      transform: translate3d(0,-15px,0);
+    }
+    70% {
+      transform: translate3d(0,-8px,0);
+    }
+    90% {
+      transform: translate3d(0,-3px,0);
+    }
+  }
+  
+  @keyframes pulse-glow {
+    0%, 100% {
+      box-shadow: 0 0 20px rgba(135, 70, 245, 0.5);
+    }
+    50% {
+      box-shadow: 0 0 40px rgba(135, 70, 245, 0.8);
+    }
+  }
+  
+  @keyframes wiggle {
+    0%, 7% { transform: rotateZ(0); }
+    15% { transform: rotateZ(-15deg); }
+    20% { transform: rotateZ(10deg); }
+    25% { transform: rotateZ(-10deg); }
+    30% { transform: rotateZ(6deg); }
+    35% { transform: rotateZ(-4deg); }
+    40%, 100% { transform: rotateZ(0); }
+  }
+  
+  @keyframes slide-in-up {
+    from {
+      transform: translateY(30px);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+  
+  @keyframes rainbow-flow {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+  
+  /* Easter egg styles */
+  .mouse-sparkle {
+    position: fixed;
+    width: 6px;
+    height: 6px;
+    background: radial-gradient(circle, #fff, #ffd700);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9999;
+    animation: sparkle-fade 1s ease-out forwards;
+  }
+  
+  .compliment-toast {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--gradient-primary);
+    color: white;
+    padding: 20px 30px;
+    border-radius: 25px;
+    font-size: 18px;
+    font-weight: bold;
+    z-index: 10000;
+    animation: compliment-appear 3s ease-in-out forwards;
+    box-shadow: 0 10px 30px rgba(135, 70, 245, 0.5);
+  }
+  
+  .rainbow-mode * {
+    animation: rainbow-cycle 2s infinite !important;
+  }
+  
+  @keyframes sparkle-fade {
+    0% {
+      opacity: 1;
+      transform: scale(0) rotate(0deg);
+    }
+    50% {
+      opacity: 1;
+      transform: scale(1) rotate(180deg);
+    }
+    100% {
+      opacity: 0;
+      transform: scale(0) rotate(360deg);
+    }
+  }
+  
+  @keyframes compliment-appear {
+    0% {
+      opacity: 0;
+      transform: translate(-50%, -50%) scale(0.5);
+    }
+    10% {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1.1);
+    }
+    20% {
+      transform: translate(-50%, -50%) scale(1);
+    }
+    80% {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+    }
+    100% {
+      opacity: 0;
+      transform: translate(-50%, -50%) scale(0.5);
+    }
+  }
+  
+  @keyframes rainbow-cycle {
+    0% { filter: hue-rotate(0deg); }
+    100% { filter: hue-rotate(360deg); }
   }
 }

@@ -7,12 +7,12 @@ export default function Landing() {
   const [, setLocation] = useLocation();
 
   return (
-    <div className="min-h-screen bg-white force-light-mode">
+    <div className="min-h-screen gradient-secondary-bg force-light-mode">
       {/* Header */}
-      <header className="app-gradient text-white shadow-md">
+      <header className="gradient-bg text-white shadow-md teen-shadow">
         <div className="max-w-6xl mx-auto px-4">
           <div className="flex items-center justify-between h-16">
-            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold">Wrickit</h1>
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold rainbow-text">✨ Wrickit 🌟</h1>
             <div className="flex space-x-2 sm:space-x-4">
               <Button
                 size="sm"

@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/theme-provider";
 import { useAuth } from "@/hooks/useAuth";
+import EasterEggs from "@/components/EasterEggs";
 import Landing from "@/pages/landing";
 import Dashboard from "@/pages/dashboard";
 import Posts from "@/pages/posts";
@@ -20,10 +21,12 @@ function Router() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="loading-spinner rounded-full h-8 w-8 border-4 border-gray-200 border-t-purple-600 mx-auto mb-4"></div>
-          <p className="app-text-light">Loading Wrickit...</p>
+      <div className="min-h-screen gradient-secondary-bg flex items-center justify-center">
+        <div className="text-center glass-effect p-8 rounded-xl teen-shadow sparkle-border">
+          <div className="text-6xl mb-4 pulse-glow">✨</div>
+          <div className="loading-spinner rounded-full h-12 w-12 border-4 border-purple-200 border-t-purple-600 mx-auto mb-4"></div>
+          <p className="rainbow-text font-bold text-lg">Loading the magic...</p>
+          <p className="text-purple-600 text-sm mt-2">Getting your vibes ready!</p>
         </div>
       </div>
     );
@@ -58,6 +61,7 @@ function App() {
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
           <Toaster />
+          <EasterEggs />
           <Router />
         </TooltipProvider>
       </QueryClientProvider>

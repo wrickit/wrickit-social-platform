@@ -30,30 +30,33 @@ export default function RightSidebar({
     <aside className="w-64 flex-shrink-0 space-y-4">
       {/* Friend Group Notification */}
       {friendGroupNotifications.map((notification: any) => (
-        <Card key={notification.id} className="content-box rounded p-4 bg-green-50 border-green-200">
-          <div className="flex items-center space-x-2 mb-2">
-            <Users className="w-4 h-4 text-green-500" />
-            <h4 className="font-bold text-fb-text">New Friend Group!</h4>
+        <Card key={notification.id} className="glass-effect rounded-xl p-4 sparkle-border slide-in-up teen-shadow">
+          <div className="flex items-center space-x-3 mb-3">
+            <div className="text-2xl pulse-glow">🎉</div>
+            <h4 className="font-bold rainbow-text">Squad Alert!</h4>
           </div>
-          <p className="text-sm text-fb-text-light mb-2">{notification.message}</p>
+          <p className="text-sm text-purple-700 mb-3">{notification.message}</p>
           <Button
             size="sm"
-            className="bg-green-500 text-white hover:bg-green-600"
+            className="gradient-secondary-bg text-white hover:scale-105 transition-transform duration-300 bouncy rounded-full w-full"
           >
-            View Group
+            ✨ Check it Out
           </Button>
         </Card>
       ))}
 
       {/* My Relationships */}
-      <Card className="content-box rounded">
-        <div className="p-3 border-b border-gray-200">
-          <h4 className="font-bold text-fb-text">My Relationships</h4>
+      <Card className="glass-effect rounded-xl teen-shadow">
+        <div className="p-4 border-b border-purple-200">
+          <h4 className="font-bold rainbow-text text-lg">💖 My Circle</h4>
         </div>
-        <div className="p-3 space-y-3">
+        <div className="p-4 space-y-4">
           {bestFriends.length > 0 && (
             <div>
-              <h5 className="text-sm font-bold text-fb-text mb-2">Best Friends ({bestFriends.length})</h5>
+              <h5 className="text-sm font-bold text-purple-700 mb-3 flex items-center">
+                <span className="mr-2">👑</span>
+                Besties ({bestFriends.length})
+              </h5>
               <div className="space-y-2">
                 {bestFriends.map((relationship: any) => (
                   <div key={relationship.id} className="flex items-center space-x-2">
@@ -79,7 +82,10 @@ export default function RightSidebar({
 
           {crushes.length > 0 && (
             <div>
-              <h5 className="text-sm font-bold text-fb-text mb-2">Crushes 💕</h5>
+              <h5 className="text-sm font-bold text-pink-700 mb-3 flex items-center pulse-glow">
+                <span className="mr-2">💕</span>
+                Secret Crushes ({crushes.length})
+              </h5>
               <div className="space-y-2">
                 {crushes.map((relationship: any) => (
                   <div key={relationship.id} className="flex items-center space-x-2">

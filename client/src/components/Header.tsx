@@ -21,23 +21,25 @@ export default function Header({ user, notifications }: HeaderProps) {
   return (
     <>
       <ServiceBanner />
-      <header className="app-gradient text-white shadow-md w-full">
+      <header className="gradient-bg text-white shadow-md w-full teen-shadow">
         <div className="w-full px-4 sm:px-6">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center space-x-8">
-            <h1 className="text-2xl font-bold">Wrickit</h1>
+            <h1 className="text-2xl font-bold rainbow-text wiggle cursor-pointer">
+              ✨ Wrickit 🌟
+            </h1>
             <nav className="hidden md:flex space-x-6">
-              <a href="#" className="hover:text-gray-200 flex items-center space-x-1">
+              <a href="#" className="hover:text-yellow-200 flex items-center space-x-1 transition-all duration-300 hover:scale-110">
                 <Home className="w-4 h-4" />
-                <span>Home</span>
+                <span>🏠 Home</span>
               </a>
-              <a href="#" className="hover:text-gray-200 flex items-center space-x-1">
+              <a href="#" className="hover:text-pink-200 flex items-center space-x-1 transition-all duration-300 hover:scale-110">
                 <Users className="w-4 h-4" />
-                <span>Friends</span>
+                <span>👥 Squad</span>
               </a>
-              <a href="#" className="hover:text-gray-200 flex items-center space-x-1">
+              <a href="#" className="hover:text-blue-200 flex items-center space-x-1 transition-all duration-300 hover:scale-110">
                 <MessageCircle className="w-4 h-4" />
-                <span>Messages</span>
+                <span>💬 Chats</span>
               </a>
             </nav>
           </div>
@@ -46,17 +48,17 @@ export default function Header({ user, notifications }: HeaderProps) {
             <div className="hidden md:flex items-center space-x-2">
               <UserSearchDialog 
                 trigger={
-                  <Button variant="ghost" size="sm" className="text-white hover:text-gray-200">
+                  <Button variant="ghost" size="sm" className="text-white hover:text-yellow-200 transition-all duration-300 hover:scale-105 bouncy">
                     <Search className="w-4 h-4 mr-1" />
-                    <span className="hidden lg:inline">Find</span>
+                    <span className="hidden lg:inline">🔍 Find</span>
                   </Button>
                 }
               />
               <CreateChatGroupDialog
                 trigger={
-                  <Button variant="ghost" size="sm" className="text-white hover:text-gray-200">
+                  <Button variant="ghost" size="sm" className="text-white hover:text-green-200 transition-all duration-300 hover:scale-105 pulse-glow">
                     <Users className="w-4 h-4 mr-1" />
-                    <span className="hidden lg:inline">Group</span>
+                    <span className="hidden lg:inline">✨ Squad Up</span>
                   </Button>
                 }
               />
@@ -69,11 +71,13 @@ export default function Header({ user, notifications }: HeaderProps) {
                 <img
                   src={user.profileImageUrl}
                   alt="Profile"
-                  className="w-8 h-8 rounded-full profile-pic"
+                  className="w-8 h-8 rounded-full profile-pic sparkle-border hover:scale-110 transition-transform duration-300"
                 />
               ) : (
-                <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
-                  <span className="text-sm font-bold">{user.name?.charAt(0) || user.firstName?.charAt(0)}</span>
+                <div className="w-8 h-8 rounded-full glass-effect flex items-center justify-center sparkle-border hover:scale-110 transition-transform duration-300 cursor-pointer" title="Click to add a profile pic! 📸">
+                  <span className="text-sm font-bold">
+                    {user.name?.charAt(0) || user.firstName?.charAt(0) || "😊"}
+                  </span>
                 </div>
               )}
               <span className="hidden sm:inline">{user.name || user.firstName}</span>

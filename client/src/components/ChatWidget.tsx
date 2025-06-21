@@ -100,13 +100,13 @@ export default function ChatWidget({ userId, onClose }: ChatWidgetProps) {
   const contactName = `User ${userId}`;
 
   return (
-    <Card className="fixed bottom-4 right-4 w-80 content-box rounded-lg shadow-lg">
-      <CardHeader className="fb-blue-bg text-white p-3 rounded-t-lg flex flex-row items-center justify-between">
-        <div className="flex items-center space-x-2">
-          <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
-            <span className="text-xs font-bold">{contactName.charAt(0)}</span>
+    <Card className="fixed bottom-4 right-4 w-80 glass-effect rounded-xl teen-shadow sparkle-border">
+      <CardHeader className="gradient-bg text-white p-3 rounded-t-xl flex flex-row items-center justify-between">
+        <div className="flex items-center space-x-3">
+          <div className="w-8 h-8 rounded-full bg-white/30 flex items-center justify-center pulse-glow">
+            <span className="text-sm font-bold">{contactName.charAt(0)}</span>
           </div>
-          <span className="font-bold">{contactName}</span>
+          <span className="font-bold">💬 {contactName}</span>
         </div>
         <Button
           variant="ghost"
@@ -152,19 +152,19 @@ export default function ChatWidget({ userId, onClose }: ChatWidgetProps) {
           </div>
         </div>
         
-        <div className="p-3 border-t border-gray-200">
+        <div className="p-3 border-t border-purple-200 bg-gradient-to-r from-purple-50 to-pink-50">
           <form onSubmit={handleSubmit} className="flex space-x-2">
             <Input
               type="text"
-              placeholder="Type a message..."
+              placeholder="Type something cute... 💕"
               value={message}
               onChange={(e) => setMessage(e.target.value)}
-              className="flex-1 text-sm"
+              className="flex-1 text-sm border-purple-200 focus:border-purple-400 rounded-full"
             />
             <Button
               type="submit"
               disabled={sendMessageMutation.isPending}
-              className="fb-blue-bg hover:bg-blue-700 text-white"
+              className="gradient-bg hover:scale-110 transition-transform duration-300 text-white rounded-full w-10 h-10 p-0 teen-shadow"
             >
               <Send className="w-4 h-4" />
             </Button>
