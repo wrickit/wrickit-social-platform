@@ -47,13 +47,51 @@ export default function ProfilePictureDialog({ trigger, userId, currentImageUrl 
     },
   });
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const compressImage = (file: File): Promise<string> => {
+    return new Promise((resolve) => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d')!;
+      const img = new Image();
+      
+      img.onload = () => {
+        // Set maximum dimensions
+        const maxSize = 400;
+        let { width, height } = img;
+        
+        if (width > height) {
+          if (width > maxSize) {
+            height = (height * maxSize) / width;
+            width = maxSize;
+          }
+        } else {
+          if (height > maxSize) {
+            width = (width * maxSize) / height;
+            height = maxSize;
+          }
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        
+        // Draw and compress
+        ctx.drawImage(img, 0, 0, width, height);
+        const compressed = canvas.toDataURL('image/jpeg', 0.8);
+        resolve(compressed);
+      };
+      
+      const reader = new FileReader();
+      reader.onload = () => img.src = reader.result as string;
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+      if (file.size > 10 * 1024 * 1024) { // 10MB limit
         toast({
           title: "File too large",
-          description: "Please select an image smaller than 5MB",
+          description: "Please select an image smaller than 10MB",
           variant: "destructive",
         });
         return;
@@ -68,12 +106,17 @@ export default function ProfilePictureDialog({ trigger, userId, currentImageUrl 
         return;
       }
 
-      setUploadedFile(file);
-      const reader = new FileReader();
-      reader.onload = () => {
-        setPreviewUrl(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+      try {
+        const compressedDataUrl = await compressImage(file);
+        setUploadedFile(file);
+        setPreviewUrl(compressedDataUrl);
+      } catch (error) {
+        toast({
+          title: "Error processing image",
+          description: "Failed to process the selected image",
+          variant: "destructive",
+        });
+      }
     }
   };
 
@@ -85,14 +128,9 @@ export default function ProfilePictureDialog({ trigger, userId, currentImageUrl 
   const handleSave = () => {
     if (activeTab === "url" && imageUrl) {
       updateProfilePictureMutation.mutate(imageUrl);
-    } else if (activeTab === "upload" && uploadedFile) {
-      // For now, we'll convert the file to base64 and use it as a data URL
-      // In a real app, you'd upload to a cloud service like Cloudinary or AWS S3
-      const reader = new FileReader();
-      reader.onload = () => {
-        updateProfilePictureMutation.mutate(reader.result as string);
-      };
-      reader.readAsDataURL(uploadedFile);
+    } else if (activeTab === "upload" && uploadedFile && previewUrl) {
+      // Use the compressed image data URL
+      updateProfilePictureMutation.mutate(previewUrl);
     } else {
       toast({
         title: "No image selected",
