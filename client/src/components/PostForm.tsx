@@ -114,10 +114,13 @@ export default function PostForm() {
     if (!files) return;
 
     for (const file of Array.from(files)) {
-      if (file.size > 10 * 1024 * 1024) { // 10MB limit
+      const sizeLimit = file.type.startsWith('video/') ? 20 * 1024 * 1024 : 10 * 1024 * 1024; // 20MB for videos, 10MB for images
+      const sizeLimitText = file.type.startsWith('video/') ? "20MB" : "10MB";
+      
+      if (file.size > sizeLimit) {
         toast({
           title: "File Too Large",
-          description: "Please select files smaller than 10MB.",
+          description: `Please select ${file.type.startsWith('video/') ? 'videos' : 'images'} smaller than ${sizeLimitText}.`,
           variant: "destructive",
         });
         continue;
