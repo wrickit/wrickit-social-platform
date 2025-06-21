@@ -230,7 +230,7 @@ export default function PostFeed({ showAll = false, maxPosts = 5, sortBy = "rece
                       <img
                         src={post.mediaUrls[0]}
                         alt="Post media"
-                        className="w-full max-h-96 object-cover rounded-lg border"
+                        className="w-full max-h-96 object-contain rounded-lg border bg-gray-50 dark:bg-gray-800"
                         onError={(e) => {
                           const target = e.target as HTMLImageElement;
                           target.style.display = 'none';
@@ -252,13 +252,13 @@ export default function PostFeed({ showAll = false, maxPosts = 5, sortBy = "rece
                   </div>
                 ) : (
                   <div className="grid grid-cols-2 gap-2">
-                    {post.mediaUrls.map((mediaUrl, index) => (
+                    {post.mediaUrls.map((mediaUrl: string, index: number) => (
                       <div key={index} className="aspect-square">
                         {post.mediaTypes?.[index] === 'image' ? (
                           <img
                             src={mediaUrl}
                             alt={`Post media ${index + 1}`}
-                            className="w-full h-full object-cover rounded-lg border"
+                            className="w-full h-full object-contain rounded-lg border bg-gray-50 dark:bg-gray-800"
                             onError={(e) => {
                               const target = e.target as HTMLImageElement;
                               target.style.display = 'none';
@@ -268,7 +268,7 @@ export default function PostFeed({ showAll = false, maxPosts = 5, sortBy = "rece
                           <video
                             src={mediaUrl}
                             controls
-                            className="w-full h-full object-cover rounded-lg border"
+                            className="w-full h-full rounded-lg border"
                             onError={(e) => {
                               const target = e.target as HTMLVideoElement;
                               target.style.display = 'none';

@@ -13,20 +13,34 @@ import { Image, Video, Link, X, Plus } from "lucide-react";
 
 
 // Image compression utility
-const compressImage = (file: File, maxWidth: number = 800, quality: number = 0.8): Promise<string> => {
+const compressImage = (file: File, maxWidth: number = 1200, quality: number = 0.85): Promise<string> => {
   return new Promise((resolve, reject) => {
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d')!;
     const img = document.createElement('img');
     
     img.onload = () => {
-      // Calculate new dimensions
-      const ratio = Math.min(maxWidth / img.width, maxWidth / img.height);
-      canvas.width = img.width * ratio;
-      canvas.height = img.height * ratio;
+      // Calculate new dimensions while maintaining aspect ratio
+      let { width, height } = img;
       
-      // Draw and compress
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      // Only resize if image is larger than maxWidth
+      if (width > maxWidth || height > maxWidth) {
+        if (width > height) {
+          height = (height * maxWidth) / width;
+          width = maxWidth;
+        } else {
+          width = (width * maxWidth) / height;
+          height = maxWidth;
+        }
+      }
+      
+      canvas.width = width;
+      canvas.height = height;
+      
+      // Clear canvas and draw image
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0, width, height);
+      
       resolve(canvas.toDataURL('image/jpeg', quality));
       
       // Clean up object URL
@@ -122,8 +136,8 @@ export default function PostForm() {
           // For videos, we'll create a data URL directly
           const reader = new FileReader();
           reader.onload = (e) => {
-            if (e.target?.result) {
-              setMediaFiles(prev => [...prev, e.target.result as string]);
+            if (e.target && e.target.result) {
+              setMediaFiles(prev => [...prev, e.target!.result as string]);
               setMediaTypes(prev => [...prev, 'video']);
               toast({
                 title: "Video Added",
@@ -216,7 +230,7 @@ export default function PostForm() {
                     <img
                       src={media}
                       alt={`Upload ${index + 1}`}
-                      className="w-full h-24 object-cover rounded-lg"
+                      className="w-full h-24 object-contain rounded-lg bg-white dark:bg-gray-600"
                     />
                   ) : (
                     <div className="w-full h-24 bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center">
