@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Edit, Save, X, Camera } from "lucide-react";
 import { useState } from "react";
 import { apiRequest } from "@/lib/queryClient";
+import ProfilePictureDialog from "@/components/ProfilePictureDialog";
 
 import { useLocation } from "wouter";
 
@@ -122,13 +123,19 @@ export default function Profile() {
                         </div>
                       )}
                       {isOwnProfile && (
-                        <Button
-                          size="sm"
-                          variant="secondary"
-                          className="absolute -bottom-2 -right-2 w-8 h-8 p-0 rounded-full"
-                        >
-                          <Camera className="w-4 h-4" />
-                        </Button>
+                        <ProfilePictureDialog
+                          userId={profileUser.id}
+                          currentImageUrl={profileUser.profileImageUrl}
+                          trigger={
+                            <Button
+                              size="sm"
+                              variant="secondary"
+                              className="absolute -bottom-2 -right-2 w-8 h-8 p-0 rounded-full"
+                            >
+                              <Camera className="w-4 h-4" />
+                            </Button>
+                          }
+                        />
                       )}
                     </div>
                     <div>

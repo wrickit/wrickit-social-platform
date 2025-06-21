@@ -5,6 +5,7 @@ import NotificationDropdown from "@/components/NotificationDropdown";
 import UserSearchDialog from "@/components/UserSearchDialog";
 import HamburgerMenu from "@/components/HamburgerMenu";
 import CreateChatGroupDialog from "@/components/CreateChatGroupDialog";
+import ProfilePictureDialog from "@/components/ProfilePictureDialog";
 import ServiceBanner from "@/components/ServiceBanner";
 import { Home, Users, MessageCircle, Bell, LogOut, UserPlus, Search } from "lucide-react";
 import { useLocation, Link } from "wouter";
@@ -72,19 +73,26 @@ export default function Header({ user, notifications }: HeaderProps) {
             <NotificationDropdown />
             
             <div className="flex items-center space-x-2">
-              {user.profileImageUrl ? (
-                <img
-                  src={user.profileImageUrl}
-                  alt="Profile"
-                  className="w-8 h-8 rounded-full profile-pic sparkle-border hover:scale-110 transition-transform duration-300"
-                />
-              ) : (
-                <div className="w-8 h-8 rounded-full glass-effect flex items-center justify-center sparkle-border hover:scale-110 transition-transform duration-300 cursor-pointer" title="Click to add a profile pic! 📸">
-                  <span className="text-sm font-bold">
-                    {user.name?.charAt(0) || user.firstName?.charAt(0) || "😊"}
-                  </span>
-                </div>
-              )}
+              <ProfilePictureDialog
+                userId={user.id}
+                currentImageUrl={user.profileImageUrl}
+                trigger={
+                  user.profileImageUrl ? (
+                    <img
+                      src={user.profileImageUrl}
+                      alt="Profile"
+                      className="w-8 h-8 rounded-full profile-pic sparkle-border hover:scale-110 transition-transform duration-300 cursor-pointer"
+                      title="Click to change profile picture"
+                    />
+                  ) : (
+                    <div className="w-8 h-8 rounded-full glass-effect flex items-center justify-center sparkle-border hover:scale-110 transition-transform duration-300 cursor-pointer" title="Click to add a profile pic! 📸">
+                      <span className="text-sm font-bold">
+                        {user.name?.charAt(0) || user.firstName?.charAt(0) || "😊"}
+                      </span>
+                    </div>
+                  )
+                }
+              />
               <span className="hidden sm:inline">{user.name || user.firstName}</span>
             </div>
             
