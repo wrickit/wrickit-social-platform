@@ -14,10 +14,10 @@ import { Image, Video, Link, X, Plus } from "lucide-react";
 
 // Image compression utility
 const compressImage = (file: File, maxWidth: number = 800, quality: number = 0.8): Promise<string> => {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d')!;
-    const img = new HTMLImageElement();
+    const img = document.createElement('img');
     
     img.onload = () => {
       // Calculate new dimensions
@@ -28,6 +28,14 @@ const compressImage = (file: File, maxWidth: number = 800, quality: number = 0.8
       // Draw and compress
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
       resolve(canvas.toDataURL('image/jpeg', quality));
+      
+      // Clean up object URL
+      URL.revokeObjectURL(img.src);
+    };
+    
+    img.onerror = () => {
+      reject(new Error('Failed to load image'));
+      URL.revokeObjectURL(img.src);
     };
     
     img.src = URL.createObjectURL(file);
@@ -101,23 +109,50 @@ export default function PostForm() {
         continue;
       }
 
-      if (file.type.startsWith('image/')) {
-        try {
+      try {
+        if (file.type.startsWith('image/')) {
           const compressedImage = await compressImage(file);
           setMediaFiles(prev => [...prev, compressedImage]);
           setMediaTypes(prev => [...prev, 'image']);
-        } catch (error) {
-          console.error('Image compression failed:', error);
           toast({
-            title: "Upload Error",
-            description: "Failed to process image. Please try again.",
+            title: "Image Added",
+            description: "Image uploaded successfully!",
+          });
+        } else if (file.type.startsWith('video/')) {
+          // For videos, we'll create a data URL directly
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            if (e.target?.result) {
+              setMediaFiles(prev => [...prev, e.target.result as string]);
+              setMediaTypes(prev => [...prev, 'video']);
+              toast({
+                title: "Video Added",
+                description: "Video uploaded successfully!",
+              });
+            }
+          };
+          reader.onerror = () => {
+            toast({
+              title: "Upload Error",
+              description: "Failed to process video. Please try again.",
+              variant: "destructive",
+            });
+          };
+          reader.readAsDataURL(file);
+        } else {
+          toast({
+            title: "Unsupported File",
+            description: "Please select image or video files only.",
             variant: "destructive",
           });
         }
-      } else if (file.type.startsWith('video/')) {
-        const videoUrl = URL.createObjectURL(file);
-        setMediaFiles(prev => [...prev, videoUrl]);
-        setMediaTypes(prev => [...prev, 'video']);
+      } catch (error) {
+        console.error('File processing failed:', error);
+        toast({
+          title: "Upload Error",
+          description: "Failed to process file. Please try again.",
+          variant: "destructive",
+        });
       }
     }
     
