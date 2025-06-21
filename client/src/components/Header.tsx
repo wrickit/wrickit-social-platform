@@ -7,7 +7,7 @@ import HamburgerMenu from "@/components/HamburgerMenu";
 import CreateChatGroupDialog from "@/components/CreateChatGroupDialog";
 import ServiceBanner from "@/components/ServiceBanner";
 import { Home, Users, MessageCircle, Bell, LogOut, UserPlus, Search } from "lucide-react";
-import { useLocation } from "wouter";
+import { useLocation, Link } from "wouter";
 
 interface HeaderProps {
   user: any;
@@ -42,10 +42,10 @@ export default function Header({ user, notifications }: HeaderProps) {
                 <Users className="w-4 h-4" />
                 <span>👥 Squad</span>
               </a>
-              <a href="#" className="hover:text-blue-200 flex items-center space-x-1 transition-all duration-300 hover:scale-110">
+              <Link href="/messages" className="hover:text-blue-200 flex items-center space-x-1 transition-all duration-300 hover:scale-110">
                 <MessageCircle className="w-4 h-4" />
                 <span>💬 Chats</span>
-              </a>
+              </Link>
             </nav>
           </div>
           <div className="flex items-center space-x-2 sm:space-x-4">
