@@ -7,6 +7,7 @@ import HamburgerMenu from "@/components/HamburgerMenu";
 import CreateChatGroupDialog from "@/components/CreateChatGroupDialog";
 import ServiceBanner from "@/components/ServiceBanner";
 import { Home, Users, MessageCircle, Bell, LogOut, UserPlus, Search } from "lucide-react";
+import { useLocation } from "wouter";
 
 interface HeaderProps {
   user: any;
@@ -15,8 +16,10 @@ interface HeaderProps {
 
 export default function Header({ user, notifications }: HeaderProps) {
   const { logout } = useAuth();
+  const [location] = useLocation();
 
   const unreadCount = notifications.filter(n => !n.isRead).length;
+  const isOnDashboard = location === "/" || location === "/dashboard";
 
   return (
     <>
@@ -29,10 +32,12 @@ export default function Header({ user, notifications }: HeaderProps) {
               ✨ Wrickit 🌟
             </h1>
             <nav className="hidden md:flex space-x-6">
-              <a href="#" className="hover:text-yellow-200 flex items-center space-x-1 transition-all duration-300 hover:scale-110">
-                <Home className="w-4 h-4" />
-                <span>🏠 Home</span>
-              </a>
+              {!isOnDashboard && (
+                <a href="/" className="hover:text-yellow-200 flex items-center space-x-1 transition-all duration-300 hover:scale-110">
+                  <Home className="w-4 h-4" />
+                  <span>🏠 Home</span>
+                </a>
+              )}
               <a href="#" className="hover:text-pink-200 flex items-center space-x-1 transition-all duration-300 hover:scale-110">
                 <Users className="w-4 h-4" />
                 <span>👥 Squad</span>
