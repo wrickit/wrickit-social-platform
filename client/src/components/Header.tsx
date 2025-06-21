@@ -56,7 +56,7 @@ export default function Header({ user, notifications }: HeaderProps) {
               />
               <CreateChatGroupDialog
                 trigger={
-                  <Button variant="ghost" size="sm" className="text-white hover:text-green-200 transition-all duration-300 hover:scale-105 pulse-glow">
+                  <Button variant="ghost" size="sm" className="text-white hover:text-green-200 transition-all duration-300 hover:scale-105">
                     <Users className="w-4 h-4 mr-1" />
                     <span className="hidden lg:inline">✨ Squad Up</span>
                   </Button>

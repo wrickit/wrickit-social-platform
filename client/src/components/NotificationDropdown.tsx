@@ -63,7 +63,7 @@ export default function NotificationDropdown() {
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
-        <Button variant="ghost" size="sm" className="relative p-2 hover:scale-110 transition-transform duration-300">
+        <Button variant="ghost" size="sm" className={`relative p-2 hover:scale-110 transition-transform duration-300 ${unreadCount > 0 ? 'pulse-glow' : ''}`}>
           <span className="text-xl wiggle">🔔</span>
           {unreadCount > 0 && (
             <Badge 
