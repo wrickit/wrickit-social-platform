@@ -12,6 +12,7 @@ export default function Login() {
   const [name, setName] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
   
   const { login } = useAuth();
   const [, setLocation] = useLocation();
@@ -19,15 +20,23 @@ export default function Login() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setError("");
 
     try {
       await login(name, password);
       setLocation("/");
     } catch (error: any) {
       console.error("Login failed:", error);
+      setError("Invalid username or password. Please try again.");
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleInputChange = (field: 'name' | 'password', value: string) => {
+    if (error) setError(""); // Clear error when user starts typing
+    if (field === 'name') setName(value);
+    if (field === 'password') setPassword(value);
   };
 
   return (
@@ -68,8 +77,9 @@ export default function Login() {
                   type="text"
                   placeholder="Enter your name"
                   value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  onChange={(e) => handleInputChange('name', e.target.value)}
                   required
+                  className={error ? "border-red-300 focus:border-red-500" : ""}
                 />
               </div>
 
@@ -80,10 +90,18 @@ export default function Login() {
                   type="password"
                   placeholder="Enter your password"
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => handleInputChange('password', e.target.value)}
                   required
+                  className={error ? "border-red-300 focus:border-red-500" : ""}
                 />
               </div>
+
+              {error && (
+                <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700">
+                  <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                  <span className="text-sm">{error}</span>
+                </div>
+              )}
 
               <Button
                 type="submit"

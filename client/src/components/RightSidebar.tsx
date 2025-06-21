@@ -15,14 +15,14 @@ export default function RightSidebar({
   notifications, 
   onOpenChat 
 }: RightSidebarProps) {
-  // Filter relationships by type
-  const bestFriends = relationships.filter(r => r.type === 'best_friend').slice(0, 3);
-  const friends = relationships.filter(r => r.type === 'friend').slice(0, 3);
-  const acquaintances = relationships.filter(r => r.type === 'acquaintance').slice(0, 2);
-  const crushes = relationships.filter(r => r.type === 'crush');
+  // Filter relationships by type with null checks
+  const bestFriends = (relationships || []).filter(r => r.type === 'best_friend').slice(0, 3);
+  const friends = (relationships || []).filter(r => r.type === 'friend').slice(0, 3);
+  const acquaintances = (relationships || []).filter(r => r.type === 'acquaintance').slice(0, 2);
+  const crushes = (relationships || []).filter(r => r.type === 'crush');
   
-  // Find friend group notifications
-  const friendGroupNotifications = notifications.filter(
+  // Find friend group notifications with null check
+  const friendGroupNotifications = (notifications || []).filter(
     n => n.type === 'friend_group_created' && !n.isRead
   ).slice(0, 1);
 

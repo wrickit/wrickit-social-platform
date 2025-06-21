@@ -105,9 +105,9 @@ export default function Dashboard() {
           {/* Right sidebar - hidden on mobile and tablet */}
           <div className="hidden xl:block xl:w-80">
             <RightSidebar 
-              relationships={relationships}
-              friendGroups={friendGroups}
-              notifications={notifications}
+              relationships={relationships as any[]}
+              friendGroups={friendGroups as any[]}
+              notifications={notifications as any[]}
               onOpenChat={openChat}
             />
           </div>
