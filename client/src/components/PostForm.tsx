@@ -176,21 +176,54 @@ export default function PostForm() {
     }
   };
 
+  // Helper function to convert YouTube/Vimeo URLs to embed format
+  const getEmbedUrl = (url: string): string => {
+    // YouTube URL conversion
+    if (url.includes('youtube.com/watch?v=')) {
+      const videoId = url.split('v=')[1]?.split('&')[0];
+      return `https://www.youtube.com/embed/${videoId}`;
+    }
+    if (url.includes('youtu.be/')) {
+      const videoId = url.split('youtu.be/')[1]?.split('?')[0];
+      return `https://www.youtube.com/embed/${videoId}`;
+    }
+    
+    // Vimeo URL conversion
+    if (url.includes('vimeo.com/')) {
+      const videoId = url.split('vimeo.com/')[1]?.split('?')[0];
+      return `https://player.vimeo.com/video/${videoId}`;
+    }
+    
+    return url; // Return original URL if no conversion needed
+  };
+
   const handleUrlAdd = () => {
     if (!urlInput.trim()) return;
     
     const url = urlInput.trim();
     let mediaType = 'image';
+    let finalUrl = url;
     
-    // Detect media type from URL
-    if (url.includes('youtube.com') || url.includes('youtu.be') || url.includes('vimeo.com') || url.match(/\.(mp4|webm|ogg)$/i)) {
+    // Detect and convert video URLs
+    if (url.includes('youtube.com') || url.includes('youtu.be')) {
+      mediaType = 'embed_video';
+      finalUrl = getEmbedUrl(url);
+    } else if (url.includes('vimeo.com')) {
+      mediaType = 'embed_video';
+      finalUrl = getEmbedUrl(url);
+    } else if (url.match(/\.(mp4|webm|ogg)$/i)) {
       mediaType = 'video';
     }
     
-    setMediaFiles(prev => [...prev, url]);
+    setMediaFiles(prev => [...prev, finalUrl]);
     setMediaTypes(prev => [...prev, mediaType]);
     setUrlInput("");
     setShowUrlDialog(false);
+    
+    toast({
+      title: "Media Added",
+      description: `${mediaType === 'embed_video' ? 'Video' : mediaType === 'video' ? 'Video' : 'Image'} URL added successfully!`,
+    });
   };
 
   const removeMedia = (index: number) => {
@@ -232,10 +265,15 @@ export default function PostForm() {
                       alt={`Upload ${index + 1}`}
                       className="w-full h-24 object-contain rounded-lg bg-white dark:bg-gray-600"
                     />
+                  ) : mediaTypes[index] === 'embed_video' ? (
+                    <div className="w-full h-24 bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center">
+                      <Video className="w-8 h-8 text-blue-500" />
+                      <span className="ml-2 text-sm text-blue-600 dark:text-blue-400">Embedded Video</span>
+                    </div>
                   ) : (
                     <div className="w-full h-24 bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center">
                       <Video className="w-8 h-8 text-gray-500" />
-                      <span className="ml-2 text-sm text-gray-600 dark:text-gray-400">Video</span>
+                      <span className="ml-2 text-sm text-gray-600 dark:text-gray-400">Video File</span>
                     </div>
                   )}
                 </div>

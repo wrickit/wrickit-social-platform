@@ -236,6 +236,15 @@ export default function PostFeed({ showAll = false, maxPosts = 5, sortBy = "rece
                           target.style.display = 'none';
                         }}
                       />
+                    ) : post.mediaTypes?.[0] === 'embed_video' ? (
+                      <iframe
+                        src={post.mediaUrls[0]}
+                        className="w-full h-80 rounded-lg border"
+                        frameBorder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                        title="Embedded video"
+                      />
                     ) : (
                       <video
                         src={post.mediaUrls[0]}
@@ -263,6 +272,15 @@ export default function PostFeed({ showAll = false, maxPosts = 5, sortBy = "rece
                               const target = e.target as HTMLImageElement;
                               target.style.display = 'none';
                             }}
+                          />
+                        ) : post.mediaTypes?.[index] === 'embed_video' ? (
+                          <iframe
+                            src={mediaUrl}
+                            className="w-full h-full rounded-lg border"
+                            frameBorder="0"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowFullScreen
+                            title={`Embedded video ${index + 1}`}
                           />
                         ) : (
                           <video
