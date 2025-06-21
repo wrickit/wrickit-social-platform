@@ -18,7 +18,7 @@ export default function ChatWidget({ userId, onClose }: ChatWidgetProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
 
-  const { data: messages = [] } = useQuery({
+  const { data: messages = [] } = useQuery<any[]>({
     queryKey: ["/api/messages", userId],
   });
 
@@ -62,8 +62,19 @@ export default function ChatWidget({ userId, onClose }: ChatWidgetProps) {
 
   // Scroll to bottom of messages
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
   }, [messages]);
+
+  // Scroll to bottom when widget opens
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "auto" });
+      }, 100);
+    }
+  }, [userId]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -108,35 +119,37 @@ export default function ChatWidget({ userId, onClose }: ChatWidgetProps) {
       </CardHeader>
       
       <CardContent className="p-0">
-        <div className="h-64 p-3 overflow-y-auto bg-gray-50">
-          {messages.length === 0 ? (
-            <div className="text-center text-fb-text-light py-8">
-              <p>No messages yet. Start the conversation!</p>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {messages.map((msg: any) => (
-                <div
-                  key={msg.id}
-                  className={`p-2 rounded text-sm ${
-                    msg.fromUserId === userId
-                      ? "bg-white ml-8"
-                      : "fb-blue-bg text-white mr-8"
-                  }`}
-                >
-                  <p>{msg.content}</p>
-                  <p className={`text-xs mt-1 ${
-                    msg.fromUserId === userId
-                      ? "text-fb-text-light"
-                      : "text-blue-100"
-                  }`}>
-                    {msg.createdAt ? formatDistanceToNow(new Date(msg.createdAt), { addSuffix: true }) : 'Just now'}
-                  </p>
-                </div>
-              ))}
-              <div ref={messagesEndRef} />
-            </div>
-          )}
+        <div className="h-64 overflow-hidden flex flex-col bg-gray-50">
+          <div className="flex-1 overflow-y-auto p-3" style={{ scrollBehavior: 'smooth' }}>
+            {(messages as any[]).length === 0 ? (
+              <div className="text-center text-fb-text-light py-8">
+                <p>No messages yet. Start the conversation!</p>
+              </div>
+            ) : (
+              <div className="space-y-2 min-h-full flex flex-col justify-end">
+                {(messages as any[]).map((msg: any) => (
+                  <div
+                    key={msg.id}
+                    className={`p-2 rounded text-sm ${
+                      msg.fromUserId === userId
+                        ? "bg-white ml-8"
+                        : "fb-blue-bg text-white mr-8"
+                    }`}
+                  >
+                    <p>{msg.content}</p>
+                    <p className={`text-xs mt-1 ${
+                      msg.fromUserId === userId
+                        ? "text-fb-text-light"
+                        : "text-blue-100"
+                    }`}>
+                      {msg.createdAt ? formatDistanceToNow(new Date(msg.createdAt), { addSuffix: true }) : 'Just now'}
+                    </p>
+                  </div>
+                ))}
+                <div ref={messagesEndRef} />
+              </div>
+            )}
+          </div>
         </div>
         
         <div className="p-3 border-t border-gray-200">
