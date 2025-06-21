@@ -5,11 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { ThumbsUp, ThumbsDown, AlertTriangle, Clock } from "lucide-react";
+import { useLocation } from "wouter";
+import { ThumbsUp, ThumbsDown, AlertTriangle, Clock, ArrowLeft } from "lucide-react";
 
 export default function Disciplinary() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [, setLocation] = useLocation();
 
   const { data: actions = [], isLoading } = useQuery({
     queryKey: ["/api/disciplinary-actions"],
@@ -78,6 +80,14 @@ export default function Disciplinary() {
   return (
     <div className="container mx-auto p-4 max-w-4xl">
       <div className="mb-6">
+        <Button
+          variant="ghost"
+          onClick={() => setLocation("/")}
+          className="app-text hover:bg-gray-100 dark:hover:bg-gray-700 mb-4"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back to Dashboard
+        </Button>
         <h1 className="text-2xl font-bold app-text mb-2">Disciplinary Review</h1>
         <p className="app-text-light">
           Review and vote on disciplinary actions submitted by the community. 

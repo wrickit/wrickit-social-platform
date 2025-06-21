@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
+import { useLocation } from "wouter";
 import { 
   Search, 
   Send, 
@@ -62,6 +63,7 @@ export default function Messages() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [, setLocation] = useLocation();
   
   const [selectedConversation, setSelectedConversation] = useState<number | null>(null);
   const [newMessage, setNewMessage] = useState("");
@@ -189,7 +191,18 @@ export default function Messages() {
           {/* Header */}
           <div className="p-4 border-b border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between mb-3">
-              <h1 className="text-xl font-bold app-text">Messages</h1>
+              <div className="flex items-center space-x-3">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setLocation("/")}
+                  className="app-text hover:bg-gray-100 dark:hover:bg-gray-700"
+                >
+                  <ArrowLeft className="w-4 h-4 mr-1" />
+                  Back
+                </Button>
+                <h1 className="text-xl font-bold app-text">Messages</h1>
+              </div>
               <Button
                 onClick={() => setShowNewChat(!showNewChat)}
                 size="sm"
