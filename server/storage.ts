@@ -48,7 +48,7 @@ export interface IStorage {
   checkMutualCrush(userId1: number, userId2: number): Promise<boolean>;
   
   // Post operations
-  createPost(authorId: number, content: string, audience: string, mediaUrls?: string[], mediaTypes?: string[]): Promise<Post>;
+  createPost(authorId: number, content: string, audience: string, mediaUrls?: string[], mediaTypes?: string[], voiceMessageUrl?: string, voiceMessageDuration?: number): Promise<Post>;
   getPosts(limit?: number, userClass?: string): Promise<(Post & { author: User; comments: (Comment & { author: User })[]; likesCount: number; isLikedByUser?: boolean })[]>;
   likePost(postId: number, userId: number): Promise<{ success: boolean; isLiked: boolean }>;
   unlikePost(postId: number, userId: number): Promise<void>;
@@ -58,7 +58,7 @@ export interface IStorage {
   getCommentsByPostId(postId: number): Promise<(Comment & { author: User })[]>;
   
   // Message operations
-  createMessage(fromUserId: number, toUserId: number, content: string): Promise<Message>;
+  createMessage(fromUserId: number, toUserId: number, content: string, voiceMessageUrl?: string, voiceMessageDuration?: number): Promise<Message>;
   getMessagesBetweenUsers(userId1: number, userId2: number): Promise<(Message & { fromUser: User; toUser: User })[]>;
   getRecentMessagesByUserId(userId: number): Promise<(Message & { fromUser: User; toUser: User })[]>;
   markMessagesAsRead(currentUserId: number, otherUserId: number): Promise<void>;
@@ -303,7 +303,7 @@ export class DatabaseStorage implements IStorage {
     return crushes.length === 2;
   }
 
-  async createPost(authorId: number, content: string, audience: string, mediaUrls?: string[], mediaTypes?: string[]): Promise<Post> {
+  async createPost(authorId: number, content: string, audience: string, mediaUrls?: string[], mediaTypes?: string[], voiceMessageUrl?: string, voiceMessageDuration?: number): Promise<Post> {
     const [post] = await db
       .insert(posts)
       .values({ 
@@ -311,7 +311,9 @@ export class DatabaseStorage implements IStorage {
         content, 
         audience,
         mediaUrls: mediaUrls || null,
-        mediaTypes: mediaTypes || null
+        mediaTypes: mediaTypes || null,
+        voiceMessageUrl: voiceMessageUrl || null,
+        voiceMessageDuration: voiceMessageDuration || null
       })
       .returning();
     return post;
@@ -410,10 +412,16 @@ export class DatabaseStorage implements IStorage {
       .where(and(eq(postLikes.postId, postId), eq(postLikes.userId, userId)));
   }
 
-  async createMessage(fromUserId: number, toUserId: number, content: string): Promise<Message> {
+  async createMessage(fromUserId: number, toUserId: number, content: string, voiceMessageUrl?: string, voiceMessageDuration?: number): Promise<Message> {
     const [message] = await db
       .insert(messages)
-      .values({ fromUserId, toUserId, content })
+      .values({ 
+        fromUserId, 
+        toUserId, 
+        content,
+        voiceMessageUrl: voiceMessageUrl || null,
+        voiceMessageDuration: voiceMessageDuration || null
+      })
       .returning();
     return message;
   }

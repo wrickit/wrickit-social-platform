@@ -220,6 +220,17 @@ export default function PostFeed({ showAll = false, maxPosts = 5, sortBy = "rece
             </div>
             
             <p className="app-text mb-3">{post.content}</p>
+            
+            {/* Voice Message */}
+            {post.voiceMessageUrl && (
+              <div className="mb-3">
+                <VoicePlayer
+                  audioUrl={post.voiceMessageUrl}
+                  duration={post.voiceMessageDuration}
+                  size="md"
+                />
+              </div>
+            )}
 
             {/* Media Content */}
             {post.mediaUrls && post.mediaUrls.length > 0 && (

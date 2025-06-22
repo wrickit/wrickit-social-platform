@@ -332,7 +332,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         validatedData.content,
         validatedData.audience,
         validatedData.mediaUrls || undefined,
-        validatedData.mediaTypes || undefined
+        validatedData.mediaTypes || undefined,
+        validatedData.voiceMessageUrl || undefined,
+        validatedData.voiceMessageDuration || undefined
       );
       
       res.json(post);
@@ -403,7 +405,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const message = await storage.createMessage(
         req.session.userId,
         validatedData.toUserId,
-        validatedData.content
+        validatedData.content,
+        validatedData.voiceMessageUrl || undefined,
+        validatedData.voiceMessageDuration || undefined
       );
       
       res.json(message);

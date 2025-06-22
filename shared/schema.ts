@@ -36,7 +36,9 @@ export const posts = pgTable("posts", {
   audience: varchar("audience", { length: 10 }).notNull(), // 'class' or 'grade'
   likes: integer("likes").default(0),
   mediaUrls: text("media_urls").array(), // Array of image/video URLs
-  mediaTypes: text("media_types").array(), // Array of media types (image/video)
+  mediaTypes: text("media_types").array(), // Array of media types (image/video/audio)
+  voiceMessageUrl: text("voice_message_url"), // Voice message audio URL
+  voiceMessageDuration: integer("voice_message_duration"), // Duration in seconds
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -46,6 +48,8 @@ export const messages = pgTable("messages", {
   toUserId: integer("to_user_id").notNull().references(() => users.id),
   content: text("content").notNull(),
   isRead: boolean("is_read").default(false),
+  voiceMessageUrl: text("voice_message_url"), // Voice message audio URL
+  voiceMessageDuration: integer("voice_message_duration"), // Duration in seconds
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -269,6 +273,8 @@ export const insertPostSchema = createInsertSchema(posts).pick({
   audience: true,
   mediaUrls: true,
   mediaTypes: true,
+  voiceMessageUrl: true,
+  voiceMessageDuration: true,
 });
 
 export const insertCommentSchema = createInsertSchema(comments).pick({
@@ -279,6 +285,8 @@ export const insertCommentSchema = createInsertSchema(comments).pick({
 export const insertMessageSchema = createInsertSchema(messages).pick({
   toUserId: true,
   content: true,
+  voiceMessageUrl: true,
+  voiceMessageDuration: true,
 });
 
 export const emailVerificationSchema = z.object({

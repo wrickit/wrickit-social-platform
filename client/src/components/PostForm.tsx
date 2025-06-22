@@ -9,7 +9,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Image, Video, Link, X, Plus } from "lucide-react";
+import { Image, Video, Link, X, Plus, Mic } from "lucide-react";
+import VoiceRecorder from "./VoiceRecorder";
 
 
 // Image compression utility
@@ -63,13 +64,14 @@ export default function PostForm() {
   const [mediaTypes, setMediaTypes] = useState<string[]>([]);
   const [urlInput, setUrlInput] = useState("");
   const [showUrlDialog, setShowUrlDialog] = useState(false);
+  const [voiceMessage, setVoiceMessage] = useState<{ url: string; duration: number } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
   const createPostMutation = useMutation({
-    mutationFn: async (data: { content: string; audience: string; mediaUrls?: string[]; mediaTypes?: string[] }) => {
+    mutationFn: async (data: { content: string; audience: string; mediaUrls?: string[]; mediaTypes?: string[]; voiceMessageUrl?: string; voiceMessageDuration?: number }) => {
       await apiRequest("POST", "/api/posts", data);
     },
     onSuccess: () => {
@@ -78,6 +80,7 @@ export default function PostForm() {
       setMediaFiles([]);
       setMediaTypes([]);
       setUrlInput("");
+      setVoiceMessage(null);
     },
     onError: (error: any) => {
       console.error("Failed to create post:", error);
@@ -92,10 +95,10 @@ export default function PostForm() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!content.trim() && mediaFiles.length === 0) {
+    if (!content.trim() && mediaFiles.length === 0 && !voiceMessage) {
       toast({
         title: "Missing Content",
-        description: "Please add some text or media to your post.",
+        description: "Please add some text, media, or a voice message to your post.",
         variant: "destructive",
       });
       return;
@@ -106,6 +109,8 @@ export default function PostForm() {
       audience,
       mediaUrls: mediaFiles.length > 0 ? mediaFiles : undefined,
       mediaTypes: mediaTypes.length > 0 ? mediaTypes : undefined,
+      voiceMessageUrl: voiceMessage?.url,
+      voiceMessageDuration: voiceMessage?.duration,
     });
   };
 
@@ -234,6 +239,14 @@ export default function PostForm() {
     setMediaTypes(prev => prev.filter((_, i) => i !== index));
   };
 
+  const handleVoiceMessage = (audioData: string, duration: number) => {
+    setVoiceMessage({ url: audioData, duration });
+  };
+
+  const removeVoiceMessage = () => {
+    setVoiceMessage(null);
+  };
+
   return (
     <Card className="glass-effect rounded-xl teen-shadow sparkle-border">
       <CardHeader>
@@ -284,6 +297,29 @@ export default function PostForm() {
             </div>
           )}
 
+          {/* Voice Message Display */}
+          {voiceMessage && (
+            <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <Mic className="w-4 h-4 text-blue-600" />
+                  <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
+                    Voice Message ({Math.round(voiceMessage.duration)}s)
+                  </span>
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={removeVoiceMessage}
+                  className="text-red-600 hover:text-red-700"
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+          )}
+
           {/* Media Upload Controls */}
           <div className="flex items-center justify-between flex-wrap gap-2">
             <div className="flex space-x-2">
@@ -297,6 +333,14 @@ export default function PostForm() {
                 <Image className="w-4 h-4 mr-1" />
                 Photo/Video
               </Button>
+              
+              {!voiceMessage && (
+                <VoiceRecorder
+                  onVoiceMessage={handleVoiceMessage}
+                  size="sm"
+                  className="border-purple-300 text-purple-700 hover:bg-purple-50"
+                />
+              )}
 
               <Dialog open={showUrlDialog} onOpenChange={setShowUrlDialog}>
                 <DialogTrigger asChild>

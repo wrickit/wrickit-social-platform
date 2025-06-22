@@ -2,7 +2,9 @@ import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { X, Send } from "lucide-react";
+import { X, Send, Mic } from "lucide-react";
+import VoiceRecorder from "./VoiceRecorder";
+import VoicePlayer from "./VoicePlayer";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { formatDistanceToNow } from "date-fns";
@@ -15,6 +17,7 @@ interface ChatWidgetProps {
 export default function ChatWidget({ userId, onClose }: ChatWidgetProps) {
   const [message, setMessage] = useState("");
   const [ws, setWs] = useState<WebSocket | null>(null);
+  const [voiceMessage, setVoiceMessage] = useState<{ url: string; duration: number } | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
 
@@ -23,12 +26,13 @@ export default function ChatWidget({ userId, onClose }: ChatWidgetProps) {
   });
 
   const sendMessageMutation = useMutation({
-    mutationFn: async (data: { toUserId: number; content: string }) => {
+    mutationFn: async (data: { toUserId: number; content: string; voiceMessageUrl?: string; voiceMessageDuration?: number }) => {
       await apiRequest("POST", "/api/messages", data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/messages", userId] });
       setMessage("");
+      setVoiceMessage(null);
     },
   });
 
@@ -76,14 +80,16 @@ export default function ChatWidget({ userId, onClose }: ChatWidgetProps) {
     }
   }, [userId]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!message.trim()) return;
+    if (!message.trim() && !voiceMessage) return;
 
     sendMessageMutation.mutate({
       toUserId: userId,
-      content: message.trim(),
+      content: message.trim() || "",
+      voiceMessageUrl: voiceMessage?.url,
+      voiceMessageDuration: voiceMessage?.duration,
     });
 
     // Send message via WebSocket for real-time updates
@@ -91,9 +97,22 @@ export default function ChatWidget({ userId, onClose }: ChatWidgetProps) {
       ws.send(JSON.stringify({
         type: 'message',
         toUserId: userId,
-        content: message.trim(),
+        content: message.trim() || "",
+        voiceMessageUrl: voiceMessage?.url,
+        voiceMessageDuration: voiceMessage?.duration,
       }));
     }
+  };
+
+  const handleVoiceMessage = (audioData: string, duration: number) => {
+    setVoiceMessage({ url: audioData, duration });
+    // Auto-send voice message
+    sendMessageMutation.mutate({
+      toUserId: userId,
+      content: "",
+      voiceMessageUrl: audioData,
+      voiceMessageDuration: duration,
+    });
   };
 
   // For demo purposes, we'll show a placeholder user name
@@ -136,7 +155,15 @@ export default function ChatWidget({ userId, onClose }: ChatWidgetProps) {
                         : "fb-blue-bg text-white mr-8"
                     }`}
                   >
-                    <p>{msg.content}</p>
+                    {msg.voiceMessageUrl ? (
+                      <VoicePlayer
+                        audioUrl={msg.voiceMessageUrl}
+                        duration={msg.voiceMessageDuration}
+                        size="sm"
+                      />
+                    ) : (
+                      <p>{msg.content}</p>
+                    )}
                     <p className={`text-xs mt-1 ${
                       msg.fromUserId === userId
                         ? "text-fb-text-light"
@@ -153,7 +180,7 @@ export default function ChatWidget({ userId, onClose }: ChatWidgetProps) {
         </div>
         
         <div className="p-3 border-t border-purple-200 bg-gradient-to-r from-purple-50 to-pink-50">
-          <form onSubmit={handleSubmit} className="flex space-x-2">
+          <form onSubmit={handleSendMessage} className="flex space-x-2">
             <Input
               type="text"
               placeholder="Type something cute... 💕"
@@ -161,9 +188,14 @@ export default function ChatWidget({ userId, onClose }: ChatWidgetProps) {
               onChange={(e) => setMessage(e.target.value)}
               className="flex-1 text-sm border-purple-200 focus:border-purple-400 rounded-full"
             />
+            <VoiceRecorder
+              onVoiceMessage={handleVoiceMessage}
+              size="sm"
+              className="border-purple-300 text-purple-700 hover:bg-purple-50"
+            />
             <Button
               type="submit"
-              disabled={sendMessageMutation.isPending}
+              disabled={sendMessageMutation.isPending || (!message.trim() && !voiceMessage)}
               className="gradient-bg hover:scale-110 transition-transform duration-300 text-white rounded-full w-10 h-10 p-0 teen-shadow"
             >
               <Send className="w-4 h-4" />
