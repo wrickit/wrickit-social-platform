@@ -197,12 +197,7 @@ export default function RelationshipForm() {
               </div>
             )}
 
-            {selectedUserId && selectedUserName && (
-              <p className="text-sm text-green-600 mt-2 flex items-center">
-                <Check className="w-4 h-4 mr-1" />
-                {selectedUserName} selected
-              </p>
-            )}
+
           </div>
           
           <div>
