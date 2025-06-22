@@ -122,7 +122,12 @@ export default function ProfilePictureDialog({ trigger, userId, currentImageUrl 
 
   const handleUrlChange = (url: string) => {
     setImageUrl(url);
-    setPreviewUrl(url);
+    // Only set preview URL if it looks like a valid image URL
+    if (url.trim() && (url.includes('.jpg') || url.includes('.jpeg') || url.includes('.png') || url.includes('.gif') || url.includes('.webp'))) {
+      setPreviewUrl(url.trim());
+    } else if (!url.trim()) {
+      setPreviewUrl("");
+    }
   };
 
   const handleSave = () => {
@@ -210,6 +215,16 @@ export default function ProfilePictureDialog({ trigger, userId, currentImageUrl 
                 src={previewUrl}
                 alt="Profile preview"
                 className="w-24 h-24 rounded-full object-cover border-2 border-gray-200"
+                onError={(e) => {
+                  // Hide preview if image fails to load
+                  const target = e.target as HTMLImageElement;
+                  target.style.display = 'none';
+                }}
+                onLoad={(e) => {
+                  // Show preview if image loads successfully
+                  const target = e.target as HTMLImageElement;
+                  target.style.display = 'block';
+                }}
               />
             </div>
           </div>

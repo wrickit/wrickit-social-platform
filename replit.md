@@ -136,6 +136,13 @@ The application is configured for deployment on Replit with the following setup:
 - ✓ Fixed hamburger menu scrolling and added complete sidebar functionality for responsive design
 - ✓ Prevented duplicate relationships by updating existing ones instead of creating duplicates
 
+### June 22, 2025
+- ✓ Fixed database connection issues by creating PostgreSQL database and pushing schema
+- ✓ Added comprehensive deployment configuration files for multiple platforms (Heroku, Railway, Vercel, Docker)
+- ✓ Removed redundant "selected" message from social relationship addition interface
+- ✓ Improved profile picture dialog with better URL validation and preview functionality
+- ✓ Enhanced image preview with error handling for invalid URLs
+
 ## Changelog
 
 - June 19, 2025. Initial setup and comprehensive feature implementation
