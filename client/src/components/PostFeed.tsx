@@ -6,6 +6,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { ThumbsUp, MessageCircle, Send, Users, Heart } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useState } from "react";
+import VoicePlayer from "./VoicePlayer";
 
 import { Link } from "wouter";
 

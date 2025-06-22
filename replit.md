@@ -142,6 +142,13 @@ The application is configured for deployment on Replit with the following setup:
 - ✓ Removed redundant "selected" message from social relationship addition interface
 - ✓ Improved profile picture dialog with better URL validation and preview functionality
 - ✓ Enhanced image preview with error handling for invalid URLs
+- ✓ Implemented complete voice messaging system for posts and direct messages
+- ✓ Created VoiceRecorder component with microphone access and audio compression
+- ✓ Built VoicePlayer component with playback controls and progress visualization
+- ✓ Updated database schema to support voice message URLs and durations
+- ✓ Integrated voice recording functionality into PostForm and ChatWidget components
+- ✓ Enhanced message and post display to show voice messages with playback controls
+- ✓ Removed "admission number" terminology from user search interface, replaced with "username"
 
 ## Changelog
 
