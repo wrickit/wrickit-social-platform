@@ -857,7 +857,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const data = JSON.parse(message);
         
         // Handle user authentication for WebSocket
-        if (data.type === 'auth' && data.userId) {
+        if ((data.type === 'auth' || data.type === 'authenticate') && data.userId) {
           userId = data.userId;
           
           // Add to active connections
@@ -889,6 +889,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             case 'call-answer':
             case 'ice-candidate':
             case 'call-ended':
+            case 'call-declined':
               // Forward call signaling to target user
               const targetConnections = activeConnections.get(data.targetUserId);
               if (targetConnections) {

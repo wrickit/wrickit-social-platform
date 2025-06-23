@@ -842,6 +842,8 @@ export default function Messages() {
           isIncoming={voiceCall.isIncoming}
           onAccept={acceptCall}
           onDecline={declineCall}
+          existingWs={ws}
+          currentUserId={user?.id}
         />
       )}
     </div>

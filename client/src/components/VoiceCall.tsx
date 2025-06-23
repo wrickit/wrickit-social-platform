@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Phone, PhoneOff, Mic, MicOff, Volume2, VolumeX } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { createPeerConnection, createAudioConstraints, formatCallDuration, isWebRTCSupported } from "@/utils/callUtils";
 
 interface VoiceCallProps {
   isOpen: boolean;
@@ -15,6 +16,8 @@ interface VoiceCallProps {
   isIncoming?: boolean;
   onAccept?: () => void;
   onDecline?: () => void;
+  existingWs?: WebSocket | null;
+  currentUserId?: number;
 }
 
 export default function VoiceCall({ 
@@ -23,7 +26,9 @@ export default function VoiceCall({
   targetUser, 
   isIncoming = false,
   onAccept,
-  onDecline 
+  onDecline,
+  existingWs,
+  currentUserId
 }: VoiceCallProps) {
   const [isConnected, setIsConnected] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
@@ -68,6 +73,13 @@ export default function VoiceCall({
   }, [isConnected]);
 
   const initializeWebSocket = () => {
+    // Use existing WebSocket connection if available
+    if (existingWs && existingWs.readyState === WebSocket.OPEN) {
+      wsRef.current = existingWs;
+      setupWebSocketHandlers();
+      return;
+    }
+    
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
     const wsUrl = `${protocol}//${window.location.host}/ws`;
     
@@ -75,24 +87,59 @@ export default function VoiceCall({
     
     wsRef.current.onopen = () => {
       console.log('WebSocket connected for voice call');
+      if (currentUserId) {
+        wsRef.current?.send(JSON.stringify({
+          type: 'auth',
+          userId: currentUserId
+        }));
+      }
+      setupWebSocketHandlers();
     };
+  };
 
+  const setupWebSocketHandlers = () => {
+    if (!wsRef.current) return;
+
+    const originalOnMessage = wsRef.current.onmessage;
+    
     wsRef.current.onmessage = async (event) => {
-      const data = JSON.parse(event.data);
+      // Call original handler first if it exists
+      if (originalOnMessage && existingWs) {
+        originalOnMessage.call(wsRef.current, event);
+      }
       
-      switch (data.type) {
-        case 'call-offer':
-          await handleCallOffer(data.offer);
-          break;
-        case 'call-answer':
-          await handleCallAnswer(data.answer);
-          break;
-        case 'ice-candidate':
-          await handleIceCandidate(data.candidate);
-          break;
-        case 'call-ended':
-          handleCallEnded();
-          break;
+      try {
+        const data = JSON.parse(event.data);
+        
+        switch (data.type) {
+          case 'call-offer':
+            if (data.fromUserId !== targetUser.id) return;
+            await handleCallOffer(data.offer);
+            break;
+          case 'call-answer':
+            if (data.fromUserId !== targetUser.id) return;
+            await handleCallAnswer(data.answer);
+            break;
+          case 'ice-candidate':
+            if (data.fromUserId !== targetUser.id) return;
+            await handleIceCandidate(data.candidate);
+            break;
+          case 'call-ended':
+            if (data.fromUserId !== targetUser.id) return;
+            handleCallEnded();
+            break;
+          case 'call-declined':
+            if (data.fromUserId !== targetUser.id) return;
+            toast({
+              title: "Call Declined",
+              description: `${targetUser.name} declined the call`,
+              variant: "default",
+            });
+            handleCallEnded();
+            break;
+        }
+      } catch (error) {
+        console.error('Error parsing WebSocket message:', error);
       }
     };
 
@@ -104,33 +151,39 @@ export default function VoiceCall({
         variant: "destructive",
       });
     };
+
+    wsRef.current.onclose = () => {
+      console.log('WebSocket connection closed');
+      if (isConnected) {
+        toast({
+          title: "Connection Lost",
+          description: "Call connection was lost",
+          variant: "destructive",
+        });
+        handleCallEnded();
+      }
+    };
   };
 
   const initializeCall = async () => {
     try {
+      if (!isWebRTCSupported()) {
+        throw new Error('WebRTC is not supported in this browser');
+      }
+      
       setCallStatus('connecting');
       
       // Initialize WebSocket for signaling
       initializeWebSocket();
       
       // Get user media (audio only)
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true
-        } 
-      });
+      const constraints = createAudioConstraints();
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
       
       localStreamRef.current = stream;
       
       // Create peer connection
-      peerConnectionRef.current = new RTCPeerConnection({
-        iceServers: [
-          { urls: 'stun:stun.l.google.com:19302' },
-          { urls: 'stun:stun1.l.google.com:19302' }
-        ]
-      });
+      peerConnectionRef.current = createPeerConnection();
 
       // Add local stream to peer connection
       stream.getTracks().forEach(track => {
@@ -146,7 +199,7 @@ export default function VoiceCall({
 
       // Handle ICE candidates
       peerConnectionRef.current.onicecandidate = (event) => {
-        if (event.candidate && wsRef.current) {
+        if (event.candidate && wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
           wsRef.current.send(JSON.stringify({
             type: 'ice-candidate',
             candidate: event.candidate,
@@ -155,16 +208,63 @@ export default function VoiceCall({
         }
       };
 
-      // Create and send offer
-      const offer = await peerConnectionRef.current.createOffer();
+      // Handle connection state changes
+      peerConnectionRef.current.onconnectionstatechange = () => {
+        const state = peerConnectionRef.current?.connectionState;
+        console.log('Connection state:', state);
+        
+        if (state === 'connected') {
+          setIsConnected(true);
+          setCallStatus('connected');
+        } else if (state === 'disconnected' || state === 'failed' || state === 'closed') {
+          if (isConnected) {
+            toast({
+              title: "Call Disconnected",
+              description: "The call connection was lost",
+              variant: "destructive",
+            });
+          }
+          handleCallEnded();
+        }
+      };
+
+      // Handle ICE connection state changes
+      peerConnectionRef.current.oniceconnectionstatechange = () => {
+        const state = peerConnectionRef.current?.iceConnectionState;
+        console.log('ICE connection state:', state);
+        
+        if (state === 'failed' || state === 'disconnected') {
+          setTimeout(() => {
+            if (peerConnectionRef.current?.iceConnectionState === 'failed') {
+              handleCallEnded();
+            }
+          }, 5000); // Give it 5 seconds to reconnect
+        }
+      };
+
+      // Create and send offer with audio-specific options
+      const offer = await peerConnectionRef.current.createOffer({
+        offerToReceiveAudio: true,
+        offerToReceiveVideo: false
+      });
       await peerConnectionRef.current.setLocalDescription(offer);
       
-      if (wsRef.current) {
+      // Wait for WebSocket to be ready before sending
+      if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
         wsRef.current.send(JSON.stringify({
           type: 'call-offer',
           offer: offer,
           targetUserId: targetUser.id
         }));
+      } else {
+        // Wait for WebSocket to open
+        wsRef.current?.addEventListener('open', () => {
+          wsRef.current?.send(JSON.stringify({
+            type: 'call-offer',
+            offer: offer,
+            targetUserId: targetUser.id
+          }));
+        });
       }
 
       setCallStatus('calling');
@@ -184,15 +284,11 @@ export default function VoiceCall({
     try {
       if (!peerConnectionRef.current) {
         // Initialize peer connection for incoming call
-        peerConnectionRef.current = new RTCPeerConnection({
-          iceServers: [
-            { urls: 'stun:stun.l.google.com:19302' },
-            { urls: 'stun:stun1.l.google.com:19302' }
-          ]
-        });
+        peerConnectionRef.current = createPeerConnection();
 
-        // Get user media
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        // Get user media with enhanced audio settings
+        const constraints = createAudioConstraints();
+        const stream = await navigator.mediaDevices.getUserMedia(constraints);
         localStreamRef.current = stream;
         
         stream.getTracks().forEach(track => {
@@ -206,12 +302,32 @@ export default function VoiceCall({
         };
 
         peerConnectionRef.current.onicecandidate = (event) => {
-          if (event.candidate && wsRef.current) {
+          if (event.candidate && wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
             wsRef.current.send(JSON.stringify({
               type: 'ice-candidate',
               candidate: event.candidate,
               targetUserId: targetUser.id
             }));
+          }
+        };
+
+        // Add connection state handlers for incoming calls too
+        peerConnectionRef.current.onconnectionstatechange = () => {
+          const state = peerConnectionRef.current?.connectionState;
+          console.log('Connection state (incoming):', state);
+          
+          if (state === 'connected') {
+            setIsConnected(true);
+            setCallStatus('connected');
+          } else if (state === 'disconnected' || state === 'failed' || state === 'closed') {
+            if (isConnected) {
+              toast({
+                title: "Call Disconnected",
+                description: "The call connection was lost",
+                variant: "destructive",
+              });
+            }
+            handleCallEnded();
           }
         };
       }
@@ -220,7 +336,7 @@ export default function VoiceCall({
       const answer = await peerConnectionRef.current.createAnswer();
       await peerConnectionRef.current.setLocalDescription(answer);
       
-      if (wsRef.current) {
+      if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
         wsRef.current.send(JSON.stringify({
           type: 'call-answer',
           answer: answer,
@@ -228,8 +344,8 @@ export default function VoiceCall({
         }));
       }
 
-      setIsConnected(true);
-      setCallStatus('connected');
+      // Don't set connected immediately, wait for connection state change
+      setCallStatus('connecting');
       
     } catch (error) {
       console.error('Error handling call offer:', error);
@@ -240,11 +356,17 @@ export default function VoiceCall({
     try {
       if (peerConnectionRef.current) {
         await peerConnectionRef.current.setRemoteDescription(answer);
-        setIsConnected(true);
-        setCallStatus('connected');
+        // Don't set connected immediately, wait for connection state change
+        setCallStatus('connecting');
       }
     } catch (error) {
       console.error('Error handling call answer:', error);
+      toast({
+        title: "Call Failed",
+        description: "Failed to establish connection",
+        variant: "destructive",
+      });
+      handleCallEnded();
     }
   };
 
@@ -265,23 +387,31 @@ export default function VoiceCall({
 
   const acceptCall = async () => {
     try {
-      initializeWebSocket();
+      if (!wsRef.current) {
+        initializeWebSocket();
+      }
+      
+      // Get user media first before accepting
+      const constraints = createAudioConstraints();
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      
+      localStreamRef.current = stream;
       onAccept?.();
       setCallStatus('connecting');
     } catch (error) {
       console.error('Error accepting call:', error);
       toast({
         title: "Call Failed",
-        description: "Unable to accept the call",
+        description: "Unable to access microphone or accept the call",
         variant: "destructive",
       });
     }
   };
 
   const declineCall = () => {
-    if (wsRef.current) {
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify({
-        type: 'call-ended',
+        type: 'call-declined',
         targetUserId: targetUser.id
       }));
     }
@@ -291,7 +421,7 @@ export default function VoiceCall({
   };
 
   const endCall = () => {
-    if (wsRef.current) {
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify({
         type: 'call-ended',
         targetUserId: targetUser.id
@@ -305,7 +435,7 @@ export default function VoiceCall({
     if (localStreamRef.current) {
       const audioTrack = localStreamRef.current.getAudioTracks()[0];
       if (audioTrack) {
-        audioTrack.enabled = isMuted;
+        audioTrack.enabled = isMuted; // This is correct - if currently muted, enable it
         setIsMuted(!isMuted);
       }
     }
@@ -313,7 +443,7 @@ export default function VoiceCall({
 
   const toggleSpeaker = () => {
     if (remoteAudioRef.current) {
-      remoteAudioRef.current.muted = isSpeakerOn;
+      remoteAudioRef.current.muted = isSpeakerOn; // This is correct - if speaker is on, mute it
       setIsSpeakerOn(!isSpeakerOn);
     }
   };
@@ -329,7 +459,8 @@ export default function VoiceCall({
       peerConnectionRef.current = null;
     }
     
-    if (wsRef.current) {
+    // Only close WebSocket if we created it (not using existing one)
+    if (wsRef.current && !existingWs) {
       wsRef.current.close();
       wsRef.current = null;
     }
@@ -343,11 +474,7 @@ export default function VoiceCall({
     setCallDuration(0);
   };
 
-  const formatDuration = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  };
+
 
   if (!isOpen) return null;
 
@@ -373,7 +500,7 @@ export default function VoiceCall({
             {callStatus === 'incoming' && 'Incoming call...'}
             {callStatus === 'calling' && 'Calling...'}
             {callStatus === 'connecting' && 'Connecting...'}
-            {callStatus === 'connected' && `Connected • ${formatDuration(callDuration)}`}
+            {callStatus === 'connected' && `Connected • ${formatCallDuration(callDuration)}`}
           </p>
         </CardHeader>
         
