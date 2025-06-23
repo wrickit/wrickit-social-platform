@@ -6,11 +6,13 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Users, Heart, UserCheck, UserMinus, Trash2 } from "lucide-react";
 import { useLocation } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
+import { useState } from "react";
 
 export default function Relationships() {
   const { user: currentUser } = useAuth();
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
+  const [deletingRelationshipId, setDeletingRelationshipId] = useState<number | null>(null);
 
   const { data: relationships = [], isLoading } = useQuery({
     queryKey: ["/api/relationships"],
@@ -19,13 +21,16 @@ export default function Relationships() {
 
   const deleteRelationshipMutation = useMutation({
     mutationFn: async (otherUserId: number) => {
+      setDeletingRelationshipId(otherUserId);
       await apiRequest("DELETE", `/api/relationships/${otherUserId}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/relationships"] });
+      setDeletingRelationshipId(null);
     },
     onError: (error: any) => {
       console.error("Failed to remove relationship:", error);
+      setDeletingRelationshipId(null);
     },
   });
 
@@ -200,11 +205,11 @@ export default function Relationships() {
                               variant="outline"
                               size="sm"
                               onClick={() => deleteRelationshipMutation.mutate(relationship.toUserId)}
-                              disabled={deleteRelationshipMutation.isPending}
+                              disabled={deletingRelationshipId === relationship.toUserId}
                               className="text-red-600 hover:bg-red-50 hover:text-red-700 border-red-200"
                             >
                               <Trash2 className="w-4 h-4 mr-1" />
-                              {deleteRelationshipMutation.isPending ? "Removing..." : "Remove"}
+                              {deletingRelationshipId === relationship.toUserId ? "Removing..." : "Remove"}
                             </Button>
                           </div>
                         </div>
