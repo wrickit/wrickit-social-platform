@@ -39,12 +39,12 @@ export default function HamburgerMenu({ user, relationships = [], friendGroups =
   };
 
   const toggleTheme = () => {
-    if (theme === "light") {
-      setTheme("dark");
-    } else if (theme === "dark") {
-      setTheme("system");
-    } else {
+    if (theme === "system") {
       setTheme("light");
+    } else if (theme === "light") {
+      setTheme("dark");
+    } else {
+      setTheme("system");
     }
   };
 
@@ -286,19 +286,19 @@ export default function HamburgerMenu({ user, relationships = [], friendGroups =
                 className="w-full justify-start p-3 h-auto"
                 onClick={toggleTheme}
               >
-                {theme === "light" ? (
-                  <Moon className="w-4 h-4 mr-3" />
-                ) : theme === "dark" ? (
-                  <Monitor className="w-4 h-4 mr-3" />
-                ) : (
+                {theme === "system" ? (
                   <Sun className="w-4 h-4 mr-3" />
+                ) : theme === "light" ? (
+                  <Moon className="w-4 h-4 mr-3" />
+                ) : (
+                  <Monitor className="w-4 h-4 mr-3" />
                 )}
                 <div className="text-left">
                   <div className="font-medium">
-                    {theme === "light" ? "Switch to Dark" : theme === "dark" ? "Switch to System" : "Switch to Light"}
+                    {theme === "system" ? "Switch to Light" : theme === "light" ? "Switch to Dark" : "Switch to System"}
                   </div>
                   <div className="text-xs text-gray-500">
-                    {theme === "light" ? "Use dark theme" : theme === "dark" ? "Follow system setting" : "Use light theme"}
+                    {theme === "system" ? "Use light theme" : theme === "light" ? "Use dark theme" : "Follow system setting"}
                   </div>
                 </div>
               </Button>
