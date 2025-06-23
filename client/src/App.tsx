@@ -62,7 +62,7 @@ function Router() {
 
 function App() {
   return (
-    <ThemeProvider defaultTheme="light" storageKey="wrickit-ui-theme">
+    <ThemeProvider defaultTheme="system" storageKey="wrickit-ui-theme">
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
           <Toaster />

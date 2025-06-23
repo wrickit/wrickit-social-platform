@@ -26,9 +26,23 @@ export function ThemeProvider({
   storageKey = "wrickit-ui-theme",
   ...props
 }: ThemeProviderProps) {
-  const [theme, setTheme] = useState<Theme>(
-    () => (localStorage.getItem(storageKey) as Theme) || defaultTheme
-  )
+  const [theme, setTheme] = useState<Theme>(() => {
+    // Check if we have a stored preference
+    const storedTheme = localStorage.getItem(storageKey) as Theme;
+    if (storedTheme) {
+      return storedTheme;
+    }
+    
+    // If no stored preference and defaultTheme is system, immediately apply system preference
+    if (defaultTheme === "system") {
+      const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+      // Apply the theme immediately to prevent flash
+      document.documentElement.classList.remove("light", "dark");
+      document.documentElement.classList.add(systemTheme);
+    }
+    
+    return defaultTheme;
+  })
 
   useEffect(() => {
     const root = window.document.documentElement
