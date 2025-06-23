@@ -49,6 +49,7 @@ export const messages = pgTable("messages", {
   toUserId: integer("to_user_id").notNull().references(() => users.id),
   content: text("content").notNull(),
   isRead: boolean("is_read").default(false),
+  readAt: timestamp("read_at"), // When the message was read
   voiceMessageUrl: text("voice_message_url"), // Voice message audio URL
   voiceMessageDuration: integer("voice_message_duration"), // Duration in seconds
   createdAt: timestamp("created_at").defaultNow(),
