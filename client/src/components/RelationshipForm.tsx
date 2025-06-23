@@ -183,7 +183,7 @@ export default function RelationshipForm() {
                             {user.name}
                           </div>
                           <div className="text-sm text-gray-500 dark:text-gray-400">
-                            Class {user.class}{user.division ? `-${user.division}` : ''}
+                            Class {user.class}
                           </div>
                         </div>
                       </div>
