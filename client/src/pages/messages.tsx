@@ -376,7 +376,9 @@ export default function Messages() {
                       {selectedUser ? getConversationPartner(selectedUser).name.charAt(0) : "?"}
                     </AvatarFallback>
                   </Avatar>
-                  <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 border border-white dark:border-gray-800 rounded-full"></div>
+                  {onlineStatus?.isOnline && (
+                    <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 border border-white dark:border-gray-800 rounded-full"></div>
+                  )}
                 </div>
                 <div>
                   <p className="font-medium app-text">
