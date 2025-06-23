@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Mic, MicOff, Play, Pause, Trash2, Send } from "lucide-react";
+import { getSupportedMimeType, formatTime, createAudioConstraints } from "@/utils/audioUtils";
 
 interface VoiceRecorderProps {
   onRecordingComplete?: (audioUrl: string, duration: number) => void;
@@ -34,8 +35,13 @@ export default function VoiceRecorder({
 
   const startRecording = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
+      const constraints = createAudioConstraints();
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      
+      const mimeType = getSupportedMimeType();
+      const options = { mimeType };
+      
+      const mediaRecorder = new MediaRecorder(stream, options);
       mediaRecorderRef.current = mediaRecorder;
       chunksRef.current = [];
 
@@ -46,20 +52,44 @@ export default function VoiceRecorder({
       };
 
       mediaRecorder.onstop = () => {
-        const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
+        const mimeType = getSupportedMimeType();
+        const blob = new Blob(chunksRef.current, { type: mimeType });
         const url = URL.createObjectURL(blob);
         setAudioUrl(url);
         
-        // Convert blob to base64 for storage
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          const base64 = reader.result as string;
-          const callback = onRecordingComplete || onVoiceMessage;
-          if (callback) {
-            callback(base64, recordingTime);
-          }
+        // Create audio element to get actual duration
+        const tempAudio = new Audio(url);
+        tempAudio.onloadedmetadata = () => {
+          const actualDuration = Math.ceil(tempAudio.duration) || recordingTime;
+          setDuration(actualDuration);
+          
+          // Convert blob to base64 for storage
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            const base64 = reader.result as string;
+            const callback = onRecordingComplete || onVoiceMessage;
+            if (callback) {
+              callback(base64, actualDuration);
+            }
+          };
+          reader.readAsDataURL(blob);
         };
-        reader.readAsDataURL(blob);
+        
+        // Fallback if metadata doesn't load
+        tempAudio.onerror = () => {
+          const fallbackDuration = recordingTime;
+          setDuration(fallbackDuration);
+          
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            const base64 = reader.result as string;
+            const callback = onRecordingComplete || onVoiceMessage;
+            if (callback) {
+              callback(base64, fallbackDuration);
+            }
+          };
+          reader.readAsDataURL(blob);
+        };
 
         // Stop all tracks
         stream.getTracks().forEach(track => track.stop());
@@ -67,15 +97,19 @@ export default function VoiceRecorder({
 
       mediaRecorder.start();
       setIsRecording(true);
+      setRecordingTime(0);
       startTimeRef.current = Date.now();
       
       // Start timer
       intervalRef.current = setInterval(() => {
-        setRecordingTime(Math.floor((Date.now() - startTimeRef.current) / 1000));
-      }, 100);
+        const elapsed = Math.floor((Date.now() - startTimeRef.current) / 1000);
+        setRecordingTime(elapsed);
+      }, 1000);
 
     } catch (error) {
       console.error('Error accessing microphone:', error);
+      // Show user-friendly error message
+      alert('Unable to access microphone. Please check your browser permissions and try again.');
     }
   };
 
@@ -83,7 +117,6 @@ export default function VoiceRecorder({
     if (mediaRecorderRef.current && isRecording) {
       mediaRecorderRef.current.stop();
       setIsRecording(false);
-      setDuration(recordingTime);
       
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
@@ -105,6 +138,10 @@ export default function VoiceRecorder({
   };
 
   const deleteRecording = () => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.src = '';
+    }
     if (audioUrl) {
       URL.revokeObjectURL(audioUrl);
     }
@@ -118,22 +155,22 @@ export default function VoiceRecorder({
     }
   };
 
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
+
 
   const handleProgressClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!audioRef.current || !duration) return;
     
     const rect = e.currentTarget.getBoundingClientRect();
     const clickX = e.clientX - rect.left;
-    const percentage = clickX / rect.width;
+    const percentage = Math.max(0, Math.min(1, clickX / rect.width));
     const newTime = percentage * duration;
     
-    audioRef.current.currentTime = newTime;
-    setCurrentTime(newTime);
+    try {
+      audioRef.current.currentTime = newTime;
+      setCurrentTime(newTime);
+    } catch (error) {
+      console.error('Error seeking audio:', error);
+    }
   };
 
   useEffect(() => {
@@ -160,6 +197,9 @@ export default function VoiceRecorder({
     return () => {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
+      }
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+        mediaRecorderRef.current.stop();
       }
       if (audioUrl) {
         URL.revokeObjectURL(audioUrl);

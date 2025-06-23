@@ -29,15 +29,20 @@ function VoiceMessagePlayer({
   const [currentTime, setCurrentTime] = useState(0);
   const audioRef = useRef<HTMLAudioElement>(null);
 
-  const togglePlayback = () => {
+  const togglePlayback = async () => {
     if (!audioRef.current) return;
 
-    if (isPlaying) {
-      audioRef.current.pause();
+    try {
+      if (isPlaying) {
+        audioRef.current.pause();
+        setIsPlaying(false);
+      } else {
+        await audioRef.current.play();
+        setIsPlaying(true);
+      }
+    } catch (error) {
+      console.error('Error playing audio:', error);
       setIsPlaying(false);
-    } else {
-      audioRef.current.play();
-      setIsPlaying(true);
     }
   };
 
@@ -51,16 +56,13 @@ function VoiceMessagePlayer({
     const audio = audioRef.current;
     if (!audio) return;
 
-    const updateTime = () => setCurrentTime(audio.currentTime);
+    const updateTime = () => setCurrentTime(Math.floor(audio.currentTime));
     const handleEnded = () => {
       setIsPlaying(false);
       setCurrentTime(0);
     };
     const handleLoadedMetadata = () => {
-      // If duration from props is 0 or invalid, use the actual audio duration
-      if (!duration || duration === 0) {
-        setCurrentTime(0);
-      }
+      setCurrentTime(0);
     };
 
     audio.addEventListener('timeupdate', updateTime);
@@ -74,8 +76,8 @@ function VoiceMessagePlayer({
     };
   }, [duration]);
 
-  // Use actual audio duration if the provided duration is 0 or invalid
-  const actualDuration = duration > 0 ? duration : (audioRef.current?.duration || 0);
+  // Use provided duration or fallback to audio duration
+  const actualDuration = duration > 0 ? duration : Math.ceil(audioRef.current?.duration || 0);
   const progress = actualDuration > 0 ? (currentTime / actualDuration) * 100 : 0;
 
   return (

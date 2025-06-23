@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Play, Pause, Volume2 } from "lucide-react";
+import { formatTime } from "@/utils/audioUtils";
 
 interface VoicePlayerProps {
   audioUrl: string;
@@ -27,12 +28,13 @@ export default function VoicePlayer({
     if (!audio) return;
 
     const handleLoadedMetadata = () => {
-      setAudioDuration(Math.round(audio.duration));
+      const actualDuration = duration > 0 ? duration : Math.ceil(audio.duration);
+      setAudioDuration(actualDuration);
       setIsLoading(false);
     };
 
     const handleTimeUpdate = () => {
-      setCurrentTime(Math.round(audio.currentTime));
+      setCurrentTime(Math.floor(audio.currentTime));
     };
 
     const handleEnded = () => {
@@ -44,29 +46,41 @@ export default function VoicePlayer({
       setIsLoading(false);
     };
 
+    const handleError = (e: Event) => {
+      console.error('Audio playback error:', e);
+      setIsLoading(false);
+    };
+
     audio.addEventListener('loadedmetadata', handleLoadedMetadata);
     audio.addEventListener('timeupdate', handleTimeUpdate);
     audio.addEventListener('ended', handleEnded);
     audio.addEventListener('canplay', handleCanPlay);
+    audio.addEventListener('error', handleError);
 
     return () => {
       audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
       audio.removeEventListener('timeupdate', handleTimeUpdate);
       audio.removeEventListener('ended', handleEnded);
       audio.removeEventListener('canplay', handleCanPlay);
+      audio.removeEventListener('error', handleError);
     };
   }, [audioUrl]);
 
-  const togglePlayPause = () => {
+  const togglePlayPause = async () => {
     const audio = audioRef.current;
     if (!audio) return;
 
-    if (isPlaying) {
-      audio.pause();
+    try {
+      if (isPlaying) {
+        audio.pause();
+        setIsPlaying(false);
+      } else {
+        await audio.play();
+        setIsPlaying(true);
+      }
+    } catch (error) {
+      console.error('Error playing audio:', error);
       setIsPlaying(false);
-    } else {
-      audio.play();
-      setIsPlaying(true);
     }
   };
 
@@ -75,18 +89,18 @@ export default function VoicePlayer({
     if (!audio || audioDuration === 0) return;
 
     const rect = e.currentTarget.getBoundingClientRect();
-    const percent = (e.clientX - rect.left) / rect.width;
+    const percent = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
     const newTime = percent * audioDuration;
     
-    audio.currentTime = newTime;
-    setCurrentTime(Math.round(newTime));
+    try {
+      audio.currentTime = newTime;
+      setCurrentTime(Math.round(newTime));
+    } catch (error) {
+      console.error('Error seeking audio:', error);
+    }
   };
 
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
+
 
   const progressPercent = audioDuration > 0 ? (currentTime / audioDuration) * 100 : 0;
   
@@ -95,7 +109,7 @@ export default function VoicePlayer({
 
   return (
     <div className={`flex items-center space-x-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg max-w-xs ${className}`}>
-      <audio ref={audioRef} src={audioUrl} preload="metadata" />
+      <audio ref={audioRef} src={audioUrl} preload="metadata" crossOrigin="anonymous" />
       
       <Button
         variant="ghost"
