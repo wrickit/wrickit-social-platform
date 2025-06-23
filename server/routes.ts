@@ -151,6 +151,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const validatedData = insertRelationshipSchema.parse(req.body);
       
+      // Prevent users from creating relationships with themselves
+      if (req.session.userId === validatedData.toUserId) {
+        return res.status(400).json({ message: "You cannot create a relationship with yourself" });
+      }
+      
       const relationship = await storage.createRelationship(
         req.session.userId,
         validatedData.toUserId,
@@ -178,7 +183,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // User search route (by name)
-  app.get("/api/users/search", requireAuth, async (req: Request, res: Response) => {
+  app.get("/api/users/search", requireAuth, async (req: any, res: Response) => {
     try {
       const { q } = req.query;
       if (!q || typeof q !== 'string') {
@@ -186,11 +191,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const users = await storage.searchUsers(q);
-      // Don't return passwords in search results
-      const usersWithoutPasswords = users.map(foundUser => {
-        const { password, ...userWithoutPassword } = foundUser;
-        return userWithoutPassword;
-      });
+      // Filter out current user and don't return passwords in search results
+      const usersWithoutPasswords = users
+        .filter(foundUser => foundUser.id !== req.session.userId)
+        .map(foundUser => {
+          const { password, ...userWithoutPassword } = foundUser;
+          return userWithoutPassword;
+        });
       res.json(usersWithoutPasswords);
     } catch (error) {
       console.error("Search users error:", error);
@@ -199,7 +206,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Search all users route (for messaging)
-  app.get("/api/users/search-all", requireAuth, async (req: Request, res: Response) => {
+  app.get("/api/users/search-all", requireAuth, async (req: any, res: Response) => {
     try {
       const { q } = req.query;
       if (!q || typeof q !== 'string') {
@@ -207,11 +214,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const users = await storage.searchUsers(q);
-      // Don't return passwords in search results
-      const usersWithoutPasswords = users.map(foundUser => {
-        const { password, ...userWithoutPassword } = foundUser;
-        return userWithoutPassword;
-      });
+      // Filter out current user and don't return passwords in search results
+      const usersWithoutPasswords = users
+        .filter(foundUser => foundUser.id !== req.session.userId)
+        .map(foundUser => {
+          const { password, ...userWithoutPassword } = foundUser;
+          return userWithoutPassword;
+        });
       res.json(usersWithoutPasswords);
     } catch (error) {
       console.error("Search all users error:", error);
@@ -219,14 +228,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/users/search-username", requireAuth, async (req: Request, res: Response) => {
+  app.get("/api/users/search-username", requireAuth, async (req: any, res: Response) => {
     try {
       const { username } = req.query;
       if (!username || typeof username !== 'string') {
         return res.json([]);
       }
       const users = await storage.searchUsersByUsername(username);
-      res.json(users);
+      // Filter out current user and don't return passwords
+      const filteredUsers = users
+        .filter(user => user.id !== req.session.userId)
+        .map(user => {
+          const { password, ...userWithoutPassword } = user;
+          return userWithoutPassword;
+        });
+      res.json(filteredUsers);
     } catch (error) {
       console.error("Search users by username error:", error);
       res.status(500).json({ message: "Failed to search users by username" });

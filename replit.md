@@ -135,6 +135,7 @@ The application is configured for deployment on Replit with the following setup:
 - ✓ Added all relationship types to dashboard sidebar (friends, acquaintances, crushes)
 - ✓ Fixed hamburger menu scrolling and added complete sidebar functionality for responsive design
 - ✓ Prevented duplicate relationships by updating existing ones instead of creating duplicates
+- ✓ Fixed self-relationship bug - users can no longer friend themselves or appear in their own search results
 
 ### June 22, 2025
 - ✓ Fixed database connection issues by creating PostgreSQL database and pushing schema
