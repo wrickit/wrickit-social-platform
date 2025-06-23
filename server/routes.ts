@@ -581,6 +581,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { videoUrl, thumbnailUrl, description, songTitle, songArtist, songUrl, songStartTime, songDuration, isPublic } = req.body;
       
+      if (!req.user || !req.user.id) {
+        return res.status(401).json({ message: "User not authenticated" });
+      }
+      
       const loop = await storage.createLoop(req.user.id, {
         videoUrl,
         thumbnailUrl,
@@ -602,7 +606,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/loops", requireAuth, async (req: any, res: Response) => {
     try {
-      const loops = await storage.getLoops(20, req.user.id);
+      const loops = await storage.getLoops(20, req.user?.id);
       res.json(loops);
     } catch (error) {
       console.error("Get loops error:", error);
@@ -613,6 +617,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/loops/:id/like", requireAuth, async (req: any, res: Response) => {
     try {
       const loopId = parseInt(req.params.id);
+      if (!req.user || !req.user.id) {
+        return res.status(401).json({ message: "User not authenticated" });
+      }
       const result = await storage.likeLoop(loopId, req.user.id);
       res.json(result);
     } catch (error) {
@@ -624,6 +631,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/loops/:id/view", requireAuth, async (req: any, res: Response) => {
     try {
       const loopId = parseInt(req.params.id);
+      if (!req.user || !req.user.id) {
+        return res.status(401).json({ message: "User not authenticated" });
+      }
       await storage.viewLoop(loopId, req.user.id);
       res.json({ success: true });
     } catch (error) {
@@ -635,6 +645,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/loops/:id", requireAuth, async (req: any, res: Response) => {
     try {
       const loopId = parseInt(req.params.id);
+      if (!req.user || !req.user.id) {
+        return res.status(401).json({ message: "User not authenticated" });
+      }
       await storage.deleteLoop(loopId, req.user.id);
       res.json({ success: true });
     } catch (error) {
