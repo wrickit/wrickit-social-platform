@@ -86,8 +86,14 @@ export default function Messages() {
   });
 
   // Fetch messages for selected conversation
-  const { data: messages = [], isLoading: messagesLoading } = useQuery<Conversation[]>({
+  const { data: messages = [], isLoading: messagesLoading } = useQuery<any[]>({
     queryKey: ["/api/messages", selectedConversation],
+    queryFn: async () => {
+      if (!selectedConversation) return [];
+      const response = await fetch(`/api/messages/${selectedConversation}`);
+      if (!response.ok) return [];
+      return response.json();
+    },
     enabled: !!selectedConversation,
     refetchInterval: 2000, // Refresh every 2 seconds
   });

@@ -140,6 +140,7 @@ The application is configured for deployment on Replit with the following setup:
 - ✓ Created dedicated relationships management page accessible from hamburger menu and sidebar
 - ✓ Built comprehensive relationships interface with grouping by type and action buttons
 - ✓ Fixed dynamic online status indicator in messages - green dot now shows only when users are actually active
+- ✓ Fixed critical messaging bug where previous messages were deleted when sending new ones - now all messages persist properly
 
 ### June 22, 2025
 - ✓ Fixed database connection issues by creating PostgreSQL database and pushing schema
