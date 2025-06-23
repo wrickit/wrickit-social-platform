@@ -27,13 +27,8 @@ export default function UserSearchDialog({ trigger }: UserSearchDialogProps) {
   const [, setLocation] = useLocation();
 
   // Real-time search with debouncing
-  const { data: searchResults = [], isLoading: isSearching } = useQuery({
-    queryKey: ["/api/users/search-all", searchQuery],
-    queryFn: async () => {
-      if (!searchQuery.trim() || searchQuery.trim().length < 1) return [];
-      const response = await apiRequest("GET", `/api/users/search-all?q=${encodeURIComponent(searchQuery.trim())}`);
-      return response;
-    },
+  const { data: searchResults = [], isLoading: isSearching } = useQuery<User[]>({
+    queryKey: [`/api/users/search-all?q=${encodeURIComponent(searchQuery.trim())}`],
     enabled: searchQuery.trim().length > 0,
     refetchOnWindowFocus: false,
     staleTime: 1000 * 60 * 2, // 2 minutes
@@ -74,7 +69,7 @@ export default function UserSearchDialog({ trigger }: UserSearchDialogProps) {
             </div>
           )}
 
-          {searchResults.length > 0 && (
+          {Array.isArray(searchResults) && searchResults.length > 0 && (
             <div className="space-y-2 max-h-80 overflow-y-auto">
               {searchResults.map((user: User) => (
                 <div
@@ -91,7 +86,7 @@ export default function UserSearchDialog({ trigger }: UserSearchDialogProps) {
                   ) : (
                     <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
                       <span className="text-sm font-semibold text-white">
-                        {user.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                        {user.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
                       </span>
                     </div>
                   )}
@@ -113,7 +108,7 @@ export default function UserSearchDialog({ trigger }: UserSearchDialogProps) {
             </div>
           )}
 
-          {searchQuery.trim().length > 0 && !isSearching && searchResults.length === 0 && (
+          {searchQuery.trim().length > 0 && !isSearching && Array.isArray(searchResults) && searchResults.length === 0 && (
             <div className="text-center py-8">
               <div className="text-gray-400 mb-2">
                 <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">

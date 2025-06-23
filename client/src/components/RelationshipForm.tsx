@@ -6,14 +6,15 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { User, Check } from "lucide-react";
+import { User as UserIcon, Check } from "lucide-react";
 
 
-interface User {
+interface UserType {
   id: number;
   name: string;
   class: string;
   division: string;
+  profileImageUrl?: string;
 }
 
 export default function RelationshipForm() {
@@ -21,7 +22,7 @@ export default function RelationshipForm() {
   const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
   const [selectedUserName, setSelectedUserName] = useState("");
   const [relationshipType, setRelationshipType] = useState("");
-  const [searchResults, setSearchResults] = useState<User[]>([]);
+  const [searchResults, setSearchResults] = useState<UserType[]>([]);
   const [showResults, setShowResults] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   
@@ -101,7 +102,7 @@ export default function RelationshipForm() {
   }, []);
 
   // Select a user from search results
-  const selectUser = (user: User) => {
+  const selectUser = (user: UserType) => {
     setSelectedUserId(user.id);
     setSelectedUserName(user.name);
     setSearchTerm(user.name);
@@ -184,7 +185,7 @@ export default function RelationshipForm() {
                         ) : (
                           <div className="w-8 h-8 bg-purple-100 dark:bg-purple-800 rounded-full flex items-center justify-center">
                             <span className="text-xs font-semibold text-purple-600 dark:text-purple-300">
-                              {user.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                              {user.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
                             </span>
                           </div>
                         )}
