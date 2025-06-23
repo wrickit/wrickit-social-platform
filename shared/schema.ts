@@ -18,6 +18,7 @@ export const users = pgTable("users", {
   bio: text("bio"),
   securityQuestion: text("security_question"),
   securityAnswer: text("security_answer"),
+  lastActiveAt: timestamp("last_active_at").defaultNow(),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

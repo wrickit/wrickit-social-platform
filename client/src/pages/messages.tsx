@@ -179,6 +179,41 @@ export default function Messages() {
     getConversationPartner(conv).id === selectedConversation
   );
 
+  // Check online status of selected conversation partner
+  const { data: onlineStatus } = useQuery<{ isOnline: boolean }>({
+    queryKey: [`/api/users/${selectedConversation}/online`],
+    enabled: !!selectedConversation,
+    refetchInterval: 30000, // Check every 30 seconds
+  });
+
+  // Get online status for conversation partners (simplified approach)
+  const conversationPartnerIds = conversations.map(conv => getConversationPartner(conv).id);
+  const { data: allOnlineStatuses = {} } = useQuery<Record<number, boolean>>({
+    queryKey: ["/api/users/online-statuses", conversationPartnerIds.join(",")],
+    queryFn: async () => {
+      if (conversationPartnerIds.length === 0) return {};
+      
+      const statuses: Record<number, boolean> = {};
+      // Check online status for each partner
+      for (const userId of conversationPartnerIds) {
+        try {
+          const response = await fetch(`/api/users/${userId}/online`);
+          if (response.ok) {
+            const data = await response.json();
+            statuses[userId] = data.isOnline;
+          } else {
+            statuses[userId] = false;
+          }
+        } catch {
+          statuses[userId] = false;
+        }
+      }
+      return statuses;
+    },
+    enabled: conversationPartnerIds.length > 0,
+    refetchInterval: 45000, // Check every 45 seconds
+  });
+
   // Mobile: Show conversation list or chat view
   const showConversationList = isMobile ? !selectedConversation : true;
   const showChatView = isMobile ? !!selectedConversation : !!selectedConversation;
@@ -290,7 +325,9 @@ export default function Messages() {
                           <AvatarImage src={partner.profileImageUrl} />
                           <AvatarFallback>{partner.name.charAt(0)}</AvatarFallback>
                         </Avatar>
-                        <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white dark:border-gray-800 rounded-full"></div>
+                        {allOnlineStatuses[partner.id] && (
+                          <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white dark:border-gray-800 rounded-full"></div>
+                        )}
                       </div>
                       
                       <div className="flex-1 min-w-0">
@@ -345,7 +382,9 @@ export default function Messages() {
                   <p className="font-medium app-text">
                     {selectedUser ? getConversationPartner(selectedUser).name : "Select a conversation"}
                   </p>
-                  <p className="text-sm app-text-light">Active now</p>
+                  <p className="text-sm app-text-light">
+                    {onlineStatus?.isOnline ? "Active now" : selectedUser ? "Offline" : ""}
+                  </p>
                 </div>
               </div>
               

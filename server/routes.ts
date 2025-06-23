@@ -32,10 +32,19 @@ const sessionConfig = session({
 });
 
 // Auth middleware
-const requireAuth = (req: any, res: Response, next: any) => {
+const requireAuth = async (req: any, res: Response, next: any) => {
   if (!req.session.userId) {
     return res.status(401).json({ message: "Unauthorized" });
   }
+  
+  // Update user activity on each authenticated request
+  try {
+    await storage.updateUserActivity(req.session.userId);
+  } catch (error) {
+    // Don't fail the request if activity update fails
+    console.warn("Failed to update user activity:", error);
+  }
+  
   next();
 };
 
@@ -262,6 +271,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Update user profile error:", error);
       res.status(500).json({ message: "Failed to update profile" });
+    }
+  });
+
+  // Check if user is online
+  app.get("/api/users/:id/online", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userId = parseInt(req.params.id);
+      const isOnline = await storage.isUserOnline(userId);
+      res.json({ isOnline });
+    } catch (error) {
+      console.error("Check user online status error:", error);
+      res.status(500).json({ message: "Failed to check online status" });
     }
   });
 

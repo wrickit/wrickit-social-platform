@@ -41,6 +41,8 @@ export interface IStorage {
   deleteUser(id: number): Promise<void>;
   searchUsers(query: string): Promise<User[]>;
   searchUsersByUsername(username: string): Promise<User[]>;
+  updateUserActivity(userId: number): Promise<void>;
+  isUserOnline(userId: number): Promise<boolean>;
   
   // Relationship operations
   createRelationship(fromUserId: number, toUserId: number, type: string): Promise<Relationship>;
@@ -213,6 +215,27 @@ export class DatabaseStorage implements IStorage {
     
     // Don't return passwords in search results
     return searchResults.map(({ password, ...user }) => user) as User[];
+  }
+
+  async updateUserActivity(userId: number): Promise<void> {
+    await db
+      .update(users)
+      .set({ lastActiveAt: new Date() })
+      .where(eq(users.id, userId));
+  }
+
+  async isUserOnline(userId: number): Promise<boolean> {
+    const user = await db
+      .select({ lastActiveAt: users.lastActiveAt })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+    
+    if (!user.length || !user[0].lastActiveAt) return false;
+    
+    // Consider user online if they were active within the last 5 minutes
+    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+    return user[0].lastActiveAt > fiveMinutesAgo;
   }
 
   async createRelationship(fromUserId: number, toUserId: number, type: string): Promise<Relationship> {
