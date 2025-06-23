@@ -68,13 +68,13 @@ export interface IStorage {
   
   // Post operations
   createPost(authorId: number, content: string, audience: string, mediaUrls?: string[], mediaTypes?: string[], voiceMessageUrl?: string, voiceMessageDuration?: number): Promise<Post>;
-  getPosts(limit?: number, userClass?: string): Promise<(Post & { author: User; comments: (Comment & { author: User })[]; likesCount: number; isLikedByUser?: boolean })[]>;
+  getPosts(limit?: number, userClass?: string): Promise<(Post & { author: { id: number; name: string; username: string; profileImageUrl: string | null; }; comments: (Comment & { author: { id: number; name: string; username: string; profileImageUrl: string | null; } })[]; likesCount: number; isLikedByUser?: boolean })[]>;
   likePost(postId: number, userId: number): Promise<{ success: boolean; isLiked: boolean }>;
   unlikePost(postId: number, userId: number): Promise<void>;
   
   // Comment operations
   createComment(postId: number, authorId: number, content: string): Promise<Comment>;
-  getCommentsByPostId(postId: number): Promise<(Comment & { author: User })[]>;
+  getCommentsByPostId(postId: number): Promise<(Comment & { author: { id: number; name: string; username: string; profileImageUrl: string | null; } })[]>;
   
   // Message operations
   createMessage(fromUserId: number, toUserId: number, content: string, voiceMessageUrl?: string, voiceMessageDuration?: number): Promise<Message>;
@@ -101,8 +101,8 @@ export interface IStorage {
   
   // Loop operations
   createLoop(authorId: number, loopData: InsertLoop): Promise<Loop>;
-  getLoops(limit?: number, currentUserId?: number): Promise<(Loop & { author: User; isLiked?: boolean })[]>;
-  getPersonalizedLoops(userId: number, limit?: number): Promise<(Loop & { author: User; isLiked?: boolean })[]>;
+  getLoops(limit?: number, currentUserId?: number): Promise<(Loop & { author: { id: number; name: string; username: string; profileImageUrl: string | null; }; isLiked?: boolean })[]>;
+  getPersonalizedLoops(userId: number, limit?: number): Promise<(Loop & { author: { id: number; name: string; username: string; profileImageUrl: string | null; }; isLiked?: boolean })[]>;
   likeLoop(loopId: number, userId: number): Promise<{ success: boolean; isLiked: boolean }>;
   viewLoop(loopId: number, userId: number): Promise<void>;
   deleteLoop(loopId: number, userId: number): Promise<void>;
@@ -120,7 +120,7 @@ export interface IStorage {
   getUsersByUsername(usernames: string[]): Promise<User[]>;
   
   // Search operations
-  searchPosts(query: string, type?: string): Promise<(Post & { author: User; comments: (Comment & { author: User })[]; likesCount: number })[]>;
+  searchPosts(query: string, type?: string): Promise<(Post & { author: { id: number; name: string; username: string; profileImageUrl: string | null; }; comments: (Comment & { author: { id: number; name: string; username: string; profileImageUrl: string | null; } })[]; likesCount: number })[]>;
   
   // Analytics operations
   getUserAnalytics(userId: number): Promise<{
@@ -161,11 +161,6 @@ export class DatabaseStorage implements IStorage {
 
   async getUser(id: number): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
-    return user || undefined;
-  }
-
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.username, username));
     return user || undefined;
   }
 
@@ -1202,7 +1197,7 @@ export class DatabaseStorage implements IStorage {
         // Update usage count
         await db.update(hashtags)
           .set({ 
-            usageCount: hashtag[0].usageCount + 1,
+            usageCount: (hashtag[0].usageCount || 0) + 1,
             updatedAt: new Date()
           })
           .where(eq(hashtags.id, hashtag[0].id));
@@ -1342,7 +1337,7 @@ export class DatabaseStorage implements IStorage {
 
     const result = [];
     for (const item of postsData) {
-      const comments = await db
+      const postComments = await db
         .select({
           comment: comments,
           author: {
@@ -1365,7 +1360,7 @@ export class DatabaseStorage implements IStorage {
       result.push({
         ...item.post,
         author: item.author,
-        comments: comments.map(c => ({ ...c.comment, author: c.author })),
+        comments: postComments.map((c: any) => ({ ...c.comment, author: c.author })),
         likesCount: likesCount[0]?.count || 0,
       });
     }
@@ -1571,8 +1566,8 @@ export class DatabaseStorage implements IStorage {
         await db
           .update(dailyUserStats)
           .set({
-            totalTimeMinutes: existingStats.totalTimeMinutes + durationMinutes,
-            sessionsCount: existingStats.sessionsCount + 1
+            totalTimeMinutes: (existingStats.totalTimeMinutes || 0) + durationMinutes,
+            sessionsCount: (existingStats.sessionsCount || 0) + 1
           })
           .where(eq(dailyUserStats.id, existingStats.id));
       } else {
@@ -1617,16 +1612,16 @@ export class DatabaseStorage implements IStorage {
       
       switch (activityType) {
         case 'messages':
-          if (actionType === 'create') updateData.messagesCount = existingStats.messagesCount + 1;
+          if (actionType === 'create') updateData.messagesCount = (existingStats.messagesCount || 0) + 1;
           break;
         case 'posts':
-          if (actionType === 'create') updateData.postsCount = existingStats.postsCount + 1;
+          if (actionType === 'create') updateData.postsCount = (existingStats.postsCount || 0) + 1;
           break;
         case 'loops':
-          if (actionType === 'create') updateData.loopsCount = existingStats.loopsCount + 1;
+          if (actionType === 'create') updateData.loopsCount = (existingStats.loopsCount || 0) + 1;
           break;
         case 'relationships':
-          if (actionType === 'create') updateData.relationshipsCount = existingStats.relationshipsCount + 1;
+          if (actionType === 'create') updateData.relationshipsCount = (existingStats.relationshipsCount || 0) + 1;
           break;
       }
 
