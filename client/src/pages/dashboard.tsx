@@ -52,7 +52,6 @@ export default function Dashboard() {
     <div className="min-h-screen gradient-secondary-bg">
       <Header 
         user={{...user, relationships, friendGroups}} 
-        notifications={notifications} 
       />
       
       <div className="w-full">

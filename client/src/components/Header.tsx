@@ -12,14 +12,11 @@ import { useLocation, Link } from "wouter";
 
 interface HeaderProps {
   user: any;
-  notifications: any[];
 }
 
-export default function Header({ user, notifications }: HeaderProps) {
+export default function Header({ user }: HeaderProps) {
   const { logout } = useAuth();
   const [location] = useLocation();
-
-  const unreadCount = notifications.filter(n => !n.isRead).length;
   const isOnDashboard = location === "/" || location === "/dashboard";
 
   return (

@@ -1,12 +1,13 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiRequest, getQueryFn } from "@/lib/queryClient";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 import { formatDistanceToNow } from "date-fns";
-import { Bell, Heart, MessageCircle, UserPlus, AlertTriangle } from "lucide-react";
+import { Bell, Heart, MessageCircle, UserPlus, AlertTriangle, Volume2 } from "lucide-react";
+import { useNotifications } from "@/hooks/useNotifications";
 
 interface Notification {
   id: number;
@@ -19,13 +20,17 @@ interface Notification {
 
 export default function NotificationDropdown() {
   const [isOpen, setIsOpen] = useState(false);
+  const [showPermissionPrompt, setShowPermissionPrompt] = useState(false);
   const queryClient = useQueryClient();
 
-  const { data: notifications = [], isLoading } = useQuery<Notification[]>({
-    queryKey: ["/api/notifications"],
-    queryFn: getQueryFn({ on401: "returnNull" }),
-    refetchInterval: 30000, // Poll every 30 seconds for new notifications
-  });
+  const { 
+    notifications, 
+    unreadCount, 
+    hasNewNotifications, 
+    isLoading, 
+    requestNotificationPermission,
+    playNotificationSound 
+  } = useNotifications();
 
   const markAsReadMutation = useMutation({
     mutationFn: async (notificationId: number) => {
@@ -37,7 +42,21 @@ export default function NotificationDropdown() {
     },
   });
 
-  const unreadCount = notifications.filter((n: Notification) => !n.isRead).length;
+  // Check notification permission on component mount
+  useEffect(() => {
+    if ('Notification' in window && Notification.permission === 'default') {
+      setShowPermissionPrompt(true);
+    }
+  }, []);
+
+  const handleEnableNotifications = async () => {
+    const granted = await requestNotificationPermission();
+    setShowPermissionPrompt(false);
+    if (granted) {
+      // Play a test sound to confirm it's working
+      playNotificationSound();
+    }
+  };
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
@@ -63,11 +82,19 @@ export default function NotificationDropdown() {
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
-        <Button variant="ghost" size="sm" className={`relative p-2 hover:scale-110 transition-transform duration-300 ${unreadCount > 0 ? 'pulse-glow' : ''}`}>
-          <span className="text-xl wiggle">🔔</span>
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          className={`relative p-2 hover:scale-110 transition-transform duration-300 ${
+            unreadCount > 0 || hasNewNotifications ? 'pulse-glow' : ''
+          } ${hasNewNotifications ? 'animate-bounce' : ''}`}
+        >
+          <span className={`text-xl ${hasNewNotifications ? 'animate-pulse' : 'wiggle'}`}>🔔</span>
           {unreadCount > 0 && (
             <Badge 
-              className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs gradient-accent-bg text-white pulse-glow"
+              className={`absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs gradient-accent-bg text-white ${
+                hasNewNotifications ? 'animate-ping' : 'pulse-glow'
+              }`}
             >
               {unreadCount > 99 ? "99+" : unreadCount}
             </Badge>
@@ -77,12 +104,56 @@ export default function NotificationDropdown() {
       <PopoverContent className="w-80 p-0 glass-effect teen-shadow sparkle-border" align="end">
         <div className="flex items-center justify-between p-4 border-b border-purple-200 gradient-bg text-white">
           <h3 className="font-semibold">✨ What's Happening</h3>
-          {unreadCount > 0 && (
-            <Badge variant="secondary" className="text-xs">
-              {unreadCount} new
-            </Badge>
-          )}
+          <div className="flex items-center gap-2">
+            {unreadCount > 0 && (
+              <Badge variant="secondary" className="text-xs">
+                {unreadCount} new
+              </Badge>
+            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-white hover:bg-white/20 p-1 h-6 w-6"
+              onClick={(e) => {
+                e.stopPropagation();
+                playNotificationSound();
+              }}
+              title="Test notification sound"
+            >
+              <Volume2 className="h-3 w-3" />
+            </Button>
+          </div>
         </div>
+
+        {/* Permission prompt */}
+        {showPermissionPrompt && (
+          <div className="p-4 bg-blue-50 border-b">
+            <div className="flex items-start gap-3">
+              <Bell className="h-5 w-5 text-blue-600 mt-0.5" />
+              <div className="flex-1">
+                <p className="text-sm font-medium text-blue-900">Enable notifications</p>
+                <p className="text-xs text-blue-700 mb-2">Get instant alerts for new messages and updates</p>
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    className="h-7 text-xs"
+                    onClick={handleEnableNotifications}
+                  >
+                    Enable
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 text-xs"
+                    onClick={() => setShowPermissionPrompt(false)}
+                  >
+                    Maybe later
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
         
         <ScrollArea className="h-96">
           {isLoading ? (
