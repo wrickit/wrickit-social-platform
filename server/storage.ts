@@ -91,6 +91,7 @@ export interface IStorage {
   getLoops(limit?: number, currentUserId?: number): Promise<(Loop & { author: User; isLiked?: boolean })[]>;
   likeLoop(loopId: number, userId: number): Promise<{ success: boolean; isLiked: boolean }>;
   viewLoop(loopId: number, userId: number): Promise<void>;
+  deleteLoop(loopId: number, userId: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -839,6 +840,143 @@ export class DatabaseStorage implements IStorage {
       ...row.comments,
       author: row.users!,
     }));
+  }
+
+  async createLoop(authorId: number, loopData: InsertLoop): Promise<Loop> {
+    const [loop] = await db
+      .insert(loops)
+      .values({
+        ...loopData,
+        authorId,
+      })
+      .returning();
+    return loop;
+  }
+
+  async getLoops(limit = 20, currentUserId?: number): Promise<(Loop & { author: User; isLiked?: boolean })[]> {
+    const result = await db
+      .select({
+        id: loops.id,
+        authorId: loops.authorId,
+        videoUrl: loops.videoUrl,
+        thumbnailUrl: loops.thumbnailUrl,
+        description: loops.description,
+        songTitle: loops.songTitle,
+        songArtist: loops.songArtist,
+        songUrl: loops.songUrl,
+        songStartTime: loops.songStartTime,
+        songDuration: loops.songDuration,
+        likes: loops.likes,
+        views: loops.views,
+        isPublic: loops.isPublic,
+        createdAt: loops.createdAt,
+        author: {
+          id: users.id,
+          name: users.name,
+          username: users.username,
+          profileImageUrl: users.profileImageUrl,
+        }
+      })
+      .from(loops)
+      .innerJoin(users, eq(loops.authorId, users.id))
+      .where(eq(loops.isPublic, true))
+      .orderBy(desc(loops.createdAt))
+      .limit(limit);
+
+    // Check if current user liked each loop
+    let userLikes: number[] = [];
+    if (currentUserId) {
+      const likes = await db
+        .select({ loopId: loopLikes.loopId })
+        .from(loopLikes)
+        .where(eq(loopLikes.userId, currentUserId));
+      userLikes = likes.map(like => like.loopId);
+    }
+
+    return result.map(row => ({
+      ...row,
+      author: row.author,
+      isLiked: currentUserId ? userLikes.includes(row.id) : false,
+    }));
+  }
+
+  async likeLoop(loopId: number, userId: number): Promise<{ success: boolean; isLiked: boolean }> {
+    // Check if already liked
+    const existingLike = await db
+      .select()
+      .from(loopLikes)
+      .where(and(eq(loopLikes.loopId, loopId), eq(loopLikes.userId, userId)))
+      .limit(1);
+
+    if (existingLike.length > 0) {
+      // Unlike
+      await db
+        .delete(loopLikes)
+        .where(and(eq(loopLikes.loopId, loopId), eq(loopLikes.userId, userId)));
+      
+      // Decrement likes count
+      await db
+        .update(loops)
+        .set({ likes: sql`${loops.likes} - 1` })
+        .where(eq(loops.id, loopId));
+
+      return { success: true, isLiked: false };
+    } else {
+      // Like
+      await db
+        .insert(loopLikes)
+        .values({ loopId, userId });
+      
+      // Increment likes count
+      await db
+        .update(loops)
+        .set({ likes: sql`${loops.likes} + 1` })
+        .where(eq(loops.id, loopId));
+
+      return { success: true, isLiked: true };
+    }
+  }
+
+  async viewLoop(loopId: number, userId: number): Promise<void> {
+    // Check if already viewed
+    const existingView = await db
+      .select()
+      .from(loopViews)
+      .where(and(eq(loopViews.loopId, loopId), eq(loopViews.userId, userId)))
+      .limit(1);
+
+    if (existingView.length === 0) {
+      // Add view
+      await db
+        .insert(loopViews)
+        .values({ loopId, userId });
+      
+      // Increment views count
+      await db
+        .update(loops)
+        .set({ views: sql`${loops.views} + 1` })
+        .where(eq(loops.id, loopId));
+    }
+  }
+
+  async deleteLoop(loopId: number, userId: number): Promise<void> {
+    // First check if the user is the author of the loop
+    const loop = await db
+      .select()
+      .from(loops)
+      .where(and(eq(loops.id, loopId), eq(loops.authorId, userId)))
+      .limit(1);
+
+    if (loop.length === 0) {
+      throw new Error("Loop not found or you don't have permission to delete it");
+    }
+
+    // Delete associated likes and views first (due to foreign key constraints)
+    await db.delete(loopLikes).where(eq(loopLikes.loopId, loopId));
+    await db.delete(loopViews).where(eq(loopViews.loopId, loopId));
+    
+    // Delete the loop
+    await db.delete(loops).where(eq(loops.id, loopId));
   }
 }
 

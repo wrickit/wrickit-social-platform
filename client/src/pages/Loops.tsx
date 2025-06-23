@@ -6,6 +6,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
@@ -21,7 +27,9 @@ import {
   Music,
   Video,
   Upload,
-  Eye
+  Eye,
+  MoreVertical,
+  Trash2
 } from "lucide-react";
 
 interface Loop {
@@ -88,6 +96,27 @@ export default function Loops() {
     },
   });
 
+  // Delete loop mutation
+  const deleteLoopMutation = useMutation({
+    mutationFn: async (loopId: number) => {
+      await apiRequest("DELETE", `/api/loops/${loopId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/loops"] });
+      toast({
+        title: "Success",
+        description: "Loop deleted successfully",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete loop",
+        variant: "destructive",
+      });
+    },
+  });
+
   // Handle video play/pause
   const togglePlayPause = (index: number) => {
     const video = videoRefs.current[index];
@@ -117,6 +146,13 @@ export default function Loops() {
   // Handle like
   const handleLike = (loopId: number) => {
     likeLoopMutation.mutate(loopId);
+  };
+
+  // Handle delete
+  const handleDelete = (loopId: number) => {
+    if (confirm("Are you sure you want to delete this loop?")) {
+      deleteLoopMutation.mutate(loopId);
+    }
   };
 
   // Auto-play next video when current ends
@@ -233,6 +269,30 @@ export default function Loops() {
                       </AvatarFallback>
                     </Avatar>
                   </div>
+
+                  {/* Delete Button (only for loop author) */}
+                  {user && loop.authorId === user.id && (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="flex flex-col items-center space-y-1 text-white hover:bg-white/20 rounded-full w-12 h-12 p-0"
+                        >
+                          <MoreVertical className="w-6 h-6" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="bg-white">
+                        <DropdownMenuItem
+                          onClick={() => handleDelete(loop.id)}
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        >
+                          <Trash2 className="w-4 h-4 mr-2" />
+                          Delete Loop
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
 
                   {/* Like Button */}
                   <Button

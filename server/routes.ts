@@ -632,6 +632,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.delete("/api/loops/:id", requireAuth, async (req: any, res: Response) => {
+    try {
+      const loopId = parseInt(req.params.id);
+      await storage.deleteLoop(loopId, req.user.id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Delete loop error:", error);
+      res.status(500).json({ message: error.message || "Failed to delete loop" });
+    }
+  });
+
   // Disciplinary action routes
   app.post("/api/disciplinary-actions", requireAuth, async (req: any, res: Response) => {
     try {
