@@ -65,20 +65,20 @@ export default function HamburgerMenu({ user, relationships = [], friendGroups =
             {/* Profile Section */}
             <div className="pb-3">
               <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Profile</h3>
-              <Dialog open={showProfileSettings} onOpenChange={setShowProfileSettings}>
-                <DialogTrigger asChild>
-                  <Button variant="ghost" className="w-full justify-start p-3 h-auto">
-                    <User className="w-4 h-4 mr-3" />
-                    <div className="text-left">
-                      <div className="font-medium">Edit Profile</div>
-                      <div className="text-xs text-gray-500">Update your information</div>
-                    </div>
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-2xl">
-                  <ProfileSettings user={user} />
-                </DialogContent>
-              </Dialog>
+              <Button 
+                variant="ghost" 
+                className="w-full justify-start p-3 h-auto"
+                onClick={() => {
+                  setShowProfileSettings(true);
+                  setIsOpen(false);
+                }}
+              >
+                <User className="w-4 h-4 mr-3" />
+                <div className="text-left">
+                  <div className="font-medium">Edit Profile</div>
+                  <div className="text-xs text-gray-500">Update your information</div>
+                </div>
+              </Button>
             </div>
 
             <Separator />
@@ -324,6 +324,13 @@ export default function HamburgerMenu({ user, relationships = [], friendGroups =
           </div>
         </SheetContent>
       </Sheet>
+
+      {/* Profile Settings Dialog - separate from the Sheet */}
+      <Dialog open={showProfileSettings} onOpenChange={setShowProfileSettings}>
+        <DialogContent className="max-w-2xl">
+          <ProfileSettings user={user} />
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
