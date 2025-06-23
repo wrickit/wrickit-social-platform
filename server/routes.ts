@@ -182,6 +182,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.delete("/api/relationships/:userId", requireAuth, async (req: any, res: Response) => {
+    try {
+      const otherUserId = parseInt(req.params.userId);
+      const currentUserId = req.session.userId;
+      
+      if (isNaN(otherUserId)) {
+        return res.status(400).json({ message: "Invalid user ID" });
+      }
+      
+      // Prevent users from trying to defriend themselves
+      if (currentUserId === otherUserId) {
+        return res.status(400).json({ message: "Cannot defriend yourself" });
+      }
+      
+      await storage.deleteRelationship(currentUserId, otherUserId);
+      res.json({ message: "Relationship removed successfully" });
+    } catch (error) {
+      console.error("Delete relationship error:", error);
+      res.status(500).json({ message: "Failed to remove relationship" });
+    }
+  });
+
   // User search route (by name)
   app.get("/api/users/search", requireAuth, async (req: any, res: Response) => {
     try {

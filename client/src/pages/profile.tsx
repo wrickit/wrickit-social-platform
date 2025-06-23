@@ -29,12 +29,17 @@ export default function Profile() {
     enabled: true,
   });
 
-  const isOwnProfile = !userId || (currentUser && profileUser && profileUser.id === currentUser.id);
+  const isOwnProfile = !userId || (currentUser && profileUser && (profileUser as any)?.id === currentUser.id);
 
   const { data: userRelationships = [] } = useQuery({
     queryKey: ["/api/users", userId, "relationships"],
     enabled: !!userId,
-  });
+  }) as any;
+
+  const { data: currentUserRelationships = [] } = useQuery({
+    queryKey: ["/api/relationships"],
+    enabled: isOwnProfile && !!currentUser,
+  }) as any;
 
   const updateProfileMutation = useMutation({
     mutationFn: async (data: { name?: string; bio?: string; profileImageUrl?: string }) => {
@@ -49,6 +54,18 @@ export default function Profile() {
     },
   });
 
+  const deleteRelationshipMutation = useMutation({
+    mutationFn: async (otherUserId: number) => {
+      await apiRequest("DELETE", `/api/relationships/${otherUserId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/relationships"] });
+    },
+    onError: (error: any) => {
+      console.error("Failed to remove relationship:", error);
+    },
+  });
+
   const handleSaveProfile = () => {
     updateProfileMutation.mutate({
       name: editedName,
@@ -57,8 +74,8 @@ export default function Profile() {
   };
 
   const startEditing = () => {
-    setEditedName(profileUser?.name || "");
-    setEditedBio(profileUser?.bio || "");
+    setEditedName((profileUser as any)?.name || "");
+    setEditedBio((profileUser as any)?.bio || "");
     setIsEditing(true);
   };
 
@@ -88,7 +105,8 @@ export default function Profile() {
   }
 
 
-  const relationshipTypes = userRelationships.map((rel: any) => rel.type);
+  const profileUserData = profileUser as any;
+  const relationshipTypes = (userRelationships as any[]).map((rel: any) => rel.type);
 
   return (
     <div className="min-h-screen app-gray-bg">
@@ -112,23 +130,23 @@ export default function Profile() {
                 <div className="flex items-start justify-between">
                   <div className="flex items-center space-x-4">
                     <div className="relative">
-                      {profileUser.profileImageUrl ? (
+                      {profileUserData.profileImageUrl ? (
                         <img
-                          src={profileUser.profileImageUrl}
+                          src={profileUserData.profileImageUrl}
                           alt="Profile"
                           className="w-20 h-20 rounded-full profile-pic"
                         />
                       ) : (
                         <div className="w-20 h-20 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center">
                           <span className="text-2xl font-bold text-white">
-                            {profileUser.name?.charAt(0) || 'U'}
+                            {profileUserData.name?.charAt(0) || 'U'}
                           </span>
                         </div>
                       )}
                       {isOwnProfile && (
                         <ProfilePictureDialog
-                          userId={profileUser.id}
-                          currentImageUrl={profileUser.profileImageUrl}
+                          userId={profileUserData.id}
+                          currentImageUrl={profileUserData.profileImageUrl}
                           trigger={
                             <Button
                               size="sm"
@@ -149,9 +167,9 @@ export default function Profile() {
                           className="text-xl font-bold mb-2"
                         />
                       ) : (
-                        <CardTitle className="text-2xl app-text">{profileUser.name}</CardTitle>
+                        <CardTitle className="text-2xl app-text">{profileUserData.name}</CardTitle>
                       )}
-                      <p className="app-text-light">Class {profileUser.class}</p>
+                      <p className="app-text-light">Class {profileUserData.class}</p>
                       {relationshipTypes.length > 0 && !isOwnProfile && (
                         <div className="flex flex-wrap gap-1 mt-2">
                           {relationshipTypes.includes('best_friend') && <Badge className="discord-purple-bg">Best Friend</Badge>}
@@ -177,7 +195,7 @@ export default function Profile() {
                     />
                   ) : (
                     <p className="mt-2 app-text-light">
-                      {profileUser.bio || "No bio available."}
+                      {profileUserData.bio || "No bio available."}
                     </p>
                   )}
                 </div>
@@ -195,17 +213,17 @@ export default function Profile() {
                 <div className="flex justify-between">
                   <span className="app-text-light">Friends:</span>
                   <span className="font-semibold app-text">
-                    {userRelationships.filter((r: any) => ['friend', 'best_friend'].includes(r.type)).length}
+                    {(userRelationships as any[]).filter((r: any) => ['friend', 'best_friend'].includes(r.type)).length}
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="app-text-light">Connections:</span>
-                  <span className="font-semibold app-text">{userRelationships.length}</span>
+                  <span className="font-semibold app-text">{(userRelationships as any[]).length}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="app-text-light">Member since:</span>
                   <span className="font-semibold app-text">
-                    {new Date(profileUser.createdAt).toLocaleDateString()}
+                    {new Date(profileUserData.createdAt).toLocaleDateString()}
                   </span>
                 </div>
               </CardContent>
@@ -231,6 +249,58 @@ export default function Profile() {
             )}
           </div>
         </div>
+
+        {/* Relationships Management - Only show on own profile */}
+        {isOwnProfile && (currentUserRelationships as any[]).length > 0 && (
+          <div className="mt-8">
+            <Card className="content-box">
+              <CardHeader>
+                <CardTitle className="app-text">My Connections</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {(currentUserRelationships as any[]).map((relationship: any) => (
+                    <div key={relationship.id} className="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-800">
+                      <div className="flex items-center space-x-3">
+                        {relationship.toUser?.profileImageUrl ? (
+                          <img
+                            src={relationship.toUser.profileImageUrl}
+                            alt="Profile"
+                            className="w-10 h-10 rounded-full profile-pic"
+                          />
+                        ) : (
+                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center">
+                            <span className="text-sm font-bold text-white">
+                              {relationship.toUser?.name?.charAt(0) || 'U'}
+                            </span>
+                          </div>
+                        )}
+                        <div>
+                          <p className="font-semibold app-text">{relationship.toUser?.name}</p>
+                          <div className="flex items-center space-x-2">
+                            {relationship.type === 'best_friend' && <Badge className="discord-purple-bg text-xs">Best Friend</Badge>}
+                            {relationship.type === 'friend' && <Badge variant="secondary" className="text-xs">Friend</Badge>}
+                            {relationship.type === 'crush' && <Badge className="youtube-red-bg text-xs">Crush 💕</Badge>}
+                            {relationship.type === 'acquaintance' && <Badge variant="outline" className="text-xs">Acquaintance</Badge>}
+                          </div>
+                        </div>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => deleteRelationshipMutation.mutate(relationship.toUserId)}
+                        disabled={deleteRelationshipMutation.isPending}
+                        className="text-red-600 hover:bg-red-50 hover:text-red-700 border-red-200"
+                      >
+                        {deleteRelationshipMutation.isPending ? "Removing..." : "Remove"}
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </div>
     </div>
   );

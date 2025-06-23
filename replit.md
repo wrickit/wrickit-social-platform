@@ -136,6 +136,7 @@ The application is configured for deployment on Replit with the following setup:
 - ✓ Fixed hamburger menu scrolling and added complete sidebar functionality for responsive design
 - ✓ Prevented duplicate relationships by updating existing ones instead of creating duplicates
 - ✓ Fixed self-relationship bug - users can no longer friend themselves or appear in their own search results
+- ✓ Added defriend functionality - users can remove relationships from their profile page
 
 ### June 22, 2025
 - ✓ Fixed database connection issues by creating PostgreSQL database and pushing schema

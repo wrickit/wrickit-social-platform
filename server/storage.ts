@@ -47,6 +47,7 @@ export interface IStorage {
   // Relationship operations
   createRelationship(fromUserId: number, toUserId: number, type: string): Promise<Relationship>;
   getRelationshipsByUserId(userId: number): Promise<(Relationship & { toUser: User; fromUser: User })[]>;
+  deleteRelationship(fromUserId: number, toUserId: number): Promise<void>;
   checkMutualCrush(userId1: number, userId2: number): Promise<boolean>;
   
   // Post operations
@@ -307,6 +308,15 @@ export class DatabaseStorage implements IStorage {
       toUser: row.users!,
       fromUser: currentUser!,
     }));
+  }
+
+  async deleteRelationship(fromUserId: number, toUserId: number): Promise<void> {
+    await db
+      .delete(relationships)
+      .where(and(
+        eq(relationships.fromUserId, fromUserId),
+        eq(relationships.toUserId, toUserId)
+      ));
   }
 
   async checkMutualCrush(userId1: number, userId2: number): Promise<boolean> {
