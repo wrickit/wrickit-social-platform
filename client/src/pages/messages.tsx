@@ -192,6 +192,9 @@ export default function Messages() {
     };
     isIncoming: boolean;
   } | null>(null);
+  
+  const ringtoneRef = useRef<HTMLAudioElement | null>(null);
+  const ringtoneIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Check if mobile
   useEffect(() => {
@@ -372,11 +375,59 @@ export default function Messages() {
     queryClient.invalidateQueries({ queryKey: ["/api/messages"] });
   };
 
+  const startRingtone = () => {
+    // Create simple repeating beep sound
+    const playBeep = () => {
+      try {
+        const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+        gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+        
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + 0.3);
+      } catch (error) {
+        console.warn('Could not play ringtone beep:', error);
+      }
+    };
+
+    // Play immediately and then repeat every 1.5 seconds
+    playBeep();
+    ringtoneIntervalRef.current = setInterval(playBeep, 1500);
+  };
+
+  const stopRingtone = () => {
+    if (ringtoneIntervalRef.current) {
+      clearInterval(ringtoneIntervalRef.current);
+      ringtoneIntervalRef.current = null;
+    }
+  };
+
   const handleIncomingCall = async (fromUserId: number) => {
     // Get caller info
     try {
       const response = await fetch(`/api/users/${fromUserId}`);
       const caller = await response.json();
+      
+      // Start ringing sound
+      startRingtone();
+      
+      // Show browser notification if supported
+      if ('Notification' in window && Notification.permission === 'granted') {
+        new Notification(`Incoming call from ${caller.name}`, {
+          body: 'Click to answer the call',
+          icon: caller.profileImageUrl || '/default-avatar.png'
+        });
+      } else if ('Notification' in window && Notification.permission !== 'denied') {
+        // Request permission for future notifications
+        Notification.requestPermission();
+      }
       
       setVoiceCall({
         isOpen: true,
@@ -401,14 +452,17 @@ export default function Messages() {
   };
 
   const closeVoiceCall = () => {
+    stopRingtone();
     setVoiceCall(null);
   };
 
   const acceptCall = () => {
+    stopRingtone();
     // Call will be handled by VoiceCall component
   };
 
   const declineCall = () => {
+    stopRingtone();
     setVoiceCall(null);
   };
 
