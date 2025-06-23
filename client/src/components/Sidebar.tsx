@@ -71,10 +71,14 @@ export default function Sidebar({ user, relationships, friendGroups }: SidebarPr
             </div>
           </Link>
           
-          <div className="flex items-center space-x-2 px-3 py-2 rounded text-fb-text">
-            <Heart className="w-4 h-4 text-red-500" />
-            <span>My Relationships</span>
-          </div>
+          <Link href="/relationships">
+            <div className={`flex items-center space-x-2 px-3 py-2 rounded cursor-pointer transition-colors ${
+              location === "/relationships" ? "discord-purple-bg text-white" : "hover:fb-gray-bg text-fb-text"
+            }`}>
+              <Heart className="w-4 h-4 text-red-500" />
+              <span>My Relationships</span>
+            </div>
+          </Link>
           <div className="flex items-center space-x-2 px-3 py-2 rounded text-fb-text">
             <Users className="w-4 h-4 text-blue-600" />
             <span>Friend Groups</span>

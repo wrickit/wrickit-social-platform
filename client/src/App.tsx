@@ -13,6 +13,7 @@ import Login from "@/pages/login";
 import Profile from "@/pages/profile";
 import Messages from "@/pages/messages";
 import Disciplinary from "@/pages/disciplinary";
+import Relationships from "@/pages/relationships";
 import DevPage from "@/pages/dev";
 import NotFound from "@/pages/not-found";
 
@@ -42,6 +43,7 @@ function Router() {
           <Route path="/profile" component={Profile} />
           <Route path="/profile/:userId" component={Profile} />
           <Route path="/messages" component={Messages} />
+          <Route path="/relationships" component={Relationships} />
           <Route path="/disciplinary" component={Disciplinary} />
         </>
       ) : (

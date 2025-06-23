@@ -107,6 +107,18 @@ export default function HamburgerMenu({ user, relationships = [], friendGroups =
               <Button
                 variant="ghost"
                 className="w-full justify-start p-3 h-auto"
+                onClick={() => navigateTo("/relationships")}
+              >
+                <Heart className="w-4 h-4 mr-3" />
+                <div className="text-left">
+                  <div className="font-medium">My Relationships</div>
+                  <div className="text-xs text-gray-500">Manage connections</div>
+                </div>
+              </Button>
+              
+              <Button
+                variant="ghost"
+                className="w-full justify-start p-3 h-auto"
                 onClick={() => navigateTo("/disciplinary")}
               >
                 <Scale className="w-4 h-4 mr-3" />
