@@ -16,14 +16,13 @@ export default function ReadReceipt({ isRead, readAt, isOwnMessage }: ReadReceip
     <div className="inline-flex items-center ml-1">
       {isReadAndSeen ? (
         // Double green ticks for read/seen
-        <div className="relative">
-          <CheckCheck className="w-3 h-3 text-green-500" />
-        </div>
+        <CheckCheck className="w-3 h-3 text-green-500" />
+      ) : isRead ? (
+        // Double grey ticks for delivered
+        <CheckCheck className="w-3 h-3 text-gray-400" />
       ) : (
-        // Double grey ticks for delivered (sent to recipient)
-        <div className="relative">
-          <CheckCheck className="w-3 h-3 text-gray-400" />
-        </div>
+        // Single grey tick for sent
+        <Check className="w-3 h-3 text-gray-400" />
       )}
     </div>
   );
