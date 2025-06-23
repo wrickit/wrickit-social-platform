@@ -220,7 +220,7 @@ export default function PostFeed({ showAll = false, maxPosts = 5, sortBy = "rece
               </div>
             </div>
             
-            <p className="app-text mb-3">{post.content}</p>
+            <p className="app-text mb-3 whitespace-pre-wrap">{post.content}</p>
             
             {/* Voice Message */}
             {post.voiceMessageUrl && (
@@ -352,7 +352,7 @@ export default function PostFeed({ showAll = false, maxPosts = 5, sortBy = "rece
                             {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true })}
                           </span>
                         </div>
-                        <p className="text-sm text-gray-700 dark:text-gray-300">{comment.content}</p>
+                        <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{comment.content}</p>
                       </div>
                     ))}
                   </div>
