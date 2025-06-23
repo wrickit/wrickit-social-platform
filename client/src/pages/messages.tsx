@@ -24,6 +24,7 @@ import {
   Mic
 } from "lucide-react";
 import VoiceRecorder from "@/components/VoiceRecorder";
+import ReadReceipt from "@/components/ReadReceipt";
 
 interface Conversation {
   id: number;
@@ -642,11 +643,18 @@ export default function Messages() {
                           ) : (
                             <p className="text-sm">{message.content}</p>
                           )}
-                          <p className={`text-xs mt-1 ${
+                          <div className={`flex items-center justify-between mt-1 ${
                             isOwnMessage ? 'text-blue-100' : 'app-text-light'
                           }`}>
-                            {formatTime(message.createdAt)}
-                          </p>
+                            <p className="text-xs">
+                              {formatTime(message.createdAt)}
+                            </p>
+                            <ReadReceipt 
+                              isRead={message.isRead}
+                              readAt={message.readAt}
+                              isOwnMessage={isOwnMessage}
+                            />
+                          </div>
                         </div>
                       </div>
                     );

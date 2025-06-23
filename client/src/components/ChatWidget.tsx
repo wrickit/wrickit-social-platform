@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { X, Send, Mic } from "lucide-react";
 import VoiceRecorder from "./VoiceRecorder";
 import VoicePlayer from "./VoicePlayer";
+import ReadReceipt from "./ReadReceipt";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { formatDistanceToNow } from "date-fns";
@@ -285,13 +286,20 @@ export default function ChatWidget({ userId, onClose }: ChatWidgetProps) {
                     ) : (
                       <p>{msg.content}</p>
                     )}
-                    <p className={`text-xs mt-1 ${
+                    <div className={`flex items-center justify-between mt-1 ${
                       msg.fromUserId === userId
                         ? "text-fb-text-light"
                         : "text-blue-100"
                     }`}>
-                      {msg.createdAt ? formatDistanceToNow(new Date(msg.createdAt), { addSuffix: true }) : 'Just now'}
-                    </p>
+                      <p className="text-xs">
+                        {msg.createdAt ? formatDistanceToNow(new Date(msg.createdAt), { addSuffix: true }) : 'Just now'}
+                      </p>
+                      <ReadReceipt 
+                        isRead={msg.isRead}
+                        readAt={msg.readAt}
+                        isOwnMessage={msg.fromUserId !== userId}
+                      />
+                    </div>
                   </div>
                 ))}
                 <div ref={messagesEndRef} />
