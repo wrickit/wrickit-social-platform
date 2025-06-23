@@ -606,7 +606,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/loops", requireAuth, async (req: any, res: Response) => {
     try {
-      const loops = await storage.getLoops(20, req.user?.id);
+      const { personalized } = req.query;
+      let loops;
+      
+      if (personalized === 'true' && req.user?.id) {
+        loops = await storage.getPersonalizedLoops(req.user.id, 20);
+      } else {
+        loops = await storage.getLoops(20, req.user?.id);
+      }
+      
       res.json(loops);
     } catch (error) {
       console.error("Get loops error:", error);
@@ -620,7 +628,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!req.user || !req.user.id) {
         return res.status(401).json({ message: "User not authenticated" });
       }
+      
       const result = await storage.likeLoop(loopId, req.user.id);
+      
+      // Record interaction for personalization
+      if (result.isLiked) {
+        await storage.recordLoopInteraction(req.user.id, loopId, 'like');
+      }
+      
       res.json(result);
     } catch (error) {
       console.error("Like loop error:", error);
@@ -631,10 +646,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/loops/:id/view", requireAuth, async (req: any, res: Response) => {
     try {
       const loopId = parseInt(req.params.id);
+      const { durationWatched } = req.body;
+      
       if (!req.user || !req.user.id) {
         return res.status(401).json({ message: "User not authenticated" });
       }
+      
       await storage.viewLoop(loopId, req.user.id);
+      await storage.recordLoopInteraction(req.user.id, loopId, 'view', durationWatched || 0);
+      
       res.json({ success: true });
     } catch (error) {
       console.error("View loop error:", error);
@@ -653,6 +673,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Delete loop error:", error);
       res.status(500).json({ message: error.message || "Failed to delete loop" });
+    }
+  });
+
+  // New routes for personalization
+  app.post("/api/loops/:id/interaction", requireAuth, async (req: any, res: Response) => {
+    try {
+      const loopId = parseInt(req.params.id);
+      const { interactionType, durationWatched } = req.body;
+      
+      if (!req.user || !req.user.id) {
+        return res.status(401).json({ message: "User not authenticated" });
+      }
+      
+      await storage.recordLoopInteraction(req.user.id, loopId, interactionType, durationWatched);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Record interaction error:", error);
+      res.status(500).json({ message: "Failed to record interaction" });
+    }
+  });
+
+  app.get("/api/user/interests", requireAuth, async (req: any, res: Response) => {
+    try {
+      if (!req.user || !req.user.id) {
+        return res.status(401).json({ message: "User not authenticated" });
+      }
+      
+      const interests = await storage.getUserInterests(req.user.id);
+      res.json(interests);
+    } catch (error) {
+      console.error("Get user interests error:", error);
+      res.status(500).json({ message: "Failed to get user interests" });
     }
   });
 

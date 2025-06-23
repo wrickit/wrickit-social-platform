@@ -71,11 +71,13 @@ export default function Loops() {
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [watchStartTime, setWatchStartTime] = useState<Date | null>(null);
   const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
 
   // Fetch loops
   const { data: loops = [], isLoading } = useQuery<Loop[]>({
     queryKey: ["/api/loops"],
+    queryFn: () => fetch("/api/loops?personalized=true").then(res => res.json()),
     refetchInterval: 30000,
   });
 
@@ -91,8 +93,22 @@ export default function Loops() {
 
   // View loop mutation
   const viewLoopMutation = useMutation({
-    mutationFn: async (loopId: number) => {
-      await apiRequest("POST", `/api/loops/${loopId}/view`);
+    mutationFn: async ({ loopId, durationWatched }: { loopId: number; durationWatched?: number }) => {
+      await apiRequest("POST", `/api/loops/${loopId}/view`, { durationWatched });
+    },
+  });
+
+  // Interaction recording mutation
+  const recordInteractionMutation = useMutation({
+    mutationFn: async ({ loopId, interactionType, durationWatched }: { 
+      loopId: number; 
+      interactionType: string; 
+      durationWatched?: number 
+    }) => {
+      await apiRequest("POST", `/api/loops/${loopId}/interaction`, { 
+        interactionType, 
+        durationWatched 
+      });
     },
   });
 
@@ -132,14 +148,25 @@ export default function Loops() {
       video.play();
       setIsPlaying(true);
       setCurrentVideoIndex(index);
+      setWatchStartTime(new Date());
       
       // Record view
       if (loops[index]) {
-        viewLoopMutation.mutate(loops[index].id);
+        viewLoopMutation.mutate({ loopId: loops[index].id });
       }
     } else {
       video.pause();
       setIsPlaying(false);
+      
+      // Record watch duration when pausing
+      if (watchStartTime && loops[index]) {
+        const watchDuration = Math.floor((Date.now() - watchStartTime.getTime()) / 1000);
+        recordInteractionMutation.mutate({
+          loopId: loops[index].id,
+          interactionType: 'view',
+          durationWatched: watchDuration
+        });
+      }
     }
   };
 
@@ -158,6 +185,14 @@ export default function Loops() {
   // Auto-play next video when current ends
   useEffect(() => {
     const handleVideoEnd = (index: number) => {
+      // Record that video was watched completely
+      if (loops[index]) {
+        recordInteractionMutation.mutate({
+          loopId: loops[index].id,
+          interactionType: 'watch_complete'
+        });
+      }
+      
       if (index < loops.length - 1) {
         setCurrentVideoIndex(index + 1);
         setTimeout(() => togglePlayPause(index + 1), 100);
@@ -202,7 +237,7 @@ export default function Loops() {
               <ArrowLeft className="w-4 h-4 mr-1" />
               Back
             </Button>
-            <h1 className="text-xl font-bold">Loops</h1>
+            <h1 className="text-xl font-bold">For You</h1>
           </div>
           <Button
             onClick={() => setShowCreateModal(true)}
@@ -315,6 +350,18 @@ export default function Loops() {
                   <Button
                     variant="ghost"
                     size="sm"
+                    onClick={() => {
+                      recordInteractionMutation.mutate({
+                        loopId: loop.id,
+                        interactionType: 'share'
+                      });
+                      // Add actual share functionality here
+                      navigator.share?.({
+                        title: `Check out this loop by ${loop.author.name}`,
+                        text: loop.description || 'Cool loop on Wrickit!',
+                        url: window.location.href
+                      });
+                    }}
                     className="flex flex-col items-center space-y-1 text-white hover:bg-white/20 rounded-full w-12 h-12 p-0"
                   >
                     <Share2 className="w-6 h-6" />

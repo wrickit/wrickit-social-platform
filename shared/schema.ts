@@ -153,6 +153,24 @@ export const loopViews = pgTable("loop_views", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const userInterests = pgTable("user_interests", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  category: text("category").notNull(),
+  score: integer("score").default(1), // Using integer for simplicity (multiply by 100 for decimals)
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const loopInteractions = pgTable("loop_interactions", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  loopId: integer("loop_id").notNull().references(() => loops.id),
+  interactionType: text("interaction_type").notNull(), // 'view', 'like', 'share', 'skip', 'watch_complete'
+  durationWatched: integer("duration_watched").default(0), // in seconds
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   sentRelationships: many(relationships, { relationName: "fromUser" }),
@@ -274,6 +292,24 @@ export const loopViewsRelations = relations(loopViews, ({ one }) => ({
   user: one(users, {
     fields: [loopViews.userId],
     references: [users.id],
+  }),
+}));
+
+export const userInterestsRelations = relations(userInterests, ({ one }) => ({
+  user: one(users, {
+    fields: [userInterests.userId],
+    references: [users.id],
+  }),
+}));
+
+export const loopInteractionsRelations = relations(loopInteractions, ({ one }) => ({
+  user: one(users, {
+    fields: [loopInteractions.userId],
+    references: [users.id],
+  }),
+  loop: one(loops, {
+    fields: [loopInteractions.loopId],
+    references: [loops.id],
   }),
 }));
 

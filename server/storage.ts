@@ -11,6 +11,11 @@ import {
   disciplinaryActions,
   disciplinaryVotes,
   emailVerifications,
+  loops,
+  loopLikes,
+  loopViews,
+  userInterests,
+  loopInteractions,
   type User,
   type InsertUser,
   type UpdateUser,
@@ -21,6 +26,8 @@ import {
   type Message,
   type FriendGroup,
   type Notification,
+  type Loop,
+  type InsertLoop
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, or, desc, sql, inArray, count, gt, lt, asc } from "drizzle-orm";
@@ -89,9 +96,13 @@ export interface IStorage {
   // Loop operations
   createLoop(authorId: number, loopData: InsertLoop): Promise<Loop>;
   getLoops(limit?: number, currentUserId?: number): Promise<(Loop & { author: User; isLiked?: boolean })[]>;
+  getPersonalizedLoops(userId: number, limit?: number): Promise<(Loop & { author: User; isLiked?: boolean })[]>;
   likeLoop(loopId: number, userId: number): Promise<{ success: boolean; isLiked: boolean }>;
   viewLoop(loopId: number, userId: number): Promise<void>;
   deleteLoop(loopId: number, userId: number): Promise<void>;
+  recordLoopInteraction(userId: number, loopId: number, interactionType: string, durationWatched?: number): Promise<void>;
+  updateUserInterests(userId: number): Promise<void>;
+  getUserInterests(userId: number): Promise<{ category: string; score: number }[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -971,12 +982,229 @@ export class DatabaseStorage implements IStorage {
       throw new Error("Loop not found or you don't have permission to delete it");
     }
 
-    // Delete associated likes and views first (due to foreign key constraints)
+    // Delete associated likes, views, and interactions first (due to foreign key constraints)
     await db.delete(loopLikes).where(eq(loopLikes.loopId, loopId));
     await db.delete(loopViews).where(eq(loopViews.loopId, loopId));
+    await db.delete(loopInteractions).where(eq(loopInteractions.loopId, loopId));
     
     // Delete the loop
     await db.delete(loops).where(eq(loops.id, loopId));
+  }
+
+  async getPersonalizedLoops(userId: number, limit = 20): Promise<(Loop & { author: User; isLiked?: boolean })[]> {
+    // Get user interests
+    const interests = await this.getUserInterests(userId);
+    const interestCategories = interests.map(i => i.category);
+
+    // Get loops from followed users/friends
+    const friendRelationships = await db
+      .select({ toUserId: relationships.toUserId })
+      .from(relationships)
+      .where(and(eq(relationships.fromUserId, userId), eq(relationships.type, 'friend')));
+    
+    const friendIds = friendRelationships.map(r => r.toUserId);
+
+    // Get recently viewed loops to avoid showing them again immediately
+    const recentlyViewed = await db
+      .select({ loopId: loopInteractions.loopId })
+      .from(loopInteractions)
+      .where(and(
+        eq(loopInteractions.userId, userId),
+        eq(loopInteractions.interactionType, 'view'),
+        gt(loopInteractions.createdAt, new Date(Date.now() - 24 * 60 * 60 * 1000)) // Last 24 hours
+      ));
+    
+    const recentLoopIds = recentlyViewed.map(r => r.loopId);
+
+    let whereConditions = [eq(loops.isPublic, true)];
+    
+    // Exclude recently viewed loops
+    if (recentLoopIds.length > 0) {
+      whereConditions.push(sql`${loops.id} NOT IN (${recentLoopIds.join(',')})`);
+    }
+
+    // Build the base query
+    let query = db
+      .select({
+        id: loops.id,
+        authorId: loops.authorId,
+        videoUrl: loops.videoUrl,
+        thumbnailUrl: loops.thumbnailUrl,
+        description: loops.description,
+        songTitle: loops.songTitle,
+        songArtist: loops.songArtist,
+        songUrl: loops.songUrl,
+        songStartTime: loops.songStartTime,
+        songDuration: loops.songDuration,
+        likes: loops.likes,
+        views: loops.views,
+        isPublic: loops.isPublic,
+        createdAt: loops.createdAt,
+        author: {
+          id: users.id,
+          name: users.name,
+          username: users.username,
+          profileImageUrl: users.profileImageUrl,
+        },
+        // Add scoring for personalization
+        friendScore: sql<number>`CASE WHEN ${loops.authorId} IN (${friendIds.length > 0 ? friendIds.join(',') : 'NULL'}) THEN 100 ELSE 0 END`,
+        interestScore: sql<number>`CASE 
+          WHEN ${loops.songTitle} IS NOT NULL OR ${loops.songArtist} IS NOT NULL THEN 
+            CASE WHEN 'music' IN (${interestCategories.length > 0 ? interestCategories.map(c => `'${c}'`).join(',') : "''"}) THEN 50 ELSE 0 END
+          ELSE 0 
+        END`,
+        recencyScore: sql<number>`EXTRACT(EPOCH FROM (NOW() - ${loops.createdAt})) / 86400 * -1`, // Negative days for recent content
+      })
+      .from(loops)
+      .innerJoin(users, eq(loops.authorId, users.id))
+      .where(and(...whereConditions));
+
+    // Execute query and sort by personalized score
+    const result = await query
+      .orderBy(sql`(friend_score + interest_score + recency_score + ${loops.likes} + ${loops.views}) DESC`)
+      .limit(limit);
+
+    // Check if current user liked each loop
+    let userLikes: number[] = [];
+    const likes = await db
+      .select({ loopId: loopLikes.loopId })
+      .from(loopLikes)
+      .where(eq(loopLikes.userId, userId));
+    userLikes = likes.map(like => like.loopId);
+
+    return result.map(row => ({
+      id: row.id,
+      authorId: row.authorId,
+      videoUrl: row.videoUrl,
+      thumbnailUrl: row.thumbnailUrl,
+      description: row.description,
+      songTitle: row.songTitle,
+      songArtist: row.songArtist,
+      songUrl: row.songUrl,
+      songStartTime: row.songStartTime,
+      songDuration: row.songDuration,
+      likes: row.likes,
+      views: row.views,
+      isPublic: row.isPublic,
+      createdAt: row.createdAt,
+      author: row.author,
+      isLiked: userLikes.includes(row.id),
+    }));
+  }
+
+  async recordLoopInteraction(userId: number, loopId: number, interactionType: string, durationWatched = 0): Promise<void> {
+    await db
+      .insert(loopInteractions)
+      .values({
+        userId,
+        loopId,
+        interactionType,
+        durationWatched,
+      });
+
+    // Update user interests based on interaction
+    if (interactionType === 'like' || interactionType === 'watch_complete') {
+      await this.updateUserInterests(userId);
+    }
+  }
+
+  async updateUserInterests(userId: number): Promise<void> {
+    // Analyze user's recent interactions to update interests
+    const recentInteractions = await db
+      .select({
+        loopId: loopInteractions.loopId,
+        interactionType: loopInteractions.interactionType,
+        durationWatched: loopInteractions.durationWatched,
+        songTitle: loops.songTitle,
+        songArtist: loops.songArtist,
+        description: loops.description,
+      })
+      .from(loopInteractions)
+      .innerJoin(loops, eq(loopInteractions.loopId, loops.id))
+      .where(and(
+        eq(loopInteractions.userId, userId),
+        gt(loopInteractions.createdAt, new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)) // Last 7 days
+      ));
+
+    // Calculate interest scores
+    const interestScores: { [category: string]: number } = {};
+
+    for (const interaction of recentInteractions) {
+      let score = 0;
+      
+      // Base scoring by interaction type
+      switch (interaction.interactionType) {
+        case 'like': score = 10; break;
+        case 'watch_complete': score = 8; break;
+        case 'view': score = 3; break;
+        case 'share': score = 15; break;
+        case 'skip': score = -2; break;
+      }
+
+      // If it's a music-related loop
+      if (interaction.songTitle || interaction.songArtist) {
+        interestScores['music'] = (interestScores['music'] || 0) + score;
+      }
+
+      // Analyze description for content categories
+      if (interaction.description) {
+        const desc = interaction.description.toLowerCase();
+        
+        // Simple keyword-based categorization
+        if (desc.includes('dance') || desc.includes('dancing')) {
+          interestScores['dance'] = (interestScores['dance'] || 0) + score;
+        }
+        if (desc.includes('comedy') || desc.includes('funny') || desc.includes('humor')) {
+          interestScores['comedy'] = (interestScores['comedy'] || 0) + score;
+        }
+        if (desc.includes('art') || desc.includes('creative') || desc.includes('design')) {
+          interestScores['art'] = (interestScores['art'] || 0) + score;
+        }
+        if (desc.includes('food') || desc.includes('cooking') || desc.includes('recipe')) {
+          interestScores['food'] = (interestScores['food'] || 0) + score;
+        }
+        if (desc.includes('travel') || desc.includes('adventure') || desc.includes('explore')) {
+          interestScores['travel'] = (interestScores['travel'] || 0) + score;
+        }
+      }
+    }
+
+    // Update or insert user interests
+    for (const [category, score] of Object.entries(interestScores)) {
+      if (score > 0) {
+        await db
+          .insert(userInterests)
+          .values({
+            userId,
+            category,
+            score: Math.round(score * 100), // Store as integer (score * 100)
+            updatedAt: new Date(),
+          })
+          .onConflictDoUpdate({
+            target: [userInterests.userId, userInterests.category],
+            set: {
+              score: sql`${userInterests.score} + ${Math.round(score * 100)}`,
+              updatedAt: new Date(),
+            },
+          });
+      }
+    }
+  }
+
+  async getUserInterests(userId: number): Promise<{ category: string; score: number }[]> {
+    const interests = await db
+      .select({
+        category: userInterests.category,
+        score: userInterests.score,
+      })
+      .from(userInterests)
+      .where(eq(userInterests.userId, userId))
+      .orderBy(desc(userInterests.score));
+
+    return interests.map(interest => ({
+      category: interest.category,
+      score: (interest.score || 0) / 100, // Convert back to decimal
+    }));
   }
 }
 
