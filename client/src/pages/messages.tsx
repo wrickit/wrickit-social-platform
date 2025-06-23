@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import VoiceRecorder from "@/components/VoiceRecorder";
 import ReadReceipt from "@/components/ReadReceipt";
+import VoiceCall from "@/components/VoiceCall";
 
 interface Conversation {
   id: number;
@@ -182,6 +183,15 @@ export default function Messages() {
   const [isMobile, setIsMobile] = useState(false);
   const [ws, setWs] = useState<WebSocket | null>(null);
   const [voiceMessage, setVoiceMessage] = useState<{ url: string; duration: number } | null>(null);
+  const [voiceCall, setVoiceCall] = useState<{
+    isOpen: boolean;
+    targetUser: {
+      id: number;
+      name: string;
+      profileImageUrl?: string;
+    };
+    isIncoming: boolean;
+  } | null>(null);
 
   // Check if mobile
   useEffect(() => {
@@ -212,11 +222,15 @@ export default function Messages() {
 
     socket.onmessage = (event) => {
       const data = JSON.parse(event.data);
+      
       if (data.type === 'message') {
         queryClient.invalidateQueries({ queryKey: ["/api/messages"] });
         if (selectedConversation) {
           queryClient.invalidateQueries({ queryKey: ["/api/messages", selectedConversation] });
         }
+      } else if (data.type === 'call-offer') {
+        // Handle incoming voice call
+        handleIncomingCall(data.fromUserId);
       }
     };
 
@@ -356,6 +370,46 @@ export default function Messages() {
     setSearchQuery("");
     // Refresh conversations to update read status
     queryClient.invalidateQueries({ queryKey: ["/api/messages"] });
+  };
+
+  const handleIncomingCall = async (fromUserId: number) => {
+    // Get caller info
+    try {
+      const response = await fetch(`/api/users/${fromUserId}`);
+      const caller = await response.json();
+      
+      setVoiceCall({
+        isOpen: true,
+        targetUser: {
+          id: caller.id,
+          name: caller.name,
+          profileImageUrl: caller.profileImageUrl
+        },
+        isIncoming: true
+      });
+    } catch (error) {
+      console.error('Error getting caller info:', error);
+    }
+  };
+
+  const startVoiceCall = (targetUser: { id: number; name: string; profileImageUrl?: string }) => {
+    setVoiceCall({
+      isOpen: true,
+      targetUser,
+      isIncoming: false
+    });
+  };
+
+  const closeVoiceCall = () => {
+    setVoiceCall(null);
+  };
+
+  const acceptCall = () => {
+    // Call will be handled by VoiceCall component
+  };
+
+  const declineCall = () => {
+    setVoiceCall(null);
   };
 
   const getConversationPartner = (conversation: Conversation) => {
@@ -598,7 +652,20 @@ export default function Messages() {
               </div>
               
               <div className="flex items-center space-x-2">
-                <Button variant="ghost" size="sm">
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={() => {
+                    if (selectedUser) {
+                      const partner = getConversationPartner(selectedUser);
+                      startVoiceCall({
+                        id: partner.id,
+                        name: partner.name,
+                        profileImageUrl: partner.profileImageUrl
+                      });
+                    }
+                  }}
+                >
                   <Phone className="w-4 h-4" />
                 </Button>
                 <Button variant="ghost" size="sm">
@@ -708,6 +775,18 @@ export default function Messages() {
             <p className="app-text-light">Choose from your existing conversations or start a new one</p>
           </div>
         </div>
+      )}
+
+      {/* Voice Call Component */}
+      {voiceCall && (
+        <VoiceCall
+          isOpen={voiceCall.isOpen}
+          onClose={closeVoiceCall}
+          targetUser={voiceCall.targetUser}
+          isIncoming={voiceCall.isIncoming}
+          onAccept={acceptCall}
+          onDecline={declineCall}
+        />
       )}
     </div>
   );

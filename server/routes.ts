@@ -872,13 +872,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.log(`User ${userId} connected via WebSocket`);
         }
         
-        // Broadcast message to all connected clients
-        // In a real app, you'd want to send to specific users
-        wss.clients.forEach((client) => {
-          if (client !== ws && client.readyState === WebSocket.OPEN) {
-            client.send(JSON.stringify(data));
+        // Handle different message types
+        if (userId && data.type !== 'auth') {
+          switch (data.type) {
+            case 'message':
+              // Handle real-time messaging (existing functionality)
+              wss.clients.forEach((client) => {
+                if (client !== ws && client.readyState === WebSocket.OPEN) {
+                  client.send(JSON.stringify(data));
+                }
+              });
+              break;
+
+            // Voice call signaling
+            case 'call-offer':
+            case 'call-answer':
+            case 'ice-candidate':
+            case 'call-ended':
+              // Forward call signaling to target user
+              const targetConnections = activeConnections.get(data.targetUserId);
+              if (targetConnections) {
+                targetConnections.forEach(targetWs => {
+                  if (targetWs.readyState === WebSocket.OPEN) {
+                    targetWs.send(JSON.stringify({
+                      ...data,
+                      fromUserId: userId
+                    }));
+                  }
+                });
+              }
+              break;
+              
+            default:
+              console.log('Unknown message type:', data.type);
           }
-        });
+        }
       } catch (error) {
         console.error('WebSocket message error:', error);
       }
