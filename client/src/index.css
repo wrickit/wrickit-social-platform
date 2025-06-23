@@ -52,28 +52,28 @@
 }
 
 .dark {
-  --background: hsl(240, 10%, 3.9%);
-  --foreground: hsl(0, 0%, 98%);
-  --muted: hsl(240, 3.7%, 15.9%);
-  --muted-foreground: hsl(240, 5%, 64.9%);
-  --popover: hsl(240, 10%, 3.9%);
-  --popover-foreground: hsl(0, 0%, 98%);
-  --card: hsl(240, 10%, 3.9%);
-  --card-foreground: hsl(0, 0%, 98%);
-  --border: hsl(240, 3.7%, 15.9%);
-  --input: hsl(240, 3.7%, 15.9%);
+  --background: hsl(0, 0%, 2%);
+  --foreground: hsl(0, 0%, 95%);
+  --muted: hsl(0, 0%, 8%);
+  --muted-foreground: hsl(0, 0%, 60%);
+  --popover: hsl(0, 0%, 4%);
+  --popover-foreground: hsl(0, 0%, 95%);
+  --card: hsl(0, 0%, 4%);
+  --card-foreground: hsl(0, 0%, 95%);
+  --border: hsl(0, 0%, 12%);
+  --input: hsl(0, 0%, 10%);
   --primary: hsl(215, 91%, 52%);
   --primary-foreground: hsl(211, 100%, 99%);
-  --secondary: hsl(240, 3.7%, 15.9%);
-  --secondary-foreground: hsl(0, 0%, 98%);
-  --accent: hsl(240, 3.7%, 15.9%);
-  --accent-foreground: hsl(0, 0%, 98%);
+  --secondary: hsl(0, 0%, 8%);
+  --secondary-foreground: hsl(0, 0%, 95%);
+  --accent: hsl(0, 0%, 8%);
+  --accent-foreground: hsl(0, 0%, 95%);
   --destructive: hsl(0, 62.8%, 30.6%);
   --destructive-foreground: hsl(0, 0%, 98%);
-  --ring: hsl(240, 4.9%, 83.9%);
+  --ring: hsl(0, 0%, 20%);
   --radius: 0.5rem;
   
-  /* Dark mode custom colors */
+  /* Dark mode custom colors - much darker theme */
   --discord-purple: hsl(235, 86%, 75%);
   --discord-purple-light: hsl(235, 76%, 85%);
   --discord-purple-accent: hsl(235, 66%, 95%);
@@ -81,10 +81,10 @@
   --youtube-red: hsl(0, 100%, 60%);
   --youtube-red-light: hsl(0, 90%, 70%);
   --youtube-red-dark: hsl(0, 100%, 50%);
-  --app-gray: hsl(240, 10%, 10%);
-  --app-border: hsl(240, 3.7%, 25%);
-  --app-text: hsl(0, 0%, 98%);
-  --app-text-light: hsl(240, 5%, 64.9%);
+  --app-gray: hsl(0, 0%, 6%);
+  --app-border: hsl(0, 0%, 15%);
+  --app-text: hsl(0, 0%, 95%);
+  --app-text-light: hsl(0, 0%, 65%);
 }
 
 @layer base {

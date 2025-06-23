@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
-import { Menu, User, Settings, Shield, MessageSquare, Users, LogOut, Moon, Sun, Home, Scale, Heart, Play } from "lucide-react";
+import { Menu, User, Settings, Shield, MessageSquare, Users, LogOut, Moon, Sun, Home, Scale, Heart, Play, Monitor } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useTheme } from "@/components/theme-provider";
 import { useLocation } from "wouter";
@@ -39,7 +39,13 @@ export default function HamburgerMenu({ user, relationships = [], friendGroups =
   };
 
   const toggleTheme = () => {
-    setTheme(theme === "light" ? "dark" : "light");
+    if (theme === "light") {
+      setTheme("dark");
+    } else if (theme === "dark") {
+      setTheme("system");
+    } else {
+      setTheme("light");
+    }
   };
 
   return (
@@ -282,14 +288,18 @@ export default function HamburgerMenu({ user, relationships = [], friendGroups =
               >
                 {theme === "light" ? (
                   <Moon className="w-4 h-4 mr-3" />
+                ) : theme === "dark" ? (
+                  <Monitor className="w-4 h-4 mr-3" />
                 ) : (
                   <Sun className="w-4 h-4 mr-3" />
                 )}
                 <div className="text-left">
                   <div className="font-medium">
-                    {theme === "light" ? "Dark Mode" : "Light Mode"}
+                    {theme === "light" ? "Switch to Dark" : theme === "dark" ? "Switch to System" : "Switch to Light"}
                   </div>
-                  <div className="text-xs text-gray-500">Change appearance</div>
+                  <div className="text-xs text-gray-500">
+                    {theme === "light" ? "Use dark theme" : theme === "dark" ? "Follow system setting" : "Use light theme"}
+                  </div>
                 </div>
               </Button>
             </div>
