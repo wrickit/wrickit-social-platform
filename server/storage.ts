@@ -20,6 +20,9 @@ import {
   loopViews,
   userInterests,
   loopInteractions,
+  userSessions,
+  userActivityLogs,
+  dailyUserStats,
   type User,
   type InsertUser,
   type UpdateUser,
@@ -32,7 +35,10 @@ import {
   type Notification,
   type Loop,
   type InsertLoop,
-  type Hashtag
+  type Hashtag,
+  type UserSession,
+  type UserActivityLog,
+  type DailyUserStats
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, or, desc, sql, inArray, count, gt, lt, asc, ilike } from "drizzle-orm";
@@ -117,6 +123,21 @@ export interface IStorage {
   
   // Search operations
   searchPosts(query: string, type?: string): Promise<(Post & { author: User; comments: (Comment & { author: User })[]; likesCount: number })[]>;
+  
+  // Analytics operations
+  getUserAnalytics(userId: number): Promise<{
+    avgDailyTimeMinutes: number;
+    avgSessionTimeMinutes: number;
+    activityBreakdown: { activityType: string; count: number; percentage: number }[];
+  }>;
+  getActiveUsersByHour(): Promise<{ hour: number; activeUsers: number }[]>;
+  getTotalUsersCount(): Promise<number>;
+  getActiveUsersToday(): Promise<number>;
+  getNewUsersLast7Days(): Promise<{ date: string; count: number }[]>;
+  getMostActiveUsers(limit?: number): Promise<(User & { totalTimeMinutes: number; sessionsCount: number })[]>;
+  startUserSession(userId: number, ipAddress?: string, userAgent?: string): Promise<UserSession>;
+  endUserSession(sessionId: number): Promise<void>;
+  logUserActivity(userId: number, sessionId: number, activityType: string, actionType: string, targetId?: number, durationSeconds?: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1367,6 +1388,272 @@ export class DatabaseStorage implements IStorage {
     }
 
     return result;
+  }
+
+  // Analytics methods
+  async getUserAnalytics(userId: number): Promise<{
+    avgDailyTimeMinutes: number;
+    avgSessionTimeMinutes: number;
+    activityBreakdown: { activityType: string; count: number; percentage: number }[];
+  }> {
+    // Get average daily time from last 30 days
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    const [avgDaily] = await db
+      .select({ avgTime: sql<number>`AVG(total_time_minutes)` })
+      .from(dailyUserStats)
+      .where(and(
+        eq(dailyUserStats.userId, userId),
+        gt(dailyUserStats.date, thirtyDaysAgo)
+      ));
+
+    // Get average session time
+    const [avgSession] = await db
+      .select({ avgDuration: sql<number>`AVG(duration_minutes)` })
+      .from(userSessions)
+      .where(and(
+        eq(userSessions.userId, userId),
+        gt(userSessions.sessionStart, thirtyDaysAgo)
+      ));
+
+    // Get activity breakdown
+    const activities = await db
+      .select({
+        activityType: userActivityLogs.activityType,
+        count: count()
+      })
+      .from(userActivityLogs)
+      .where(and(
+        eq(userActivityLogs.userId, userId),
+        gt(userActivityLogs.createdAt, thirtyDaysAgo)
+      ))
+      .groupBy(userActivityLogs.activityType)
+      .orderBy(desc(count()));
+
+    const totalActivities = activities.reduce((sum, activity) => sum + Number(activity.count), 0);
+    const activityBreakdown = activities.map(activity => ({
+      activityType: activity.activityType,
+      count: Number(activity.count),
+      percentage: totalActivities > 0 ? Math.round((Number(activity.count) / totalActivities) * 100) : 0
+    }));
+
+    return {
+      avgDailyTimeMinutes: avgDaily?.avgTime || 0,
+      avgSessionTimeMinutes: avgSession?.avgDuration || 0,
+      activityBreakdown
+    };
+  }
+
+  async getActiveUsersByHour(): Promise<{ hour: number; activeUsers: number }[]> {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const hourlyData = await db
+      .select({
+        hour: sql<number>`EXTRACT(HOUR FROM session_start)`,
+        activeUsers: sql<number>`COUNT(DISTINCT user_id)`
+      })
+      .from(userSessions)
+      .where(gt(userSessions.sessionStart, today))
+      .groupBy(sql`EXTRACT(HOUR FROM session_start)`)
+      .orderBy(sql`EXTRACT(HOUR FROM session_start)`);
+
+    // Fill in missing hours with 0
+    const result = [];
+    for (let hour = 0; hour < 24; hour++) {
+      const found = hourlyData.find(data => Number(data.hour) === hour);
+      result.push({
+        hour,
+        activeUsers: found ? Number(found.activeUsers) : 0
+      });
+    }
+
+    return result;
+  }
+
+  async getTotalUsersCount(): Promise<number> {
+    const [result] = await db
+      .select({ count: count() })
+      .from(users);
+    return Number(result.count);
+  }
+
+  async getActiveUsersToday(): Promise<number> {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const [result] = await db
+      .select({ count: sql<number>`COUNT(DISTINCT user_id)` })
+      .from(userSessions)
+      .where(gt(userSessions.sessionStart, today));
+
+    return Number(result.count);
+  }
+
+  async getNewUsersLast7Days(): Promise<{ date: string; count: number }[]> {
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+    const newUsers = await db
+      .select({
+        date: sql<string>`DATE(created_at)`,
+        count: count()
+      })
+      .from(users)
+      .where(gt(users.createdAt, sevenDaysAgo))
+      .groupBy(sql`DATE(created_at)`)
+      .orderBy(sql`DATE(created_at)`);
+
+    return newUsers.map(user => ({
+      date: user.date,
+      count: Number(user.count)
+    }));
+  }
+
+  async getMostActiveUsers(limit = 10): Promise<(User & { totalTimeMinutes: number; sessionsCount: number })[]> {
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    const activeUsers = await db
+      .select({
+        user: users,
+        totalTimeMinutes: sql<number>`COALESCE(SUM(total_time_minutes), 0)`,
+        sessionsCount: sql<number>`COALESCE(SUM(sessions_count), 0)`
+      })
+      .from(users)
+      .leftJoin(dailyUserStats, eq(users.id, dailyUserStats.userId))
+      .where(or(
+        gt(dailyUserStats.date, thirtyDaysAgo),
+        eq(dailyUserStats.date, sql`NULL`)
+      ))
+      .groupBy(users.id)
+      .orderBy(desc(sql`COALESCE(SUM(total_time_minutes), 0)`))
+      .limit(limit);
+
+    return activeUsers.map(result => ({
+      ...result.user,
+      totalTimeMinutes: Number(result.totalTimeMinutes),
+      sessionsCount: Number(result.sessionsCount)
+    }));
+  }
+
+  async startUserSession(userId: number, ipAddress?: string, userAgent?: string): Promise<UserSession> {
+    const [session] = await db
+      .insert(userSessions)
+      .values({
+        userId,
+        ipAddress,
+        userAgent,
+        sessionStart: new Date()
+      })
+      .returning();
+
+    return session;
+  }
+
+  async endUserSession(sessionId: number): Promise<void> {
+    const sessionEnd = new Date();
+    
+    // Get session start time
+    const [session] = await db
+      .select()
+      .from(userSessions)
+      .where(eq(userSessions.id, sessionId));
+
+    if (session && session.sessionStart) {
+      const durationMinutes = Math.round((sessionEnd.getTime() - session.sessionStart.getTime()) / (1000 * 60));
+      
+      await db
+        .update(userSessions)
+        .set({
+          sessionEnd,
+          durationMinutes
+        })
+        .where(eq(userSessions.id, sessionId));
+
+      // Update daily stats
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const [existingStats] = await db
+        .select()
+        .from(dailyUserStats)
+        .where(and(
+          eq(dailyUserStats.userId, session.userId),
+          eq(dailyUserStats.date, today)
+        ));
+
+      if (existingStats) {
+        await db
+          .update(dailyUserStats)
+          .set({
+            totalTimeMinutes: existingStats.totalTimeMinutes + durationMinutes,
+            sessionsCount: existingStats.sessionsCount + 1
+          })
+          .where(eq(dailyUserStats.id, existingStats.id));
+      } else {
+        await db
+          .insert(dailyUserStats)
+          .values({
+            userId: session.userId,
+            date: today,
+            totalTimeMinutes: durationMinutes,
+            sessionsCount: 1
+          });
+      }
+    }
+  }
+
+  async logUserActivity(userId: number, sessionId: number, activityType: string, actionType: string, targetId?: number, durationSeconds = 0): Promise<void> {
+    await db
+      .insert(userActivityLogs)
+      .values({
+        userId,
+        sessionId,
+        activityType,
+        actionType,
+        targetId,
+        durationSeconds
+      });
+
+    // Update daily stats for activity counts
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const [existingStats] = await db
+      .select()
+      .from(dailyUserStats)
+      .where(and(
+        eq(dailyUserStats.userId, userId),
+        eq(dailyUserStats.date, today)
+      ));
+
+    if (existingStats) {
+      const updateData: any = {};
+      
+      switch (activityType) {
+        case 'messages':
+          if (actionType === 'create') updateData.messagesCount = existingStats.messagesCount + 1;
+          break;
+        case 'posts':
+          if (actionType === 'create') updateData.postsCount = existingStats.postsCount + 1;
+          break;
+        case 'loops':
+          if (actionType === 'create') updateData.loopsCount = existingStats.loopsCount + 1;
+          break;
+        case 'relationships':
+          if (actionType === 'create') updateData.relationshipsCount = existingStats.relationshipsCount + 1;
+          break;
+      }
+
+      if (Object.keys(updateData).length > 0) {
+        await db
+          .update(dailyUserStats)
+          .set(updateData)
+          .where(eq(dailyUserStats.id, existingStats.id));
+      }
+    }
   }
 }
 

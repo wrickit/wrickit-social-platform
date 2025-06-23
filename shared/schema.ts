@@ -200,6 +200,42 @@ export const messageMentions = pgTable("message_mentions", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// User Sessions and Activity Tracking
+export const userSessions = pgTable("user_sessions", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  sessionStart: timestamp("session_start").defaultNow(),
+  sessionEnd: timestamp("session_end"),
+  durationMinutes: integer("duration_minutes").default(0),
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const userActivityLogs = pgTable("user_activity_logs", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  sessionId: integer("session_id").references(() => userSessions.id),
+  activityType: varchar("activity_type", { length: 50 }).notNull(), // 'messages', 'posts', 'loops', 'relationships', 'profile', 'dashboard'
+  actionType: varchar("action_type", { length: 50 }).notNull(), // 'view', 'create', 'edit', 'delete', 'like', 'comment'
+  targetId: integer("target_id"), // ID of the target resource (post, message, etc.)
+  durationSeconds: integer("duration_seconds").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const dailyUserStats = pgTable("daily_user_stats", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  date: timestamp("date").notNull(),
+  totalTimeMinutes: integer("total_time_minutes").default(0),
+  sessionsCount: integer("sessions_count").default(0),
+  messagesCount: integer("messages_count").default(0),
+  postsCount: integer("posts_count").default(0),
+  loopsCount: integer("loops_count").default(0),
+  relationshipsCount: integer("relationships_count").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   sentRelationships: many(relationships, { relationName: "fromUser" }),
@@ -391,6 +427,32 @@ export const messageMentionsRelations = relations(messageMentions, ({ one }) => 
   }),
 }));
 
+export const userSessionsRelations = relations(userSessions, ({ one, many }) => ({
+  user: one(users, {
+    fields: [userSessions.userId],
+    references: [users.id],
+  }),
+  activities: many(userActivityLogs),
+}));
+
+export const userActivityLogsRelations = relations(userActivityLogs, ({ one }) => ({
+  user: one(users, {
+    fields: [userActivityLogs.userId],
+    references: [users.id],
+  }),
+  session: one(userSessions, {
+    fields: [userActivityLogs.sessionId],
+    references: [userSessions.id],
+  }),
+}));
+
+export const dailyUserStatsRelations = relations(dailyUserStats, ({ one }) => ({
+  user: one(users, {
+    fields: [dailyUserStats.userId],
+    references: [users.id],
+  }),
+}));
+
 // Schemas
 export const insertUserSchema = createInsertSchema(users).pick({
   admissionNumber: true,
@@ -508,3 +570,6 @@ export type MessageHashtag = typeof messageHashtags.$inferSelect;
 export type PostMention = typeof postMentions.$inferSelect;
 export type MessageMention = typeof messageMentions.$inferSelect;
 export type SearchQuery = z.infer<typeof searchSchema>;
+export type UserSession = typeof userSessions.$inferSelect;
+export type UserActivityLog = typeof userActivityLogs.$inferSelect;
+export type DailyUserStats = typeof dailyUserStats.$inferSelect;
