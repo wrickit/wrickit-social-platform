@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { X, Send, Mic } from "lucide-react";
+import { X, Send, Mic, Play, Pause } from "lucide-react";
 import VoiceRecorder from "./VoiceRecorder";
 import VoicePlayer from "./VoicePlayer";
 import ReadReceipt from "./ReadReceipt";
@@ -122,6 +122,7 @@ export default function ChatWidget({ userId, onClose }: ChatWidgetProps) {
   const [message, setMessage] = useState("");
   const [ws, setWs] = useState<WebSocket | null>(null);
   const [voiceMessage, setVoiceMessage] = useState<{ url: string; duration: number } | null>(null);
+  const [isVoiceMode, setIsVoiceMode] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
 
@@ -224,6 +225,7 @@ export default function ChatWidget({ userId, onClose }: ChatWidgetProps) {
 
   const handleVoiceMessage = (audioData: string, duration: number) => {
     setVoiceMessage({ url: audioData, duration });
+    setIsVoiceMode(true);
   };
 
   const handleSendVoiceMessage = () => {
@@ -235,6 +237,15 @@ export default function ChatWidget({ userId, onClose }: ChatWidgetProps) {
       voiceMessageUrl: voiceMessage.url,
       voiceMessageDuration: voiceMessage.duration,
     });
+    
+    // Reset voice mode after sending
+    setIsVoiceMode(false);
+    setVoiceMessage(null);
+  };
+
+  const handleCancelVoiceMessage = () => {
+    setVoiceMessage(null);
+    setIsVoiceMode(false);
   };
 
   // For demo purposes, we'll show a placeholder user name
@@ -309,27 +320,38 @@ export default function ChatWidget({ userId, onClose }: ChatWidgetProps) {
         </div>
         
         <div className="p-3 border-t border-purple-200 bg-gradient-to-r from-purple-50 to-pink-50">
-          <form onSubmit={handleSendMessage} className="flex space-x-2">
-            <Input
-              type="text"
-              placeholder="Type something cute... 💕"
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              className="flex-1 text-sm border-purple-200 focus:border-purple-400 rounded-full"
-            />
+          {isVoiceMode ? (
             <VoiceRecorder
-              onVoiceMessage={handleVoiceMessage}
-              size="sm"
-              className="border-purple-300 text-purple-700 hover:bg-purple-50"
+              onRecordingComplete={handleVoiceMessage}
+              onSend={handleSendVoiceMessage}
+              onCancel={handleCancelVoiceMessage}
+              disabled={sendMessageMutation.isPending}
             />
-            <Button
-              type="submit"
-              disabled={sendMessageMutation.isPending || (!message.trim() && !voiceMessage)}
-              className="gradient-bg hover:scale-110 transition-transform duration-300 text-white rounded-full w-10 h-10 p-0 teen-shadow"
-            >
-              <Send className="w-4 h-4" />
-            </Button>
-          </form>
+          ) : (
+            <form onSubmit={handleSendMessage} className="flex space-x-2">
+              <Input
+                type="text"
+                placeholder="Type something cute... 💕"
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                className="flex-1 text-sm border-purple-200 focus:border-purple-400 rounded-full"
+              />
+              <Button
+                type="button"
+                onClick={() => setIsVoiceMode(true)}
+                className="border-purple-300 text-purple-700 hover:bg-purple-50 rounded-full w-10 h-10 p-0"
+              >
+                <Mic className="w-4 h-4" />
+              </Button>
+              <Button
+                type="submit"
+                disabled={sendMessageMutation.isPending || !message.trim()}
+                className="gradient-bg hover:scale-110 transition-transform duration-300 text-white rounded-full w-10 h-10 p-0 teen-shadow"
+              >
+                <Send className="w-4 h-4" />
+              </Button>
+            </form>
+          )}
         </div>
       </CardContent>
     </Card>

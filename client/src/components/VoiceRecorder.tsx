@@ -3,14 +3,18 @@ import { Button } from "@/components/ui/button";
 import { Mic, MicOff, Play, Pause, Trash2, Send } from "lucide-react";
 
 interface VoiceRecorderProps {
-  onRecordingComplete: (audioUrl: string, duration: number) => void;
+  onRecordingComplete?: (audioUrl: string, duration: number) => void;
+  onVoiceMessage?: (audioUrl: string, duration: number) => void;
   onSend?: () => void;
   onCancel?: () => void;
   disabled?: boolean;
+  size?: string;
+  className?: string;
 }
 
 export default function VoiceRecorder({ 
   onRecordingComplete, 
+  onVoiceMessage,
   onSend, 
   onCancel, 
   disabled 
@@ -20,6 +24,7 @@ export default function VoiceRecorder({
   const [duration, setDuration] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
+  const [currentTime, setCurrentTime] = useState(0);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -49,7 +54,10 @@ export default function VoiceRecorder({
         const reader = new FileReader();
         reader.onloadend = () => {
           const base64 = reader.result as string;
-          onRecordingComplete(base64, recordingTime);
+          const callback = onRecordingComplete || onVoiceMessage;
+          if (callback) {
+            callback(base64, recordingTime);
+          }
         };
         reader.readAsDataURL(blob);
 
@@ -103,7 +111,11 @@ export default function VoiceRecorder({
     setAudioUrl(null);
     setDuration(0);
     setRecordingTime(0);
+    setCurrentTime(0);
     setIsPlaying(false);
+    if (onCancel) {
+      onCancel();
+    }
   };
 
   const formatTime = (seconds: number) => {
@@ -112,9 +124,35 @@ export default function VoiceRecorder({
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
+  const handleProgressClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!audioRef.current || !duration) return;
+    
+    const rect = e.currentTarget.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const percentage = clickX / rect.width;
+    const newTime = percentage * duration;
+    
+    audioRef.current.currentTime = newTime;
+    setCurrentTime(newTime);
+  };
+
   useEffect(() => {
     if (audioRef.current) {
-      audioRef.current.onended = () => setIsPlaying(false);
+      const audio = audioRef.current;
+      
+      const updateTime = () => setCurrentTime(audio.currentTime);
+      const handleEnded = () => {
+        setIsPlaying(false);
+        setCurrentTime(0);
+      };
+      
+      audio.addEventListener('timeupdate', updateTime);
+      audio.addEventListener('ended', handleEnded);
+      
+      return () => {
+        audio.removeEventListener('timeupdate', updateTime);
+        audio.removeEventListener('ended', handleEnded);
+      };
     }
   }, [audioUrl]);
 
@@ -148,8 +186,17 @@ export default function VoiceRecorder({
           <div className="text-sm text-gray-600 dark:text-gray-400">
             Voice message • {formatTime(duration)}
           </div>
-          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1 mt-1">
-            <div className="bg-blue-500 h-1 rounded-full w-1/3"></div>
+          <div 
+            className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mt-1 cursor-pointer"
+            onClick={handleProgressClick}
+          >
+            <div 
+              className="bg-blue-500 h-2 rounded-full transition-all duration-100"
+              style={{ width: `${duration > 0 ? (currentTime / duration) * 100 : 0}%` }}
+            ></div>
+          </div>
+          <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            {formatTime(currentTime)} / {formatTime(duration)}
           </div>
         </div>
 
