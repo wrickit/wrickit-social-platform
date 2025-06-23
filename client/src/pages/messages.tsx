@@ -20,7 +20,8 @@ import {
   MoreVertical,
   ArrowLeft,
   Play,
-  Pause
+  Pause,
+  Mic
 } from "lucide-react";
 import VoiceRecorder from "@/components/VoiceRecorder";
 
@@ -31,6 +32,8 @@ interface Conversation {
   content: string;
   createdAt: string;
   isRead: boolean;
+  voiceMessageUrl?: string;
+  voiceMessageDuration?: number;
   fromUser: {
     id: number;
     name: string;
@@ -532,7 +535,15 @@ export default function Messages() {
                         </div>
                         <div className="flex items-center justify-between">
                           <p className="text-sm app-text-light truncate">
-                            {conversation.fromUserId === (user as any)?.id ? "You: " : ""}{conversation.content}
+                            {conversation.fromUserId === (user as any)?.id ? "You: " : ""}
+                            {conversation.voiceMessageUrl ? (
+                              <span className="flex items-center">
+                                <Mic className="w-3 h-3 mr-1" />
+                                Voice message
+                              </span>
+                            ) : (
+                              conversation.content
+                            )}
                           </p>
                           {!conversation.isRead && conversation.toUserId === (user as any)?.id && (
                             <Badge className="bg-blue-500 text-white text-xs">new</Badge>
