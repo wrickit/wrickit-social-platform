@@ -45,6 +45,20 @@ export default function ChatWidget({ userId, onClose }: ChatWidgetProps) {
     socket.onopen = () => {
       console.log("WebSocket connected");
       setWs(socket);
+      
+      // Authenticate user with WebSocket server
+      // Note: userId here is the chat partner, we need to get current user
+      fetch('/api/user')
+        .then(res => res.json())
+        .then(currentUser => {
+          if (currentUser.id) {
+            socket.send(JSON.stringify({
+              type: 'auth',
+              userId: currentUser.id
+            }));
+          }
+        })
+        .catch(console.warn);
     };
 
     socket.onmessage = (event) => {

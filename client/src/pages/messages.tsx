@@ -70,6 +70,7 @@ export default function Messages() {
   const [searchQuery, setSearchQuery] = useState("");
   const [showNewChat, setShowNewChat] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [ws, setWs] = useState<WebSocket | null>(null);
 
   // Check if mobile
   useEffect(() => {
@@ -78,6 +79,45 @@ export default function Messages() {
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
+
+  // WebSocket connection for real-time updates
+  useEffect(() => {
+    if (!user) return;
+
+    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+    const wsUrl = `${protocol}//${window.location.host}/ws`;
+    const socket = new WebSocket(wsUrl);
+
+    socket.onopen = () => {
+      console.log("WebSocket connected");
+      setWs(socket);
+      
+      // Authenticate user with WebSocket server
+      socket.send(JSON.stringify({
+        type: 'auth',
+        userId: user.id
+      }));
+    };
+
+    socket.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      if (data.type === 'message') {
+        queryClient.invalidateQueries({ queryKey: ["/api/messages"] });
+        if (selectedConversation) {
+          queryClient.invalidateQueries({ queryKey: ["/api/messages", selectedConversation] });
+        }
+      }
+    };
+
+    socket.onclose = () => {
+      console.log("WebSocket disconnected");
+      setWs(null);
+    };
+
+    return () => {
+      socket.close();
+    };
+  }, [user, queryClient, selectedConversation]);
 
   // Fetch recent conversations
   const { data: conversations = [], isLoading: conversationsLoading } = useQuery<Conversation[]>({
@@ -121,6 +161,15 @@ export default function Messages() {
         queryClient.invalidateQueries({ queryKey: ["/api/messages", selectedConversation] });
       }
       setNewMessage("");
+      
+      // Send real-time update via WebSocket
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({
+          type: 'message',
+          toUserId: selectedConversation,
+          content: newMessage.trim(),
+        }));
+      }
     },
     onError: (error: any) => {
       toast({

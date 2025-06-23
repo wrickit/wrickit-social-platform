@@ -37,12 +37,23 @@ const requireAuth = async (req: any, res: Response, next: any) => {
     return res.status(401).json({ message: "Unauthorized" });
   }
   
-  // Update user activity on each authenticated request
-  try {
-    await storage.updateUserActivity(req.session.userId);
-  } catch (error) {
-    // Don't fail the request if activity update fails
-    console.warn("Failed to update user activity:", error);
+  // Only update user activity for meaningful interactions (not just background polls)
+  const meaningfulRoutes = ['/api/posts', '/api/relationships'];
+  const isBackgroundPoll = req.path.includes('/online') || 
+                          req.path.includes('/notifications') ||
+                          (req.method === 'GET' && req.path.includes('/messages'));
+  
+  // Update activity for POST requests (creating content) and specific meaningful routes
+  const shouldUpdateActivity = (req.method === 'POST' && !isBackgroundPoll) || 
+                              meaningfulRoutes.some(route => req.path.startsWith(route));
+  
+  if (shouldUpdateActivity) {
+    try {
+      await storage.updateUserActivity(req.session.userId);
+    } catch (error) {
+      // Don't fail the request if activity update fails
+      console.warn("Failed to update user activity:", error);
+    }
   }
   
   next();
@@ -631,15 +642,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   const httpServer = createServer(app);
 
+  // Track active WebSocket connections by user ID
+  const activeConnections = new Map<number, Set<WebSocket>>();
+
   // WebSocket server for real-time messaging
   const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
   
   wss.on('connection', (ws: WebSocket, req: any) => {
     console.log('New WebSocket connection');
+    let userId: number | null = null;
     
     ws.on('message', (message: string) => {
       try {
         const data = JSON.parse(message);
+        
+        // Handle user authentication for WebSocket
+        if (data.type === 'auth' && data.userId) {
+          userId = data.userId;
+          
+          // Add to active connections
+          if (!activeConnections.has(userId)) {
+            activeConnections.set(userId, new Set());
+          }
+          activeConnections.get(userId)!.add(ws);
+          
+          // Update user activity when they connect
+          storage.updateUserActivity(userId).catch(console.warn);
+          
+          console.log(`User ${userId} connected via WebSocket`);
+        }
         
         // Broadcast message to all connected clients
         // In a real app, you'd want to send to specific users
@@ -655,8 +686,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     
     ws.on('close', () => {
       console.log('WebSocket connection closed');
+      
+      // Remove from active connections
+      if (userId) {
+        const userConnections = activeConnections.get(userId);
+        if (userConnections) {
+          userConnections.delete(ws);
+          if (userConnections.size === 0) {
+            activeConnections.delete(userId);
+          }
+        }
+      }
     });
   });
+
+  // Enhanced isUserOnline check that considers WebSocket connections
+  const originalIsUserOnline = storage.isUserOnline.bind(storage);
+  storage.isUserOnline = async (userId: number): Promise<boolean> => {
+    // First check if user has active WebSocket connections
+    const hasActiveConnections = activeConnections.has(userId) && activeConnections.get(userId)!.size > 0;
+    
+    if (hasActiveConnections) {
+      // Update their activity since they have an active connection
+      await storage.updateUserActivity(userId);
+      return true;
+    }
+    
+    // Fall back to time-based check
+    return originalIsUserOnline(userId);
+  };
 
   return httpServer;
 }
