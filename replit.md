@@ -149,6 +149,11 @@ The application is configured for deployment on Replit with the following setup:
 - ✓ Integrated voice recording functionality into PostForm and ChatWidget components
 - ✓ Enhanced message and post display to show voice messages with playback controls
 - ✓ Removed "admission number" terminology from user search interface, replaced with "username"
+- ✓ Completely redesigned UserSearchDialog to remove social relationship dropdown
+- ✓ Implemented real-time user search functionality with username and name matching
+- ✓ Made search results clickable to navigate to user profile pages
+- ✓ Enhanced search backend to include firstName, lastName, and username fields
+- ✓ Fixed search API to properly filter and return user data without passwords
 
 ## Changelog
 

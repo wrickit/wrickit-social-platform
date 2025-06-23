@@ -30,13 +30,14 @@ export default function UserSearchDialog({ trigger }: UserSearchDialogProps) {
   const { data: searchResults = [], isLoading: isSearching } = useQuery({
     queryKey: ["/api/users/search-all", searchQuery],
     queryFn: async () => {
-      if (!searchQuery.trim()) return [];
+      if (!searchQuery.trim() || searchQuery.trim().length < 1) return [];
       const response = await apiRequest("GET", `/api/users/search-all?q=${encodeURIComponent(searchQuery.trim())}`);
       return response;
     },
     enabled: searchQuery.trim().length > 0,
     refetchOnWindowFocus: false,
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 1000 * 60 * 2, // 2 minutes
+    gcTime: 1000 * 60 * 5, // 5 minutes
   });
 
   const handleUserClick = (userId: number) => {

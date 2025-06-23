@@ -631,6 +631,9 @@ export class DatabaseStorage implements IStorage {
       .where(
         or(
           sql`${users.name} ILIKE ${`%${query}%`}`,
+          sql`${users.username} ILIKE ${`%${query}%`}`,
+          sql`${users.firstName} ILIKE ${`%${query}%`}`,
+          sql`${users.lastName} ILIKE ${`%${query}%`}`,
           sql`${users.admissionNumber} ILIKE ${`%${query}%`}`
         )
       )

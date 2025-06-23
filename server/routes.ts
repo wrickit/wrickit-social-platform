@@ -193,12 +193,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/users/search-all", requireAuth, async (req: Request, res: Response) => {
     try {
       const { q } = req.query;
-      if (!q || typeof q !== 'string' || q.length < 2) {
+      if (!q || typeof q !== 'string') {
         return res.json([]);
       }
       
       const users = await storage.searchUsers(q);
-      res.json(users);
+      // Don't return passwords in search results
+      const usersWithoutPasswords = users.map(foundUser => {
+        const { password, ...userWithoutPassword } = foundUser;
+        return userWithoutPassword;
+      });
+      res.json(usersWithoutPasswords);
     } catch (error) {
       console.error("Search all users error:", error);
       res.status(500).json({ message: "Failed to search users" });
