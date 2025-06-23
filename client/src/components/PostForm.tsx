@@ -255,7 +255,7 @@ export default function PostForm() {
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           <Textarea
-            placeholder="What's the tea today? 👀✨"
+            placeholder="What's the tea today? 👀✨ (Use @username to mention someone!)"
             value={content}
             onChange={(e) => setContent(e.target.value)}
             className="min-h-20 resize-none border-purple-200 focus:border-purple-400 rounded-lg"

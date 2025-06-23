@@ -68,6 +68,8 @@ export default function NotificationDropdown() {
         return <span className="text-lg">👥</span>;
       case "disciplinary":
         return <span className="text-lg">⚠️</span>;
+      case "mention":
+        return <span className="text-lg">@</span>;
       default:
         return <span className="text-lg">🔔</span>;
     }

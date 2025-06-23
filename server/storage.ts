@@ -384,7 +384,7 @@ export class DatabaseStorage implements IStorage {
     
     // Process hashtags and mentions
     await this.processHashtags(content, post.id);
-    await this.processMentions(content, post.id);
+    await this.processMentions(content, post.id, undefined, authorId);
     
     return post;
   }
@@ -493,6 +493,11 @@ export class DatabaseStorage implements IStorage {
         voiceMessageDuration: voiceMessageDuration || null
       })
       .returning();
+    
+    // Process hashtags and mentions in messages
+    await this.processHashtags(content, undefined, message.id);
+    await this.processMentions(content, undefined, message.id, fromUserId);
+    
     return message;
   }
 
@@ -1236,9 +1241,15 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Mention operations
-  async processMentions(content: string, postId?: number, messageId?: number): Promise<void> {
+  async processMentions(content: string, postId?: number, messageId?: number, authorId?: number): Promise<void> {
     const mentionMatches = content.match(/@(\w+)/g);
     if (!mentionMatches) return;
+
+    // Get author information for better notification messages
+    let author: User | undefined;
+    if (authorId) {
+      author = await this.getUser(authorId);
+    }
 
     for (const match of mentionMatches) {
       const username = match.slice(1); // Remove @
@@ -1246,7 +1257,7 @@ export class DatabaseStorage implements IStorage {
       // Find user by username
       const [user] = await db.select().from(users).where(eq(users.username, username)).limit(1);
       
-      if (user) {
+      if (user && user.id !== authorId) { // Don't notify if user mentions themselves
         // Link mention to post or message
         if (postId) {
           await db.insert(postMentions).values({
@@ -1254,11 +1265,12 @@ export class DatabaseStorage implements IStorage {
             mentionedUserId: user.id
           }).onConflictDoNothing();
           
-          // Create notification for mentioned user
+          // Create notification for mentioned user with author context
+          const authorName = author?.name || author?.firstName || 'Someone';
           await this.createNotification(
             user.id,
             'mention',
-            `You were mentioned in a post`,
+            `${authorName} mentioned you in a post`,
             postId
           );
         } else if (messageId) {
@@ -1267,11 +1279,12 @@ export class DatabaseStorage implements IStorage {
             mentionedUserId: user.id
           }).onConflictDoNothing();
           
-          // Create notification for mentioned user
+          // Create notification for mentioned user with author context
+          const authorName = author?.name || author?.firstName || 'Someone';
           await this.createNotification(
             user.id,
             'mention',
-            `You were mentioned in a message`,
+            `${authorName} mentioned you in a message`,
             messageId
           );
         }
