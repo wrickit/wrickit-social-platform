@@ -18,8 +18,11 @@ import {
   Phone, 
   Video, 
   MoreVertical,
-  ArrowLeft 
+  ArrowLeft,
+  Play,
+  Pause
 } from "lucide-react";
+import VoiceRecorder from "@/components/VoiceRecorder";
 
 interface Conversation {
   id: number;
@@ -58,6 +61,99 @@ interface AuthUser {
   profileImageUrl?: string;
 }
 
+// Voice message player component
+function VoiceMessagePlayer({ 
+  audioUrl, 
+  duration, 
+  isOwnMessage 
+}: { 
+  audioUrl: string; 
+  duration: number; 
+  isOwnMessage: boolean; 
+}) {
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const audioRef = useRef<HTMLAudioElement>(null);
+
+  const togglePlayback = () => {
+    if (!audioRef.current) return;
+
+    if (isPlaying) {
+      audioRef.current.pause();
+      setIsPlaying(false);
+    } else {
+      audioRef.current.play();
+      setIsPlaying(true);
+    }
+  };
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    const updateTime = () => setCurrentTime(audio.currentTime);
+    const handleEnded = () => {
+      setIsPlaying(false);
+      setCurrentTime(0);
+    };
+
+    audio.addEventListener('timeupdate', updateTime);
+    audio.addEventListener('ended', handleEnded);
+
+    return () => {
+      audio.removeEventListener('timeupdate', updateTime);
+      audio.removeEventListener('ended', handleEnded);
+    };
+  }, []);
+
+  const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
+
+  return (
+    <div className="flex items-center space-x-2 min-w-[200px]">
+      <audio ref={audioRef} src={audioUrl} />
+      
+      <button
+        onClick={togglePlayback}
+        className={`w-8 h-8 rounded-full flex items-center justify-center ${
+          isOwnMessage 
+            ? 'bg-blue-400 hover:bg-blue-300' 
+            : 'bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500'
+        }`}
+      >
+        {isPlaying ? (
+          <Pause className="w-4 h-4" />
+        ) : (
+          <Play className="w-4 h-4 ml-0.5" />
+        )}
+      </button>
+
+      <div className="flex-1">
+        <div className={`w-full h-1 rounded-full ${
+          isOwnMessage ? 'bg-blue-300' : 'bg-gray-300 dark:bg-gray-600'
+        }`}>
+          <div 
+            className={`h-1 rounded-full transition-all duration-100 ${
+              isOwnMessage ? 'bg-white' : 'bg-blue-500'
+            }`}
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+        <div className={`text-xs mt-0.5 ${
+          isOwnMessage ? 'text-blue-100' : 'text-gray-500 dark:text-gray-400'
+        }`}>
+          {formatTime(currentTime)} / {formatTime(duration)}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Messages() {
   const { user } = useAuth() as { user: AuthUser | null };
   const { toast } = useToast();
@@ -71,6 +167,7 @@ export default function Messages() {
   const [showNewChat, setShowNewChat] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [ws, setWs] = useState<WebSocket | null>(null);
+  const [voiceMessage, setVoiceMessage] = useState<{ url: string; duration: number } | null>(null);
 
   // Check if mobile
   useEffect(() => {
@@ -152,8 +249,23 @@ export default function Messages() {
 
   // Send message mutation
   const sendMessageMutation = useMutation({
-    mutationFn: async ({ toUserId, content }: { toUserId: number; content: string }) => {
-      await apiRequest("POST", "/api/messages", { toUserId, content });
+    mutationFn: async ({ 
+      toUserId, 
+      content, 
+      voiceMessageUrl, 
+      voiceMessageDuration 
+    }: { 
+      toUserId: number; 
+      content: string; 
+      voiceMessageUrl?: string; 
+      voiceMessageDuration?: number; 
+    }) => {
+      await apiRequest("POST", "/api/messages", { 
+        toUserId, 
+        content, 
+        voiceMessageUrl, 
+        voiceMessageDuration 
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/messages"] });
@@ -161,6 +273,7 @@ export default function Messages() {
         queryClient.invalidateQueries({ queryKey: ["/api/messages", selectedConversation] });
       }
       setNewMessage("");
+      setVoiceMessage(null);
       
       // Send real-time update via WebSocket
       if (ws && ws.readyState === WebSocket.OPEN) {
@@ -198,11 +311,28 @@ export default function Messages() {
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMessage.trim() || !selectedConversation) return;
+    if ((!newMessage.trim() && !voiceMessage) || !selectedConversation) return;
     
     sendMessageMutation.mutate({
       toUserId: selectedConversation,
-      content: newMessage.trim(),
+      content: newMessage.trim() || "",
+      voiceMessageUrl: voiceMessage?.url,
+      voiceMessageDuration: voiceMessage?.duration,
+    });
+  };
+
+  const handleVoiceMessage = (audioUrl: string, duration: number) => {
+    setVoiceMessage({ url: audioUrl, duration });
+  };
+
+  const handleSendVoiceMessage = () => {
+    if (!voiceMessage || !selectedConversation) return;
+    
+    sendMessageMutation.mutate({
+      toUserId: selectedConversation,
+      content: "",
+      voiceMessageUrl: voiceMessage.url,
+      voiceMessageDuration: voiceMessage.duration,
     });
   };
 
@@ -482,7 +612,15 @@ export default function Messages() {
                             ? 'bg-blue-500 text-white' 
                             : 'bg-gray-100 dark:bg-gray-700 app-text'
                         }`}>
-                          <p className="text-sm">{message.content}</p>
+                          {message.voiceMessageUrl ? (
+                            <VoiceMessagePlayer 
+                              audioUrl={message.voiceMessageUrl}
+                              duration={message.voiceMessageDuration || 0}
+                              isOwnMessage={isOwnMessage}
+                            />
+                          ) : (
+                            <p className="text-sm">{message.content}</p>
+                          )}
                           <p className={`text-xs mt-1 ${
                             isOwnMessage ? 'text-blue-100' : 'app-text-light'
                           }`}>
@@ -501,22 +639,35 @@ export default function Messages() {
           {/* Message Input */}
           {selectedConversation && (
             <div className="p-4 border-t border-gray-200 dark:border-gray-700">
-              <form onSubmit={handleSendMessage} className="flex items-center space-x-2">
-                <Input
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  placeholder="Type a message..."
-                  className="flex-1"
+              {voiceMessage ? (
+                <VoiceRecorder
+                  onRecordingComplete={handleVoiceMessage}
+                  onSend={handleSendVoiceMessage}
+                  onCancel={() => setVoiceMessage(null)}
                   disabled={sendMessageMutation.isPending}
                 />
-                <Button
-                  type="submit"
-                  disabled={!newMessage.trim() || sendMessageMutation.isPending}
-                  className="discord-purple-bg hover:bg-purple-700 text-white"
-                >
-                  <Send className="w-4 h-4" />
-                </Button>
-              </form>
+              ) : (
+                <form onSubmit={handleSendMessage} className="flex items-center space-x-2">
+                  <Input
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                    placeholder="Type a message..."
+                    className="flex-1"
+                    disabled={sendMessageMutation.isPending}
+                  />
+                  <VoiceRecorder
+                    onRecordingComplete={handleVoiceMessage}
+                    disabled={sendMessageMutation.isPending}
+                  />
+                  <Button
+                    type="submit"
+                    disabled={!newMessage.trim() || sendMessageMutation.isPending}
+                    className="discord-purple-bg hover:bg-purple-700 text-white"
+                  >
+                    <Send className="w-4 h-4" />
+                  </Button>
+                </form>
+              )}
             </div>
           )}
         </div>

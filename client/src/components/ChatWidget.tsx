@@ -14,6 +14,99 @@ interface ChatWidgetProps {
   onClose: () => void;
 }
 
+// Voice message player component for ChatWidget
+function VoiceMessagePlayer({ 
+  audioUrl, 
+  duration, 
+  isOwnMessage 
+}: { 
+  audioUrl: string; 
+  duration: number; 
+  isOwnMessage: boolean; 
+}) {
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const audioRef = useRef<HTMLAudioElement>(null);
+
+  const togglePlayback = () => {
+    if (!audioRef.current) return;
+
+    if (isPlaying) {
+      audioRef.current.pause();
+      setIsPlaying(false);
+    } else {
+      audioRef.current.play();
+      setIsPlaying(true);
+    }
+  };
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    const updateTime = () => setCurrentTime(audio.currentTime);
+    const handleEnded = () => {
+      setIsPlaying(false);
+      setCurrentTime(0);
+    };
+
+    audio.addEventListener('timeupdate', updateTime);
+    audio.addEventListener('ended', handleEnded);
+
+    return () => {
+      audio.removeEventListener('timeupdate', updateTime);
+      audio.removeEventListener('ended', handleEnded);
+    };
+  }, []);
+
+  const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
+
+  return (
+    <div className="flex items-center space-x-2 min-w-[180px]">
+      <audio ref={audioRef} src={audioUrl} />
+      
+      <button
+        onClick={togglePlayback}
+        className={`w-6 h-6 rounded-full flex items-center justify-center ${
+          isOwnMessage 
+            ? 'bg-blue-400 hover:bg-blue-300' 
+            : 'bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500'
+        }`}
+      >
+        {isPlaying ? (
+          <Pause className="w-3 h-3" />
+        ) : (
+          <Play className="w-3 h-3 ml-0.5" />
+        )}
+      </button>
+
+      <div className="flex-1">
+        <div className={`w-full h-1 rounded-full ${
+          isOwnMessage ? 'bg-blue-300' : 'bg-gray-300 dark:bg-gray-600'
+        }`}>
+          <div 
+            className={`h-1 rounded-full transition-all duration-100 ${
+              isOwnMessage ? 'bg-white' : 'bg-blue-500'
+            }`}
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+        <div className={`text-xs mt-0.5 ${
+          isOwnMessage ? 'text-blue-100' : 'text-gray-500 dark:text-gray-400'
+        }`}>
+          {formatTime(currentTime)} / {formatTime(duration)}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function ChatWidget({ userId, onClose }: ChatWidgetProps) {
   const [message, setMessage] = useState("");
   const [ws, setWs] = useState<WebSocket | null>(null);
@@ -120,12 +213,16 @@ export default function ChatWidget({ userId, onClose }: ChatWidgetProps) {
 
   const handleVoiceMessage = (audioData: string, duration: number) => {
     setVoiceMessage({ url: audioData, duration });
-    // Auto-send voice message
+  };
+
+  const handleSendVoiceMessage = () => {
+    if (!voiceMessage) return;
+    
     sendMessageMutation.mutate({
       toUserId: userId,
       content: "",
-      voiceMessageUrl: audioData,
-      voiceMessageDuration: duration,
+      voiceMessageUrl: voiceMessage.url,
+      voiceMessageDuration: voiceMessage.duration,
     });
   };
 

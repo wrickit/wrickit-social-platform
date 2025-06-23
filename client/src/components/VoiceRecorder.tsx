@@ -1,82 +1,73 @@
-import React, { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Mic, MicOff, Play, Pause, Trash2, Send } from "lucide-react";
 
 interface VoiceRecorderProps {
-  onVoiceMessage: (audioData: string, duration: number) => void;
+  onRecordingComplete: (audioUrl: string, duration: number) => void;
+  onSend?: () => void;
   onCancel?: () => void;
-  className?: string;
-  size?: "sm" | "md" | "lg";
+  disabled?: boolean;
 }
 
 export default function VoiceRecorder({ 
-  onVoiceMessage, 
+  onRecordingComplete, 
+  onSend, 
   onCancel, 
-  className = "",
-  size = "md" 
+  disabled 
 }: VoiceRecorderProps) {
   const [isRecording, setIsRecording] = useState(false);
-  const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
-  const [audioUrl, setAudioUrl] = useState<string>("");
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [duration, setDuration] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
-  
+
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
   const chunksRef = useRef<Blob[]>([]);
-
-  useEffect(() => {
-    return () => {
-      if (recordingTimerRef.current) {
-        clearInterval(recordingTimerRef.current);
-      }
-      if (audioUrl) {
-        URL.revokeObjectURL(audioUrl);
-      }
-    };
-  }, [audioUrl]);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const startTimeRef = useRef<number>(0);
 
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream, {
-        mimeType: 'audio/webm;codecs=opus'
-      });
-      
-      chunksRef.current = [];
+      const mediaRecorder = new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
-      
+      chunksRef.current = [];
+
       mediaRecorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
           chunksRef.current.push(event.data);
         }
       };
-      
+
       mediaRecorder.onstop = () => {
-        const blob = new Blob(chunksRef.current, { type: 'audio/webm;codecs=opus' });
-        setAudioBlob(blob);
+        const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
         const url = URL.createObjectURL(blob);
         setAudioUrl(url);
-        setDuration(recordingTime);
         
-        // Stop all tracks to release microphone
+        // Convert blob to base64 for storage
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const base64 = reader.result as string;
+          onRecordingComplete(base64, duration);
+        };
+        reader.readAsDataURL(blob);
+
+        // Stop all tracks
         stream.getTracks().forEach(track => track.stop());
       };
-      
+
       mediaRecorder.start();
       setIsRecording(true);
-      setRecordingTime(0);
+      startTimeRef.current = Date.now();
       
       // Start timer
-      recordingTimerRef.current = setInterval(() => {
-        setRecordingTime(prev => prev + 1);
-      }, 1000);
-      
+      intervalRef.current = setInterval(() => {
+        setRecordingTime(Math.floor((Date.now() - startTimeRef.current) / 1000));
+      }, 100);
+
     } catch (error) {
-      console.error('Error starting recording:', error);
-      alert('Failed to access microphone. Please check permissions.');
+      console.error('Error accessing microphone:', error);
     }
   };
 
@@ -84,23 +75,24 @@ export default function VoiceRecorder({
     if (mediaRecorderRef.current && isRecording) {
       mediaRecorderRef.current.stop();
       setIsRecording(false);
+      setDuration(recordingTime);
       
-      if (recordingTimerRef.current) {
-        clearInterval(recordingTimerRef.current);
-        recordingTimerRef.current = null;
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
       }
     }
   };
 
-  const playAudio = () => {
-    if (audioRef.current && audioUrl) {
-      if (isPlaying) {
-        audioRef.current.pause();
-        setIsPlaying(false);
-      } else {
-        audioRef.current.play();
-        setIsPlaying(true);
-      }
+  const togglePlayback = () => {
+    if (!audioRef.current || !audioUrl) return;
+
+    if (isPlaying) {
+      audioRef.current.pause();
+      setIsPlaying(false);
+    } else {
+      audioRef.current.play();
+      setIsPlaying(true);
     }
   };
 
@@ -108,24 +100,10 @@ export default function VoiceRecorder({
     if (audioUrl) {
       URL.revokeObjectURL(audioUrl);
     }
-    setAudioBlob(null);
-    setAudioUrl("");
+    setAudioUrl(null);
     setDuration(0);
     setRecordingTime(0);
     setIsPlaying(false);
-  };
-
-  const sendVoiceMessage = async () => {
-    if (audioBlob) {
-      // Convert blob to base64 data URL
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const audioData = reader.result as string;
-        onVoiceMessage(audioData, duration);
-        deleteRecording();
-      };
-      reader.readAsDataURL(audioBlob);
-    }
   };
 
   const formatTime = (seconds: number) => {
@@ -134,113 +112,100 @@ export default function VoiceRecorder({
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const buttonSize = size === "sm" ? "h-8 w-8" : size === "lg" ? "h-12 w-12" : "h-10 w-10";
-  const iconSize = size === "sm" ? "h-4 w-4" : size === "lg" ? "h-6 w-6" : "h-5 w-5";
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.onended = () => setIsPlaying(false);
+    }
+  }, [audioUrl]);
 
-  if (audioBlob && audioUrl) {
-    // Show playback controls
+  useEffect(() => {
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+      if (audioUrl) {
+        URL.revokeObjectURL(audioUrl);
+      }
+    };
+  }, [audioUrl]);
+
+  // If we have a recording, show playback controls
+  if (audioUrl) {
     return (
-      <div className={`flex items-center space-x-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg ${className}`}>
-        <audio
-          ref={audioRef}
-          src={audioUrl}
-          onEnded={() => setIsPlaying(false)}
-          onLoadedMetadata={() => {
-            if (audioRef.current) {
-              setDuration(Math.round(audioRef.current.duration));
-            }
-          }}
-        />
+      <div className="flex items-center space-x-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+        <audio ref={audioRef} src={audioUrl} />
         
         <Button
           variant="ghost"
           size="sm"
-          onClick={playAudio}
-          className={`${buttonSize} text-blue-600 hover:text-blue-700`}
+          onClick={togglePlayback}
+          className="h-8 w-8 p-0"
         >
-          {isPlaying ? <Pause className={iconSize} /> : <Play className={iconSize} />}
+          {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
         </Button>
-        
+
         <div className="flex-1">
-          <div className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            Voice Message
+          <div className="text-sm text-gray-600 dark:text-gray-400">
+            Voice message • {formatTime(duration)}
           </div>
-          <div className="text-xs text-gray-500">
-            {formatTime(duration)}
+          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1 mt-1">
+            <div className="bg-blue-500 h-1 rounded-full w-1/3"></div>
           </div>
         </div>
-        
+
         <Button
           variant="ghost"
           size="sm"
           onClick={deleteRecording}
-          className={`${buttonSize} text-red-600 hover:text-red-700`}
+          className="h-8 w-8 p-0 text-red-500 hover:text-red-600"
         >
-          <Trash2 className={iconSize} />
+          <Trash2 className="w-4 h-4" />
         </Button>
-        
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={sendVoiceMessage}
-          className={`${buttonSize} text-green-600 hover:text-green-700`}
-        >
-          <Send className={iconSize} />
-        </Button>
-      </div>
-    );
-  }
 
-  if (isRecording) {
-    // Show recording interface
-    return (
-      <div className={`flex items-center space-x-3 p-3 bg-red-50 dark:bg-red-900/20 rounded-lg ${className}`}>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={stopRecording}
-          className={`${buttonSize} text-red-600 hover:text-red-700 animate-pulse`}
-        >
-          <MicOff className={iconSize} />
-        </Button>
-        
-        <div className="flex-1">
-          <div className="text-sm font-medium text-red-700 dark:text-red-300">
-            Recording...
-          </div>
-          <div className="text-xs text-red-600 dark:text-red-400">
-            {formatTime(recordingTime)}
-          </div>
-        </div>
-        
-        {onCancel && (
+        {onSend && (
           <Button
-            variant="ghost"
             size="sm"
-            onClick={() => {
-              stopRecording();
-              deleteRecording();
-              onCancel();
-            }}
-            className={`${buttonSize} text-gray-600 hover:text-gray-700`}
+            onClick={onSend}
+            disabled={disabled}
+            className="h-8 px-3"
           >
-            <Trash2 className={iconSize} />
+            <Send className="w-4 h-4" />
           </Button>
         )}
       </div>
     );
   }
 
-  // Show initial record button
+  // Recording interface
   return (
-    <Button
-      variant="ghost"
-      size="sm"
-      onClick={startRecording}
-      className={`${buttonSize} text-blue-600 hover:text-blue-700 ${className}`}
-      title="Record voice message"
-    >
-      <Mic className={iconSize} />
-    </Button>
+    <div className="flex items-center space-x-2">
+      {isRecording ? (
+        <div className="flex items-center space-x-2 p-2 bg-red-50 dark:bg-red-900/20 rounded-lg">
+          <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+          <span className="text-sm text-red-600 dark:text-red-400">
+            Recording • {formatTime(recordingTime)}
+          </span>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={stopRecording}
+            className="h-8 w-8 p-0 text-red-500 hover:text-red-600"
+          >
+            <MicOff className="w-4 h-4" />
+          </Button>
+        </div>
+      ) : (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={startRecording}
+          disabled={disabled}
+          className="h-8 w-8 p-0"
+          title="Record voice message"
+        >
+          <Mic className="w-4 h-4" />
+        </Button>
+      )}
+    </div>
   );
 }
