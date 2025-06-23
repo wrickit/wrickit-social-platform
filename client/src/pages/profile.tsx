@@ -23,10 +23,13 @@ export default function Profile() {
   const [editedName, setEditedName] = useState("");
   const queryClient = useQueryClient();
 
+  // If userId is provided, fetch that user's profile, otherwise use current user
   const { data: profileUser, isLoading } = useQuery({
-    queryKey: ["/api/users", userId],
-    enabled: !!userId,
+    queryKey: userId ? ["/api/users", userId] : ["/api/user"],
+    enabled: true,
   });
+
+  const isOwnProfile = !userId || (currentUser && profileUser && profileUser.id === currentUser.id);
 
   const { data: userRelationships = [] } = useQuery({
     queryKey: ["/api/users", userId, "relationships"],
@@ -84,7 +87,7 @@ export default function Profile() {
     );
   }
 
-  const isOwnProfile = currentUser?.id === profileUser.id;
+
   const relationshipTypes = userRelationships.map((rel: any) => rel.type);
 
   return (

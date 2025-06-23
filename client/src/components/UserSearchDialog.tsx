@@ -1,12 +1,10 @@
-import React, { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiRequest, getQueryFn } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
-import { Search, UserPlus } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Search } from "lucide-react";
+import { useLocation } from "wouter";
+import { useQuery } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 
 interface User {
   id: number;
@@ -25,44 +23,25 @@ interface UserSearchDialogProps {
 
 export default function UserSearchDialog({ trigger }: UserSearchDialogProps) {
   const [searchQuery, setSearchQuery] = useState("");
-  const [relationshipType, setRelationshipType] = useState("friend");
   const [isOpen, setIsOpen] = useState(false);
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
+  const [, setLocation] = useLocation();
 
-  const { data: searchResults = [], isLoading: isSearching } = useQuery<User[]>({
-    queryKey: ["/api/users/search", searchQuery],
-    queryFn: getQueryFn({ on401: "throw" }),
-    enabled: searchQuery.length > 0,
+  // Real-time search with debouncing
+  const { data: searchResults = [], isLoading: isSearching } = useQuery({
+    queryKey: ["/api/users/search-all", searchQuery],
+    queryFn: async () => {
+      if (!searchQuery.trim()) return [];
+      const response = await apiRequest("GET", `/api/users/search-all?q=${encodeURIComponent(searchQuery.trim())}`);
+      return response;
+    },
+    enabled: searchQuery.trim().length > 0,
+    refetchOnWindowFocus: false,
+    staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
-  const createRelationshipMutation = useMutation({
-    mutationFn: async ({ userId, type }: { userId: number; type: string }) => {
-      const response = await apiRequest("POST", "/api/relationships", {
-        toUserId: userId,
-        type,
-      });
-      return response.json();
-    },
-    onSuccess: () => {
-      toast({
-        title: "Relationship added!",
-        description: "Successfully added user to your connections.",
-      });
-      queryClient.invalidateQueries({ queryKey: ["/api/relationships"] });
-      setIsOpen(false);
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to add relationship",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const handleAddRelationship = (userId: number) => {
-    createRelationshipMutation.mutate({ userId, type: relationshipType });
+  const handleUserClick = (userId: number) => {
+    setIsOpen(false);
+    setLocation(`/profile/${userId}`);
   };
 
   return (
@@ -72,75 +51,88 @@ export default function UserSearchDialog({ trigger }: UserSearchDialogProps) {
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Find Classmates</DialogTitle>
+          <DialogTitle>Search Users</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
-          <div className="flex space-x-2">
-            <div className="flex-1">
-              <Input
-                placeholder="Search by name..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full"
-              />
-            </div>
-            <Search className="h-4 w-4 mt-3 text-gray-400" />
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Input
+              placeholder="Search by name or username..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+              autoFocus
+            />
           </div>
 
-          <div>
-            <Select value={relationshipType} onValueChange={setRelationshipType}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select relationship type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="best_friend">Best Friend</SelectItem>
-                <SelectItem value="friend">Friend</SelectItem>
-                <SelectItem value="acquaintance">Acquaintance</SelectItem>
-                <SelectItem value="crush">Crush</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {isSearching && (
+          {isSearching && searchQuery.trim().length > 0 && (
             <div className="text-center py-4">
-              <p className="text-gray-500">Searching...</p>
+              <div className="animate-pulse">
+                <p className="text-gray-500">Searching...</p>
+              </div>
             </div>
           )}
 
           {searchResults.length > 0 && (
-            <div className="space-y-2 max-h-64 overflow-y-auto">
+            <div className="space-y-2 max-h-80 overflow-y-auto">
               {searchResults.map((user: User) => (
                 <div
                   key={user.id}
-                  className="flex items-center justify-between p-3 border rounded-lg"
+                  onClick={() => handleUserClick(user.id)}
+                  className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors"
                 >
-                  <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                      <span className="text-sm font-semibold text-blue-600">
+                  {user.profileImageUrl ? (
+                    <img
+                      src={user.profileImageUrl}
+                      alt={user.name}
+                      className="w-10 h-10 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
+                      <span className="text-sm font-semibold text-white">
                         {user.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
                       </span>
                     </div>
-                    <div>
-                      <p className="font-medium">{user.name}</p>
-                      <p className="text-sm text-gray-500">Class {user.class}</p>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-gray-900 dark:text-gray-100 truncate">{user.name}</p>
+                    <div className="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400">
+                      <span>@{user.username}</span>
+                      <span>•</span>
+                      <span>Class {user.class}</span>
                     </div>
                   </div>
-                  <Button
-                    size="sm"
-                    onClick={() => handleAddRelationship(user.id)}
-                    disabled={createRelationshipMutation.isPending}
-                  >
-                    <UserPlus className="h-4 w-4 mr-1" />
-                    Add
-                  </Button>
+                  <div className="text-gray-400">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </div>
                 </div>
               ))}
             </div>
           )}
 
-          {searchQuery.length > 0 && !isSearching && searchResults.length === 0 && (
-            <div className="text-center py-4">
-              <p className="text-gray-500">No users found with that name.</p>
+          {searchQuery.trim().length > 0 && !isSearching && searchResults.length === 0 && (
+            <div className="text-center py-8">
+              <div className="text-gray-400 mb-2">
+                <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+              <p className="text-gray-500 font-medium">No users found</p>
+              <p className="text-gray-400 text-sm">Try searching with a different name or username</p>
+            </div>
+          )}
+
+          {searchQuery.trim().length === 0 && (
+            <div className="text-center py-8">
+              <div className="text-gray-400 mb-2">
+                <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+              <p className="text-gray-500 font-medium">Start typing to search</p>
+              <p className="text-gray-400 text-sm">Find classmates by name or username</p>
             </div>
           )}
         </div>
