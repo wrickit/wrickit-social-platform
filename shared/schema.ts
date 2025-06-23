@@ -164,6 +164,42 @@ export const loopInteractions = pgTable("loop_interactions", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const hashtags = pgTable("hashtags", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull().unique(), // hashtag without the #
+  usageCount: integer("usage_count").default(1),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const postHashtags = pgTable("post_hashtags", {
+  id: serial("id").primaryKey(),
+  postId: integer("post_id").notNull().references(() => posts.id, { onDelete: "cascade" }),
+  hashtagId: integer("hashtag_id").notNull().references(() => hashtags.id),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const messageHashtags = pgTable("message_hashtags", {
+  id: serial("id").primaryKey(),
+  messageId: integer("message_id").notNull().references(() => messages.id, { onDelete: "cascade" }),
+  hashtagId: integer("hashtag_id").notNull().references(() => hashtags.id),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const postMentions = pgTable("post_mentions", {
+  id: serial("id").primaryKey(),
+  postId: integer("post_id").notNull().references(() => posts.id, { onDelete: "cascade" }),
+  mentionedUserId: integer("mentioned_user_id").notNull().references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const messageMentions = pgTable("message_mentions", {
+  id: serial("id").primaryKey(),
+  messageId: integer("message_id").notNull().references(() => messages.id, { onDelete: "cascade" }),
+  mentionedUserId: integer("mentioned_user_id").notNull().references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   sentRelationships: many(relationships, { relationName: "fromUser" }),
@@ -306,6 +342,55 @@ export const loopInteractionsRelations = relations(loopInteractions, ({ one }) =
   }),
 }));
 
+export const hashtagsRelations = relations(hashtags, ({ many }) => ({
+  postHashtags: many(postHashtags),
+  messageHashtags: many(messageHashtags),
+}));
+
+export const postHashtagsRelations = relations(postHashtags, ({ one }) => ({
+  post: one(posts, {
+    fields: [postHashtags.postId],
+    references: [posts.id],
+  }),
+  hashtag: one(hashtags, {
+    fields: [postHashtags.hashtagId],
+    references: [hashtags.id],
+  }),
+}));
+
+export const messageHashtagsRelations = relations(messageHashtags, ({ one }) => ({
+  message: one(messages, {
+    fields: [messageHashtags.messageId],
+    references: [messages.id],
+  }),
+  hashtag: one(hashtags, {
+    fields: [messageHashtags.hashtagId],
+    references: [hashtags.id],
+  }),
+}));
+
+export const postMentionsRelations = relations(postMentions, ({ one }) => ({
+  post: one(posts, {
+    fields: [postMentions.postId],
+    references: [posts.id],
+  }),
+  mentionedUser: one(users, {
+    fields: [postMentions.mentionedUserId],
+    references: [users.id],
+  }),
+}));
+
+export const messageMentionsRelations = relations(messageMentions, ({ one }) => ({
+  message: one(messages, {
+    fields: [messageMentions.messageId],
+    references: [messages.id],
+  }),
+  mentionedUser: one(users, {
+    fields: [messageMentions.mentionedUserId],
+    references: [users.id],
+  }),
+}));
+
 // Schemas
 export const insertUserSchema = createInsertSchema(users).pick({
   admissionNumber: true,
@@ -393,6 +478,11 @@ export const insertLoopSchema = createInsertSchema(loops).pick({
   isPublic: true,
 });
 
+export const searchSchema = z.object({
+  query: z.string().min(1),
+  type: z.enum(['all', 'hashtags', 'mentions', 'content']).optional().default('all'),
+});
+
 
 
 // Types
@@ -412,3 +502,9 @@ export type DevRegisterData = z.infer<typeof devRegisterSchema>;
 export type InsertComment = z.infer<typeof insertCommentSchema>;
 export type InsertLoop = z.infer<typeof insertLoopSchema>;
 export type Loop = typeof loops.$inferSelect;
+export type Hashtag = typeof hashtags.$inferSelect;
+export type PostHashtag = typeof postHashtags.$inferSelect;
+export type MessageHashtag = typeof messageHashtags.$inferSelect;
+export type PostMention = typeof postMentions.$inferSelect;
+export type MessageMention = typeof messageMentions.$inferSelect;
+export type SearchQuery = z.infer<typeof searchSchema>;

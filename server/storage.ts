@@ -10,7 +10,11 @@ import {
   notifications,
   disciplinaryActions,
   disciplinaryVotes,
-
+  hashtags,
+  postHashtags,
+  messageHashtags,
+  postMentions,
+  messageMentions,
   loops,
   loopLikes,
   loopViews,
@@ -27,10 +31,11 @@ import {
   type FriendGroup,
   type Notification,
   type Loop,
-  type InsertLoop
+  type InsertLoop,
+  type Hashtag
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, or, desc, sql, inArray, count, gt, lt, asc } from "drizzle-orm";
+import { eq, and, or, desc, sql, inArray, count, gt, lt, asc, ilike } from "drizzle-orm";
 import bcrypt from "bcrypt";
 
 export interface IStorage {
@@ -100,6 +105,18 @@ export interface IStorage {
   recordLoopInteraction(userId: number, loopId: number, interactionType: string, durationWatched?: number): Promise<void>;
   updateUserInterests(userId: number): Promise<void>;
   getUserInterests(userId: number): Promise<{ category: string; score: number }[]>;
+  
+  // Hashtag operations
+  processHashtags(content: string, postId?: number, messageId?: number): Promise<void>;
+  getHashtagsByName(names: string[]): Promise<Hashtag[]>;
+  searchHashtags(query: string): Promise<Hashtag[]>;
+  
+  // Mention operations
+  processMentions(content: string, postId?: number, messageId?: number): Promise<void>;
+  getUsersByUsername(usernames: string[]): Promise<User[]>;
+  
+  // Search operations
+  searchPosts(query: string, type?: string): Promise<(Post & { author: User; comments: (Comment & { author: User })[]; likesCount: number })[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -364,6 +381,11 @@ export class DatabaseStorage implements IStorage {
         voiceMessageDuration: voiceMessageDuration || null
       })
       .returning();
+    
+    // Process hashtags and mentions
+    await this.processHashtags(content, post.id);
+    await this.processMentions(content, post.id);
+    
     return post;
   }
 
@@ -1152,6 +1174,199 @@ export class DatabaseStorage implements IStorage {
       category: interest.category,
       score: (interest.score || 0) / 100, // Convert back to decimal
     }));
+  }
+
+  // Hashtag operations
+  async processHashtags(content: string, postId?: number, messageId?: number): Promise<void> {
+    const hashtagMatches = content.match(/#(\w+)/g);
+    if (!hashtagMatches) return;
+
+    for (const match of hashtagMatches) {
+      const hashtagName = match.slice(1).toLowerCase(); // Remove # and convert to lowercase
+      
+      // Find or create hashtag
+      let hashtag = await db.select().from(hashtags).where(eq(hashtags.name, hashtagName)).limit(1);
+      
+      if (hashtag.length === 0) {
+        // Create new hashtag
+        const [newHashtag] = await db.insert(hashtags).values({
+          name: hashtagName,
+          usageCount: 1
+        }).returning();
+        hashtag = [newHashtag];
+      } else {
+        // Update usage count
+        await db.update(hashtags)
+          .set({ 
+            usageCount: hashtag[0].usageCount + 1,
+            updatedAt: new Date()
+          })
+          .where(eq(hashtags.id, hashtag[0].id));
+      }
+
+      // Link hashtag to post or message
+      if (postId) {
+        try {
+          await db.insert(postHashtags).values({
+            postId,
+            hashtagId: hashtag[0].id
+          });
+        } catch (error) {
+          // Ignore duplicate key errors
+        }
+      } else if (messageId) {
+        await db.insert(messageHashtags).values({
+          messageId,
+          hashtagId: hashtag[0].id
+        }).onConflictDoNothing();
+      }
+    }
+  }
+
+  async getHashtagsByName(names: string[]): Promise<Hashtag[]> {
+    if (names.length === 0) return [];
+    const lowerNames = names.map(name => name.toLowerCase());
+    return await db.select().from(hashtags).where(inArray(hashtags.name, lowerNames));
+  }
+
+  async searchHashtags(query: string): Promise<Hashtag[]> {
+    return await db.select().from(hashtags)
+      .where(ilike(hashtags.name, `%${query.toLowerCase()}%`))
+      .orderBy(desc(hashtags.usageCount))
+      .limit(20);
+  }
+
+  // Mention operations
+  async processMentions(content: string, postId?: number, messageId?: number): Promise<void> {
+    const mentionMatches = content.match(/@(\w+)/g);
+    if (!mentionMatches) return;
+
+    for (const match of mentionMatches) {
+      const username = match.slice(1); // Remove @
+      
+      // Find user by username
+      const [user] = await db.select().from(users).where(eq(users.username, username)).limit(1);
+      
+      if (user) {
+        // Link mention to post or message
+        if (postId) {
+          await db.insert(postMentions).values({
+            postId,
+            mentionedUserId: user.id
+          }).onConflictDoNothing();
+          
+          // Create notification for mentioned user
+          await this.createNotification(
+            user.id,
+            'mention',
+            `You were mentioned in a post`,
+            postId
+          );
+        } else if (messageId) {
+          await db.insert(messageMentions).values({
+            messageId,
+            mentionedUserId: user.id
+          }).onConflictDoNothing();
+          
+          // Create notification for mentioned user
+          await this.createNotification(
+            user.id,
+            'mention',
+            `You were mentioned in a message`,
+            messageId
+          );
+        }
+      }
+    }
+  }
+
+  async getUsersByUsername(usernames: string[]): Promise<User[]> {
+    if (usernames.length === 0) return [];
+    return await db.select().from(users).where(inArray(users.username, usernames));
+  }
+
+  // Search operations
+  async searchPosts(query: string, type?: string): Promise<(Post & { author: User; comments: (Comment & { author: User })[]; likesCount: number })[]> {
+    let searchCondition;
+
+    if (type === 'hashtags') {
+      // Search by hashtag
+      const hashtagName = query.startsWith('#') ? query.slice(1) : query;
+      const hashtagResults = await db
+        .select({ postId: postHashtags.postId })
+        .from(postHashtags)
+        .innerJoin(hashtags, eq(postHashtags.hashtagId, hashtags.id))
+        .where(ilike(hashtags.name, `%${hashtagName.toLowerCase()}%`));
+      
+      const postIds = hashtagResults.map(r => r.postId);
+      if (postIds.length === 0) return [];
+      
+      searchCondition = inArray(posts.id, postIds);
+    } else if (type === 'mentions') {
+      // Search by mention
+      const username = query.startsWith('@') ? query.slice(1) : query;
+      const mentionResults = await db
+        .select({ postId: postMentions.postId })
+        .from(postMentions)
+        .innerJoin(users, eq(postMentions.mentionedUserId, users.id))
+        .where(ilike(users.username, `%${username}%`));
+      
+      const postIds = mentionResults.map(r => r.postId);
+      if (postIds.length === 0) return [];
+      
+      searchCondition = inArray(posts.id, postIds);
+    } else {
+      // Search in content
+      searchCondition = ilike(posts.content, `%${query}%`);
+    }
+
+    const postsData = await db
+      .select({
+        post: posts,
+        author: {
+          id: users.id,
+          name: users.name,
+          username: users.username,
+          profileImageUrl: users.profileImageUrl,
+        },
+      })
+      .from(posts)
+      .innerJoin(users, eq(posts.authorId, users.id))
+      .where(searchCondition)
+      .orderBy(desc(posts.createdAt))
+      .limit(50);
+
+    const result = [];
+    for (const item of postsData) {
+      const comments = await db
+        .select({
+          comment: comments,
+          author: {
+            id: users.id,
+            name: users.name,
+            username: users.username,
+            profileImageUrl: users.profileImageUrl,
+          },
+        })
+        .from(comments)
+        .innerJoin(users, eq(comments.authorId, users.id))
+        .where(eq(comments.postId, item.post.id))
+        .orderBy(comments.createdAt);
+
+      const likesCount = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(postLikes)
+        .where(eq(postLikes.postId, item.post.id));
+
+      result.push({
+        ...item.post,
+        author: item.author,
+        comments: comments.map(c => ({ ...c.comment, author: c.author })),
+        likesCount: likesCount[0]?.count || 0,
+      });
+    }
+
+    return result;
   }
 }
 

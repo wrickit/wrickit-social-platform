@@ -749,6 +749,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Search posts
+  app.get("/api/search/posts", requireAuth, async (req: any, res: Response) => {
+    try {
+      const { query, type = "content" } = req.query;
+      
+      if (!query || typeof query !== "string") {
+        return res.status(400).json({ error: "Search query is required" });
+      }
+
+      const posts = await storage.searchPosts(query, type);
+      res.json(posts);
+    } catch (error) {
+      console.error("Error searching posts:", error);
+      res.status(500).json({ error: "Failed to search posts" });
+    }
+  });
+
   app.post("/api/notifications/:id/read", requireAuth, async (req: Request, res: Response) => {
     try {
       const notificationId = parseInt(req.params.id);

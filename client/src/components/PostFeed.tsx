@@ -7,6 +7,7 @@ import { ThumbsUp, MessageCircle, Send, Users, Heart } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useState } from "react";
 import VoicePlayer from "./VoicePlayer";
+import ContentRenderer from "./ContentRenderer";
 
 import { Link } from "wouter";
 
@@ -220,7 +221,7 @@ export default function PostFeed({ showAll = false, maxPosts = 5, sortBy = "rece
               </div>
             </div>
             
-            <p className="app-text mb-3 whitespace-pre-wrap">{post.content}</p>
+            <ContentRenderer content={post.content} className="app-text mb-3" />
             
             {/* Voice Message */}
             {post.voiceMessageUrl && (
