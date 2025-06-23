@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
-import { Menu, User, Settings, Shield, MessageSquare, Users, LogOut, Moon, Sun, Home, Scale, Heart } from "lucide-react";
+import { Menu, User, Settings, Shield, MessageSquare, Users, LogOut, Moon, Sun, Home, Scale, Heart, Play } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useTheme } from "@/components/theme-provider";
 import { useLocation } from "wouter";
@@ -101,6 +101,18 @@ export default function HamburgerMenu({ user, relationships = [], friendGroups =
                 <div className="text-left">
                   <div className="font-medium">Messages</div>
                   <div className="text-xs text-gray-500">Chat with classmates</div>
+                </div>
+              </Button>
+              
+              <Button
+                variant="ghost"
+                className="w-full justify-start p-3 h-auto"
+                onClick={() => navigateTo("/loops")}
+              >
+                <Play className="w-4 h-4 mr-3" />
+                <div className="text-left">
+                  <div className="font-medium">Loops</div>
+                  <div className="text-xs text-gray-500">Short videos</div>
                 </div>
               </Button>
               
