@@ -102,17 +102,27 @@ function VoiceMessagePlayer({
       setIsPlaying(false);
       setCurrentTime(0);
     };
+    const handleLoadedMetadata = () => {
+      // If duration from props is 0 or invalid, use the actual audio duration
+      if (!duration || duration === 0) {
+        setCurrentTime(0);
+      }
+    };
 
     audio.addEventListener('timeupdate', updateTime);
     audio.addEventListener('ended', handleEnded);
+    audio.addEventListener('loadedmetadata', handleLoadedMetadata);
 
     return () => {
       audio.removeEventListener('timeupdate', updateTime);
       audio.removeEventListener('ended', handleEnded);
+      audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
     };
-  }, []);
+  }, [duration]);
 
-  const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
+  // Use actual audio duration if the provided duration is 0 or invalid
+  const actualDuration = duration > 0 ? duration : (audioRef.current?.duration || 0);
+  const progress = actualDuration > 0 ? (currentTime / actualDuration) * 100 : 0;
 
   return (
     <div className="flex items-center space-x-2 min-w-[200px]">
@@ -147,7 +157,7 @@ function VoiceMessagePlayer({
         <div className={`text-xs mt-0.5 ${
           isOwnMessage ? 'text-blue-100' : 'text-gray-500 dark:text-gray-400'
         }`}>
-          {formatTime(currentTime)} / {formatTime(duration)}
+          {formatTime(currentTime)} / {formatTime(actualDuration)}
         </div>
       </div>
     </div>

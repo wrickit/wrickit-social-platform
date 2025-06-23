@@ -49,7 +49,7 @@ export default function VoiceRecorder({
         const reader = new FileReader();
         reader.onloadend = () => {
           const base64 = reader.result as string;
-          onRecordingComplete(base64, duration);
+          onRecordingComplete(base64, recordingTime);
         };
         reader.readAsDataURL(blob);
 
