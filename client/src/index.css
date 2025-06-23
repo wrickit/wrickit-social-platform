@@ -75,8 +75,8 @@
   
   /* Dark mode custom colors - much darker theme */
   --discord-purple: hsl(235, 86%, 75%);
-  --discord-purple-light: hsl(235, 76%, 85%);
-  --discord-purple-accent: hsl(235, 66%, 95%);
+  --discord-purple-light: hsl(0, 0%, 10%);
+  --discord-purple-accent: hsl(0, 0%, 15%);
   --discord-purple-dark: hsl(235, 96%, 65%);
   --youtube-red: hsl(0, 100%, 60%);
   --youtube-red-light: hsl(0, 90%, 70%);
@@ -85,6 +85,19 @@
   --app-border: hsl(0, 0%, 15%);
   --app-text: hsl(0, 0%, 95%);
   --app-text-light: hsl(0, 0%, 65%);
+  
+  /* Override teen colors for dark mode */
+  --teen-purple: hsl(270, 60%, 60%);
+  --teen-pink: hsl(330, 60%, 65%);
+  --teen-blue: hsl(200, 60%, 55%);
+  --teen-green: hsl(140, 50%, 55%);
+  --teen-orange: hsl(30, 70%, 60%);
+  --teen-yellow: hsl(50, 70%, 65%);
+  
+  /* Dark gradients */
+  --gradient-primary: linear-gradient(135deg, hsl(0, 0%, 8%), hsl(0, 0%, 12%));
+  --gradient-secondary: linear-gradient(135deg, hsl(0, 0%, 6%), hsl(0, 0%, 10%));
+  --gradient-accent: linear-gradient(135deg, hsl(0, 0%, 10%), hsl(0, 0%, 14%));
 }
 
 @layer base {
@@ -166,6 +179,12 @@
     border: 1px solid rgba(255, 255, 255, 0.3);
   }
   
+  .dark .glass-effect {
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
   .bouncy {
     animation: bounce 0.6s ease-in-out;
   }
@@ -204,6 +223,114 @@
     background: linear-gradient(white, white) padding-box,
                 var(--gradient-primary) border-box;
     border-radius: 12px;
+  }
+  
+  .dark .sparkle-border {
+    background: linear-gradient(hsl(0, 0%, 4%), hsl(0, 0%, 4%)) padding-box,
+                var(--gradient-primary) border-box;
+  }
+  
+  /* Comprehensive dark mode overrides */
+  .dark .bg-white {
+    background-color: hsl(0, 0%, 4%) !important;
+  }
+  
+  .dark .bg-gray-50 {
+    background-color: hsl(0, 0%, 8%) !important;
+  }
+  
+  .dark .bg-gray-100 {
+    background-color: hsl(0, 0%, 10%) !important;
+  }
+  
+  .dark .bg-blue-50 {
+    background-color: hsl(220, 20%, 8%) !important;
+  }
+  
+  .dark .bg-green-50 {
+    background-color: hsl(140, 20%, 8%) !important;
+  }
+  
+  .dark .bg-red-50 {
+    background-color: hsl(0, 20%, 8%) !important;
+  }
+  
+  .dark .bg-purple-50 {
+    background-color: hsl(270, 20%, 8%) !important;
+  }
+  
+  .dark .text-white {
+    color: hsl(0, 0%, 95%) !important;
+  }
+  
+  .dark .text-gray-900 {
+    color: hsl(0, 0%, 95%) !important;
+  }
+  
+  .dark .text-gray-800 {
+    color: hsl(0, 0%, 90%) !important;
+  }
+  
+  .dark .border-white {
+    border-color: hsl(0, 0%, 20%) !important;
+  }
+  
+  .dark .border-gray-200 {
+    border-color: hsl(0, 0%, 15%) !important;
+  }
+  
+  /* Override any remaining light backgrounds */
+  .dark .bg-gradient-to-br {
+    background: var(--gradient-primary) !important;
+  }
+  
+  .dark .bg-gradient-to-r {
+    background: var(--gradient-primary) !important;
+  }
+  
+  .dark .bg-gradient-to-b {
+    background: var(--gradient-primary) !important;
+  }
+  
+  .dark .from-blue-400 {
+    --tw-gradient-from: hsl(0, 0%, 8%) !important;
+  }
+  
+  .dark .to-purple-600 {
+    --tw-gradient-to: hsl(0, 0%, 12%) !important;
+  }
+  
+  .dark .from-green-400 {
+    --tw-gradient-from: hsl(0, 0%, 6%) !important;
+  }
+  
+  .dark .to-blue-500 {
+    --tw-gradient-to: hsl(0, 0%, 10%) !important;
+  }
+  
+  .dark .from-purple-400 {
+    --tw-gradient-from: hsl(0, 0%, 10%) !important;
+  }
+  
+  .dark .to-pink-600 {
+    --tw-gradient-to: hsl(0, 0%, 14%) !important;
+  }
+  
+  /* Ensure landing page components are dark */
+  .dark .bg-yellow-50 {
+    background-color: hsl(45, 20%, 8%) !important;
+  }
+  
+  .dark .border-yellow-200 {
+    border-color: hsl(45, 30%, 15%) !important;
+  }
+  
+  .dark .text-yellow-800 {
+    color: hsl(45, 60%, 70%) !important;
+  }
+  
+  .dark .text-yellow-700 {
+    color: hsl(45, 50%, 65%) !important;
   }
   
   .teen-shadow {
