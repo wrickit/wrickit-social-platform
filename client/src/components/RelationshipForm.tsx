@@ -175,9 +175,19 @@ export default function RelationshipForm() {
                       className="w-full text-left p-3 hover:bg-gray-50 dark:hover:bg-gray-700 border-b border-gray-100 dark:border-gray-600 last:border-b-0 focus:bg-gray-50 dark:focus:bg-gray-700 focus:outline-none"
                     >
                       <div className="flex items-center space-x-3">
-                        <div className="w-8 h-8 bg-purple-100 dark:bg-purple-800 rounded-full flex items-center justify-center">
-                          <User className="w-4 h-4 text-purple-600 dark:text-purple-300" />
-                        </div>
+                        {user.profileImageUrl ? (
+                          <img
+                            src={user.profileImageUrl}
+                            alt={user.name}
+                            className="w-8 h-8 rounded-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-8 h-8 bg-purple-100 dark:bg-purple-800 rounded-full flex items-center justify-center">
+                            <span className="text-xs font-semibold text-purple-600 dark:text-purple-300">
+                              {user.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                            </span>
+                          </div>
+                        )}
                         <div className="flex-1">
                           <div className="font-medium text-gray-900 dark:text-gray-100">
                             {user.name}
