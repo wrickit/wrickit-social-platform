@@ -5,13 +5,11 @@ import { z } from "zod";
 
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
-  admissionNumber: varchar("admission_number", { length: 20 }).notNull().unique(),
   username: varchar("username", { length: 50 }).notNull().unique(),
   password: text("password").notNull(),
   firstName: text("first_name").notNull(),
   lastName: text("last_name").notNull(),
   name: text("name").notNull(), // Full name for backward compatibility
-  email: text("email").notNull(),
   class: varchar("class", { length: 10 }).notNull(), // e.g., "9A", "9B"
   division: varchar("division", { length: 5 }).notNull(), // e.g., "A", "B"
   profileImageUrl: text("profile_image_url"),
@@ -455,12 +453,10 @@ export const dailyUserStatsRelations = relations(dailyUserStats, ({ one }) => ({
 
 // Schemas
 export const insertUserSchema = createInsertSchema(users).pick({
-  admissionNumber: true,
   username: true,
   password: true,
   firstName: true,
   lastName: true,
-  email: true,
   class: true,
   division: true,
 }).extend({
@@ -481,7 +477,6 @@ export const devRegisterSchema = z.object({
 export const updateUserSchema = z.object({
   firstName: z.string().min(1).optional(),
   lastName: z.string().min(1).optional(),
-  email: z.string().email().optional(),
   bio: z.string().optional(),
   profileImageUrl: z.string().optional(),
   securityQuestion: z.string().optional(),

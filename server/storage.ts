@@ -46,12 +46,10 @@ import bcrypt from "bcrypt";
 
 export interface IStorage {
   // User operations
-  getUserByAdmissionNumber(admissionNumber: string): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   getUserByName(name: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   createDevUser(name: string, userClass: string, password: string): Promise<User>;
-  authenticateUser(admissionNumber: string, password: string): Promise<User | null>;
   authenticateUserByName(name: string, password: string): Promise<User | null>;
   getUser(id: number): Promise<User | undefined>;
   updateUser(id: number, userData: UpdateUser): Promise<User>;
@@ -141,8 +139,8 @@ export interface IStorage {
 }
 
 export class DatabaseStorage implements IStorage {
-  async getUserByAdmissionNumber(admissionNumber: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.admissionNumber, admissionNumber));
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.username, username));
     return user || undefined;
   }
 
@@ -159,14 +157,6 @@ export class DatabaseStorage implements IStorage {
       })
       .returning();
     return user;
-  }
-
-  async authenticateUser(admissionNumber: string, password: string): Promise<User | null> {
-    const user = await this.getUserByAdmissionNumber(admissionNumber);
-    if (!user) return null;
-    
-    const isValid = await bcrypt.compare(password, user.password);
-    return isValid ? user : null;
   }
 
   async getUser(id: number): Promise<User | undefined> {
@@ -187,20 +177,14 @@ export class DatabaseStorage implements IStorage {
   async createDevUser(name: string, userClass: string, password: string): Promise<User> {
     const hashedPassword = await bcrypt.hash(password, 10);
     
-    // Generate a unique admission number for dev-created users
-    const timestamp = Date.now().toString().slice(-6);
-    const admissionNumber = `DEV${timestamp}`;
-    
     const [user] = await db
       .insert(users)
       .values({ 
-        admissionNumber,
         username: name.toLowerCase().replace(/\s+/g, ''),
         password: hashedPassword,
         firstName: name.split(' ')[0] || name,
         lastName: name.split(' ').slice(1).join(' ') || '',
         name,
-        email: `${name.toLowerCase().replace(/\s+/g, '')}@wrickit.dev`,
         class: userClass,
         division: userClass.slice(-1) || 'A'
       })
