@@ -10,7 +10,7 @@ import {
   notifications,
   disciplinaryActions,
   disciplinaryVotes,
-  emailVerifications,
+
   loops,
   loopLikes,
   loopViews,
@@ -88,10 +88,7 @@ export interface IStorage {
   getDisciplinaryActions(): Promise<any[]>;
   voteDisciplinaryAction(actionId: number, voterId: number, vote: string): Promise<void>;
   
-  // Email verification operations
-  createEmailVerification(email: string, code: string): Promise<void>;
-  verifyEmailCode(email: string, code: string): Promise<boolean>;
-  cleanupExpiredCodes(): Promise<void>;
+
   
   // Loop operations
   createLoop(authorId: number, loopData: InsertLoop): Promise<Loop>;
@@ -779,57 +776,7 @@ export class DatabaseStorage implements IStorage {
       .where(eq(disciplinaryActions.id, actionId));
   }
 
-  async createEmailVerification(email: string, code: string): Promise<void> {
-    // Clean up any existing codes for this email
-    await db
-      .delete(emailVerifications)
-      .where(eq(emailVerifications.email, email));
 
-    // Create new verification code with 10 minute expiry
-    const expiresAt = new Date();
-    expiresAt.setMinutes(expiresAt.getMinutes() + 10);
-
-    await db
-      .insert(emailVerifications)
-      .values({
-        email,
-        code,
-        expiresAt,
-      });
-  }
-
-  async verifyEmailCode(email: string, code: string): Promise<boolean> {
-    const [verification] = await db
-      .select()
-      .from(emailVerifications)
-      .where(
-        and(
-          eq(emailVerifications.email, email),
-          eq(emailVerifications.code, code),
-          eq(emailVerifications.isUsed, false),
-          gt(emailVerifications.expiresAt, new Date())
-        )
-      )
-      .limit(1);
-
-    if (verification) {
-      // Mark as used
-      await db
-        .update(emailVerifications)
-        .set({ isUsed: true })
-        .where(eq(emailVerifications.id, verification.id));
-      
-      return true;
-    }
-
-    return false;
-  }
-
-  async cleanupExpiredCodes(): Promise<void> {
-    await db
-      .delete(emailVerifications)
-      .where(lt(emailVerifications.expiresAt, new Date()));
-  }
 
   async createComment(postId: number, authorId: number, content: string): Promise<Comment> {
     const [comment] = await db

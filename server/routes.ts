@@ -11,8 +11,6 @@ import {
   updateUserSchema,
   changePasswordSchema,
   searchUserSchema,
-  emailVerificationSchema,
-  sendVerificationSchema,
   devRegisterSchema,
 } from "@shared/schema";
 import { sendEmail, generateVerificationCode, createVerificationEmail } from "./emailService";
@@ -69,17 +67,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
-  app.post("/api/send-verification", async (req: Request, res: Response) => {
-    res.status(403).json({ 
-      message: "Email verification is no longer available. Please contact admin for account creation." 
-    });
-  });
 
-  app.post("/api/verify-email", async (req: Request, res: Response) => {
-    res.status(403).json({ 
-      message: "Email verification is no longer available. Please contact admin for account creation." 
-    });
-  });
 
   // Dev registration endpoint
   app.post("/api/dev-register", async (req: Request, res: Response) => {
