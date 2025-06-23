@@ -122,6 +122,37 @@ export const emailVerifications = pgTable("email_verifications", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const loops = pgTable("loops", {
+  id: serial("id").primaryKey(),
+  authorId: integer("author_id").notNull().references(() => users.id),
+  videoUrl: text("video_url").notNull(),
+  thumbnailUrl: text("thumbnail_url"),
+  description: text("description"),
+  songTitle: text("song_title"),
+  songArtist: text("song_artist"),
+  songUrl: text("song_url"),
+  songStartTime: integer("song_start_time").default(0),
+  songDuration: integer("song_duration").default(30),
+  likes: integer("likes").default(0),
+  views: integer("views").default(0),
+  isPublic: boolean("is_public").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const loopLikes = pgTable("loop_likes", {
+  id: serial("id").primaryKey(),
+  loopId: integer("loop_id").notNull().references(() => loops.id),
+  userId: integer("user_id").notNull().references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const loopViews = pgTable("loop_views", {
+  id: serial("id").primaryKey(),
+  loopId: integer("loop_id").notNull().references(() => loops.id),
+  userId: integer("user_id").notNull().references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   sentRelationships: many(relationships, { relationName: "fromUser" }),
@@ -215,6 +246,37 @@ export const notificationsRelations = relations(notifications, ({ one }) => ({
   }),
 }));
 
+export const loopsRelations = relations(loops, ({ one, many }) => ({
+  author: one(users, {
+    fields: [loops.authorId],
+    references: [users.id],
+  }),
+  likes: many(loopLikes),
+  views: many(loopViews),
+}));
+
+export const loopLikesRelations = relations(loopLikes, ({ one }) => ({
+  loop: one(loops, {
+    fields: [loopLikes.loopId],
+    references: [loops.id],
+  }),
+  user: one(users, {
+    fields: [loopLikes.userId],
+    references: [users.id],
+  }),
+}));
+
+export const loopViewsRelations = relations(loopViews, ({ one }) => ({
+  loop: one(loops, {
+    fields: [loopViews.loopId],
+    references: [loops.id],
+  }),
+  user: one(users, {
+    fields: [loopViews.userId],
+    references: [users.id],
+  }),
+}));
+
 // Schemas
 export const insertUserSchema = createInsertSchema(users).pick({
   admissionNumber: true,
@@ -291,6 +353,18 @@ export const insertMessageSchema = createInsertSchema(messages).pick({
   voiceMessageDuration: true,
 });
 
+export const insertLoopSchema = createInsertSchema(loops).pick({
+  videoUrl: true,
+  thumbnailUrl: true,
+  description: true,
+  songTitle: true,
+  songArtist: true,
+  songUrl: true,
+  songStartTime: true,
+  songDuration: true,
+  isPublic: true,
+});
+
 export const emailVerificationSchema = z.object({
   email: z.string().email(),
   code: z.string().length(6),
@@ -317,3 +391,5 @@ export type Notification = typeof notifications.$inferSelect;
 export type LoginData = z.infer<typeof loginSchema>;
 export type DevRegisterData = z.infer<typeof devRegisterSchema>;
 export type InsertComment = z.infer<typeof insertCommentSchema>;
+export type InsertLoop = z.infer<typeof insertLoopSchema>;
+export type Loop = typeof loops.$inferSelect;

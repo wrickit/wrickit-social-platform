@@ -85,6 +85,12 @@ export interface IStorage {
   createEmailVerification(email: string, code: string): Promise<void>;
   verifyEmailCode(email: string, code: string): Promise<boolean>;
   cleanupExpiredCodes(): Promise<void>;
+  
+  // Loop operations
+  createLoop(authorId: number, loopData: InsertLoop): Promise<Loop>;
+  getLoops(limit?: number, currentUserId?: number): Promise<(Loop & { author: User; isLiked?: boolean })[]>;
+  likeLoop(loopId: number, userId: number): Promise<{ success: boolean; isLiked: boolean }>;
+  viewLoop(loopId: number, userId: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {

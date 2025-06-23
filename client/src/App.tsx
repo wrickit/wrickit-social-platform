@@ -12,6 +12,7 @@ import Posts from "@/pages/posts";
 import Login from "@/pages/login";
 import Profile from "@/pages/profile";
 import Messages from "@/pages/messages";
+import Loops from "@/pages/Loops";
 import Disciplinary from "@/pages/disciplinary";
 import Relationships from "@/pages/relationships";
 import DevPage from "@/pages/dev";
@@ -43,6 +44,7 @@ function Router() {
           <Route path="/profile" component={Profile} />
           <Route path="/profile/:userId" component={Profile} />
           <Route path="/messages" component={Messages} />
+      <Route path="/loops" component={Loops} />
           <Route path="/relationships" component={Relationships} />
           <Route path="/disciplinary" component={Disciplinary} />
         </>
