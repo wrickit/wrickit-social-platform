@@ -49,7 +49,15 @@ export default function VoiceCall({
 
   useEffect(() => {
     if (isOpen && !isIncoming) {
-      initializeCall();
+      initializeCall().catch(error => {
+        console.error('Failed to initialize call:', error);
+        toast({
+          title: "Call Failed",
+          description: "Unable to start the call. Please check your microphone permissions.",
+          variant: "destructive",
+        });
+        onClose();
+      });
     }
 
     return () => {
@@ -273,9 +281,10 @@ export default function VoiceCall({
       console.error('Error initializing call:', error);
       toast({
         title: "Call Failed",
-        description: "Unable to access microphone or establish connection",
+        description: "Unable to access microphone. Please check your browser permissions.",
         variant: "destructive",
       });
+      cleanup();
       onClose();
     }
   };
@@ -349,6 +358,13 @@ export default function VoiceCall({
       
     } catch (error) {
       console.error('Error handling call offer:', error);
+      toast({
+        title: "Call Failed",
+        description: "Unable to access microphone. Please check your browser permissions.",
+        variant: "destructive",
+      });
+      cleanup();
+      onClose();
     }
   };
 
@@ -402,9 +418,11 @@ export default function VoiceCall({
       console.error('Error accepting call:', error);
       toast({
         title: "Call Failed",
-        description: "Unable to access microphone or accept the call",
+        description: "Unable to access microphone. Please check your browser permissions.",
         variant: "destructive",
       });
+      cleanup();
+      onClose();
     }
   };
 

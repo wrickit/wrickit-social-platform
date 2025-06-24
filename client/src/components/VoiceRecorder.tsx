@@ -108,8 +108,7 @@ export default function VoiceRecorder({
 
     } catch (error) {
       console.error('Error accessing microphone:', error);
-      // Show user-friendly error message
-      alert('Unable to access microphone. Please check your browser permissions and try again.');
+      // Silently fail instead of showing alert - user only sees error when they explicitly try to record
     }
   };
 
