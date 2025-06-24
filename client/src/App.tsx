@@ -6,6 +6,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/theme-provider";
 import { useAuth } from "@/hooks/useAuth";
 import EasterEggs from "@/components/EasterEggs";
+import OnboardingTutorial from "@/components/OnboardingTutorial";
+import { useOnboarding } from "@/hooks/useOnboarding";
 import Landing from "@/pages/landing";
 import Dashboard from "@/pages/dashboard";
 import Posts from "@/pages/posts";
@@ -20,6 +22,7 @@ import NotFound from "@/pages/not-found";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
+  const { showTutorial, completeTutorial, skipTutorial } = useOnboarding();
 
   if (isLoading) {
     return (
@@ -35,28 +38,37 @@ function Router() {
   }
 
   return (
-    <Switch>
-      {isAuthenticated ? (
-        <>
-          <Route path="/" component={Dashboard} />
-          <Route path="/dashboard" component={Dashboard} />
-          <Route path="/posts" component={Posts} />
-          <Route path="/profile" component={Profile} />
-          <Route path="/profile/:userId" component={Profile} />
-          <Route path="/messages" component={Messages} />
-
-          <Route path="/relationships" component={Relationships} />
-          <Route path="/disciplinary" component={Disciplinary} />
-        </>
-      ) : (
-        <>
-          <Route path="/" component={Landing} />
-          <Route path="/login" component={Login} />
-          <Route path="/dev" component={DevPage} />
-        </>
+    <>
+      <Switch>
+        {isAuthenticated ? (
+          <>
+            <Route path="/" component={Dashboard} />
+            <Route path="/dashboard" component={Dashboard} />
+            <Route path="/posts" component={Posts} />
+            <Route path="/profile" component={Profile} />
+            <Route path="/profile/:userId" component={Profile} />
+            <Route path="/messages" component={Messages} />
+            <Route path="/relationships" component={Relationships} />
+            <Route path="/disciplinary" component={Disciplinary} />
+          </>
+        ) : (
+          <>
+            <Route path="/" component={Landing} />
+            <Route path="/login" component={Login} />
+            <Route path="/dev" component={DevPage} />
+          </>
+        )}
+        <Route component={NotFound} />
+      </Switch>
+      
+      {isAuthenticated && (
+        <OnboardingTutorial
+          isOpen={showTutorial}
+          onComplete={completeTutorial}
+          onSkip={skipTutorial}
+        />
       )}
-      <Route component={NotFound} />
-    </Switch>
+    </>
   );
 }
 

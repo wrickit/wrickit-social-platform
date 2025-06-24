@@ -11,6 +11,7 @@ import { ArrowLeft, Edit, Save, X, Camera } from "lucide-react";
 import { useState } from "react";
 import { apiRequest } from "@/lib/queryClient";
 import ProfilePictureDialog from "@/components/ProfilePictureDialog";
+import TutorialButton from "@/components/TutorialButton";
 
 import { useLocation } from "wouter";
 
@@ -228,6 +229,24 @@ export default function Profile() {
                 </div>
               </CardContent>
             </Card>
+
+            {isOwnProfile && (
+              <Card className="content-box">
+                <CardHeader>
+                  <CardTitle className="app-text">Help & Support</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <TutorialButton 
+                    variant="outline" 
+                    size="sm" 
+                    className="w-full"
+                  />
+                  <p className="text-xs text-gray-500 mt-2">
+                    Need help? Take the interactive tutorial to learn about all features.
+                  </p>
+                </CardContent>
+              </Card>
+            )}
 
             {!isOwnProfile && (
               <Card className="content-box">

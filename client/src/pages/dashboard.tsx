@@ -6,6 +6,7 @@ import PostForm from "@/components/PostForm";
 import PostFeed from "@/components/PostFeed";
 import RelationshipForm from "@/components/RelationshipForm";
 import ChatWidget from "@/components/ChatWidget";
+import WelcomeBanner from "@/components/WelcomeBanner";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -62,7 +63,8 @@ export default function Dashboard() {
               <Sidebar user={user} relationships={relationships} friendGroups={friendGroups} />
             </div>
             
-            <main className="flex-1 min-w-0 space-y-4 sm:space-y-6">
+            <main className="flex-1 min-w-0 space-y-4 sm:space-y-6 dashboard-content">
+            <WelcomeBanner user={user} />
             {/* Mutual Crush Notifications */}
             {mutualCrushNotifications.map((notification: any) => (
               <div key={notification.id} className="glass-effect rounded-xl p-6 sparkle-border slide-in-up teen-shadow">
