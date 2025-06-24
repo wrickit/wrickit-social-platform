@@ -785,7 +785,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Analytics routes for dev panel
-  app.get("/api/dev/analytics/user/:userId", requireAuth, async (req: Request, res: Response) => {
+  app.get("/api/dev/analytics/user/:userId", async (req: Request, res: Response) => {
     try {
       const userId = parseInt(req.params.userId);
       const analytics = await storage.getUserAnalytics(userId);
@@ -796,7 +796,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/dev/analytics/active-users-by-hour", requireAuth, async (req: Request, res: Response) => {
+  app.get("/api/dev/analytics/active-users-by-hour", async (req: Request, res: Response) => {
     try {
       const data = await storage.getActiveUsersByHour();
       res.json(data);
@@ -806,7 +806,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/dev/analytics/total-users", requireAuth, async (req: Request, res: Response) => {
+  app.get("/api/dev/analytics/total-users", async (req: Request, res: Response) => {
     try {
       const count = await storage.getTotalUsersCount();
       res.json({ count });
@@ -816,7 +816,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/dev/analytics/active-users-today", requireAuth, async (req: Request, res: Response) => {
+  app.get("/api/dev/analytics/active-users-today", async (req: Request, res: Response) => {
     try {
       const count = await storage.getActiveUsersToday();
       res.json({ count });
@@ -826,7 +826,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/dev/analytics/new-users-7days", requireAuth, async (req: Request, res: Response) => {
+  app.get("/api/dev/analytics/new-users-7days", async (req: Request, res: Response) => {
     try {
       const data = await storage.getNewUsersLast7Days();
       res.json(data);
@@ -836,7 +836,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/dev/analytics/most-active-users", requireAuth, async (req: Request, res: Response) => {
+  app.get("/api/dev/analytics/most-active-users", async (req: Request, res: Response) => {
     try {
       const limit = parseInt(req.query.limit as string) || 10;
       const users = await storage.getMostActiveUsers(limit);
