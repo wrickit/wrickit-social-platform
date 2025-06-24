@@ -86,7 +86,10 @@ export default function DevPage() {
         <header className="fb-gradient text-white shadow-md">
           <div className="max-w-6xl mx-auto px-4">
             <div className="flex items-center justify-between h-16">
-              <h1 className="text-lg sm:text-2xl lg:text-3xl font-bold">Wrickit Dev Panel</h1>
+              <div className="flex items-center space-x-2">
+                <img src="/favicon-32x32.png" alt="Wrickit Logo" className="w-6 h-6 sm:w-8 sm:h-8" />
+                <h1 className="text-lg sm:text-2xl lg:text-3xl font-bold">Wrickit Dev Panel</h1>
+              </div>
               <Button
                 variant="outline"
                 size="sm"

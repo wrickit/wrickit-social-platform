@@ -12,7 +12,10 @@ export default function Landing() {
       <header className="gradient-bg text-white shadow-md teen-shadow">
         <div className="max-w-6xl mx-auto px-4">
           <div className="flex items-center justify-between h-16">
-            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold rainbow-text">✨ Wrickit 🌟</h1>
+            <div className="flex items-center space-x-2">
+              <img src="/favicon-32x32.png" alt="Wrickit Logo" className="w-8 h-8 sm:w-10 sm:h-10" />
+              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold rainbow-text">Wrickit</h1>
+            </div>
             <div className="flex space-x-2 sm:space-x-4">
               <Button
                 size="sm"

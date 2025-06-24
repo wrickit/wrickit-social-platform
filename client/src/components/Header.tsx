@@ -26,9 +26,12 @@ export default function Header({ user }: HeaderProps) {
         <div className="w-full px-4 sm:px-6">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center space-x-8">
-            <h1 className="text-2xl font-bold rainbow-text wiggle cursor-pointer">
-              ✨ Wrickit 🌟
-            </h1>
+            <div className="flex items-center space-x-2 cursor-pointer">
+              <img src="/favicon-32x32.png" alt="Wrickit Logo" className="w-8 h-8" />
+              <h1 className="text-2xl font-bold rainbow-text wiggle">
+                Wrickit
+              </h1>
+            </div>
             <nav className="hidden md:flex space-x-6">
               {!isOnDashboard && (
                 <a href="/" className="hover:text-yellow-200 flex items-center space-x-1 transition-all duration-300 hover:scale-110">
