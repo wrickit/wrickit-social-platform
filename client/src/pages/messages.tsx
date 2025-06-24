@@ -822,10 +822,17 @@ export default function Messages() {
                     className="flex-1"
                     disabled={sendMessageMutation.isPending}
                   />
-                  <VoiceRecorder
-                    onRecordingComplete={handleVoiceMessage}
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setVoiceMessage({ url: "", duration: 0 })}
                     disabled={sendMessageMutation.isPending}
-                  />
+                    className="h-9 w-9 p-0"
+                    title="Record voice message"
+                  >
+                    <Mic className="w-4 h-4" />
+                  </Button>
                   <Button
                     type="submit"
                     disabled={!newMessage.trim() || sendMessageMutation.isPending}

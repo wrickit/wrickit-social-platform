@@ -341,7 +341,9 @@ export default function ChatWidget({ userId, onClose }: ChatWidgetProps) {
               <Button
                 type="button"
                 onClick={() => setIsVoiceMode(true)}
-                className="border-purple-300 text-purple-700 hover:bg-purple-50 rounded-full w-10 h-10 p-0"
+                variant="ghost"
+                className="text-purple-700 hover:bg-purple-50 rounded-full w-10 h-10 p-0"
+                title="Record voice message"
               >
                 <Mic className="w-4 h-4" />
               </Button>

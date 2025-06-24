@@ -35,6 +35,7 @@ export default function VoiceRecorder({
 
   const startRecording = async () => {
     try {
+      // Only request microphone access when user explicitly clicks to record
       const constraints = createAudioConstraints();
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
       
