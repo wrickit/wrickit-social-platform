@@ -25,14 +25,14 @@ export default function Profile() {
 
   // If userId is provided, fetch that user's profile, otherwise use current user
   const { data: profileUser, isLoading } = useQuery({
-    queryKey: userId ? ["/api/users", userId] : ["/api/user"],
+    queryKey: userId ? [`/api/users/${userId}`] : ["/api/user"],
     enabled: true,
   });
 
   const isOwnProfile = !userId || (currentUser && profileUser && (profileUser as any)?.id === currentUser.id);
 
   const { data: userRelationships = [] } = useQuery({
-    queryKey: ["/api/users", userId, "relationships"],
+    queryKey: [`/api/users/${userId}/relationships`],
     enabled: !!userId,
   }) as any;
 
@@ -46,7 +46,7 @@ export default function Profile() {
       await apiRequest("PUT", `/api/users/${userId}`, data);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/users", userId] });
+      queryClient.invalidateQueries({ queryKey: [`/api/users/${userId}`] });
       setIsEditing(false);
     },
     onError: (error: any) => {
