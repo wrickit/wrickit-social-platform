@@ -470,3 +470,14 @@
     100% { filter: hue-rotate(360deg); }
   }
 }
+
+/* Logo styles - make all logo images circular with better clarity */
+img[alt*="Wrickit Logo"], 
+img[src*="favicon"], 
+.wrickit-logo {
+  border-radius: 50% !important;
+  object-fit: cover;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+  filter: contrast(1.1) saturate(1.1);
+}
