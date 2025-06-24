@@ -1,5 +1,3 @@
-import { Check, CheckCheck } from "lucide-react";
-
 interface ReadReceiptProps {
   isRead: boolean;
   readAt?: string;
@@ -14,16 +12,20 @@ export default function ReadReceipt({ isRead, readAt, isOwnMessage }: ReadReceip
 
   return (
     <div className="inline-flex items-center ml-2">
-      {isReadAndSeen ? (
-        // Double green ticks for read/seen
-        <CheckCheck className="w-4 h-4 text-green-500 drop-shadow-sm" />
-      ) : isRead ? (
-        // Double blue ticks for delivered
-        <CheckCheck className="w-4 h-4 text-blue-400 drop-shadow-sm" />
-      ) : (
-        // Single grey tick for sent
-        <Check className="w-4 h-4 text-gray-400 drop-shadow-sm" />
-      )}
+      <div className="relative w-3 h-3">
+        {isReadAndSeen ? (
+          // Whole square filled green - message seen
+          <div className="w-3 h-3 bg-green-500 rounded-sm shadow-sm"></div>
+        ) : isRead ? (
+          // Left half filled green - message delivered/received
+          <div className="w-3 h-3 border border-green-500 rounded-sm relative overflow-hidden shadow-sm">
+            <div className="absolute left-0 top-0 w-1.5 h-full bg-green-500"></div>
+          </div>
+        ) : (
+          // Outline only - message sent
+          <div className="w-3 h-3 border border-green-500 rounded-sm shadow-sm"></div>
+        )}
+      </div>
     </div>
   );
 }
