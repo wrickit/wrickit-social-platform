@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Lock, UserPlus, BarChart3, Users, Clock, TrendingUp, Activity } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from "recharts";
@@ -24,6 +24,7 @@ export default function DevPage() {
   
   const { toast } = useToast();
   const [, setLocation] = useLocation();
+  const queryClient = useQueryClient();
 
   const handleDevAuth = (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,6 +54,13 @@ export default function DevPage() {
         setName("");
         setUserClass("");
         setUserPassword("");
+        
+        // Invalidate analytics queries to refresh the data
+        queryClient.invalidateQueries({ queryKey: ["/api/dev/analytics/total-users"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/dev/analytics/active-users-today"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/dev/analytics/new-users-7days"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/dev/analytics/most-active-users"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/dev/analytics/most-active-users"] });
       } else {
         const error = await response.json();
         toast({
