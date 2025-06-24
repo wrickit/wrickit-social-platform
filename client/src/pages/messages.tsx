@@ -785,11 +785,13 @@ export default function Messages() {
                             <p className="text-xs">
                               {formatTime(message.createdAt)}
                             </p>
-                            <ReadReceipt 
-                              isRead={message.isRead}
-                              readAt={message.readAt}
-                              isOwnMessage={isOwnMessage}
-                            />
+                            <div className="flex items-center">
+                              <ReadReceipt 
+                                isRead={message.isRead}
+                                readAt={message.readAt}
+                                isOwnMessage={isOwnMessage}
+                              />
+                            </div>
                           </div>
                         </div>
                       </div>

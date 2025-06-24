@@ -13,16 +13,16 @@ export default function ReadReceipt({ isRead, readAt, isOwnMessage }: ReadReceip
   const isReadAndSeen = isRead && readAt;
 
   return (
-    <div className="inline-flex items-center ml-1">
+    <div className="inline-flex items-center ml-2">
       {isReadAndSeen ? (
         // Double green ticks for read/seen
-        <CheckCheck className="w-3 h-3 text-green-500" />
+        <CheckCheck className="w-4 h-4 text-green-500 drop-shadow-sm" />
       ) : isRead ? (
-        // Double grey ticks for delivered
-        <CheckCheck className="w-3 h-3 text-gray-400" />
+        // Double blue ticks for delivered
+        <CheckCheck className="w-4 h-4 text-blue-400 drop-shadow-sm" />
       ) : (
         // Single grey tick for sent
-        <Check className="w-3 h-3 text-gray-400" />
+        <Check className="w-4 h-4 text-gray-400 drop-shadow-sm" />
       )}
     </div>
   );

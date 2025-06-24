@@ -161,6 +161,12 @@ The application is configured for deployment on Replit with the following setup:
 - ✓ Enhanced search backend to include firstName, lastName, and username fields
 - ✓ Fixed search API to properly filter and return user data without passwords
 
+### June 24, 2025
+- ✓ Fixed messaging interface to show recipient's name when starting new conversations instead of "Select a conversation"
+- ✓ Resolved microphone permission prompts appearing during regular text messaging
+- ✓ Enhanced message read receipt tick marks with larger size, better colors, and improved visibility
+- ✓ Updated ReadReceipt component with blue ticks for delivered and green ticks for read messages
+
 ## Changelog
 
 - June 19, 2025. Initial setup and comprehensive feature implementation
