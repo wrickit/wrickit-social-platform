@@ -38,7 +38,8 @@ import {
   type Hashtag,
   type UserSession,
   type UserActivityLog,
-  type DailyUserStats
+  type DailyUserStats,
+  type PublicUser
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, or, desc, sql, inArray, count, gt, lt, asc, ilike } from "drizzle-orm";
@@ -389,7 +390,7 @@ export class DatabaseStorage implements IStorage {
     return post;
   }
 
-  async getPosts(limit = 20, userClass?: string, currentUserId?: number): Promise<(Post & { author: User; comments: (Comment & { author: User })[]; likesCount: number; isLikedByUser?: boolean })[]> {
+  async getPosts(limit = 20, userClass?: string, currentUserId?: number): Promise<(Post & { author: PublicUser; comments: (Comment & { author: PublicUser })[]; likesCount: number; isLikedByUser?: boolean })[]> {
     let query = db
       .select()
       .from(posts)
@@ -415,7 +416,12 @@ export class DatabaseStorage implements IStorage {
     // Get posts with authors
     const postsWithAuthors = result.map(row => ({
       ...row.posts,
-      author: row.users!,
+      author: {
+        id: row.users!.id,
+        name: row.users!.name,
+        username: row.users!.username,
+        profileImageUrl: row.users!.profileImageUrl,
+      },
     }));
 
     // Get comments and likes for each post
@@ -812,7 +818,7 @@ export class DatabaseStorage implements IStorage {
     return comment;
   }
 
-  async getCommentsByPostId(postId: number): Promise<(Comment & { author: User })[]> {
+  async getCommentsByPostId(postId: number): Promise<(Comment & { author: PublicUser })[]> {
     const result = await db
       .select()
       .from(comments)
@@ -822,7 +828,12 @@ export class DatabaseStorage implements IStorage {
     
     return result.map(row => ({
       ...row.comments,
-      author: row.users!,
+      author: {
+        id: row.users!.id,
+        name: row.users!.name,
+        username: row.users!.username,
+        profileImageUrl: row.users!.profileImageUrl,
+      },
     }));
   }
 
@@ -837,7 +848,7 @@ export class DatabaseStorage implements IStorage {
     return loop;
   }
 
-  async getLoops(limit = 20, currentUserId?: number): Promise<(Loop & { author: User; isLiked?: boolean })[]> {
+  async getLoops(limit = 20, currentUserId?: number): Promise<(Loop & { author: PublicUser; isLiked?: boolean })[]> {
     const result = await db
       .select({
         id: loops.id,
@@ -964,7 +975,7 @@ export class DatabaseStorage implements IStorage {
     await db.delete(loops).where(eq(loops.id, loopId));
   }
 
-  async getPersonalizedLoops(userId: number, limit = 20): Promise<(Loop & { author: User; isLiked?: boolean })[]> {
+  async getPersonalizedLoops(userId: number, limit = 20): Promise<(Loop & { author: PublicUser; isLiked?: boolean })[]> {
     // Get user interests
     const interests = await this.getUserInterests(userId);
     const interestCategories = interests.map(i => i.category);
@@ -1298,7 +1309,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Search operations
-  async searchPosts(query: string, type?: string): Promise<(Post & { author: User; comments: (Comment & { author: User })[]; likesCount: number })[]> {
+  async searchPosts(query: string, type?: string): Promise<(Post & { author: PublicUser; comments: (Comment & { author: PublicUser })[]; likesCount: number })[]> {
     let searchCondition;
 
     if (type === 'hashtags') {
@@ -1373,7 +1384,15 @@ export class DatabaseStorage implements IStorage {
       result.push({
         ...item.post,
         author: item.author,
-        comments: postComments.map((c: any) => ({ ...c.comment, author: c.author })),
+        comments: postComments.map((c: any) => ({ 
+          ...c.comment, 
+          author: {
+            id: c.author.id,
+            name: c.author.name,
+            username: c.author.username,
+            profileImageUrl: c.author.profileImageUrl,
+          }
+        })),
         likesCount: likesCount[0]?.count || 0,
       });
     }

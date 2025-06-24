@@ -568,3 +568,11 @@ export type SearchQuery = z.infer<typeof searchSchema>;
 export type UserSession = typeof userSessions.$inferSelect;
 export type UserActivityLog = typeof userActivityLogs.$inferSelect;
 export type DailyUserStats = typeof dailyUserStats.$inferSelect;
+
+// Partial user type for public display
+export type PublicUser = {
+  id: number;
+  name: string;
+  username: string;
+  profileImageUrl: string | null;
+};
