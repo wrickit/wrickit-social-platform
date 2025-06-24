@@ -1,6 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { Link, useLocation } from "wouter";
-import { Home, Heart, Users, MessageCircle, Scale, Play } from "lucide-react";
+import { Home, Heart, Users, MessageCircle, Scale } from "lucide-react";
 
 interface SidebarProps {
   user: any;
@@ -60,14 +60,7 @@ export default function Sidebar({ user, relationships, friendGroups }: SidebarPr
             </div>
           </Link>
           
-          <Link href="/loops">
-            <div className={`flex items-center space-x-2 px-3 py-2 rounded cursor-pointer transition-colors ${
-              location === "/loops" ? "discord-purple-bg text-white" : "hover:fb-gray-bg text-fb-text"
-            }`}>
-              <Play className="w-4 h-4 text-purple-500" />
-              <span>Loops</span>
-            </div>
-          </Link>
+
 
           <Link href="/disciplinary">
             <div className={`flex items-center space-x-2 px-3 py-2 rounded cursor-pointer transition-colors ${

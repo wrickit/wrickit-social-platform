@@ -110,17 +110,7 @@ export default function HamburgerMenu({ user, relationships = [], friendGroups =
                 </div>
               </Button>
               
-              <Button
-                variant="ghost"
-                className="w-full justify-start p-3 h-auto"
-                onClick={() => navigateTo("/loops")}
-              >
-                <Play className="w-4 h-4 mr-3" />
-                <div className="text-left">
-                  <div className="font-medium">Loops</div>
-                  <div className="text-xs text-gray-500">Short videos</div>
-                </div>
-              </Button>
+
               
               <Button
                 variant="ghost"
