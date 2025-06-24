@@ -15,7 +15,7 @@ export function useNotifications() {
   const queryClient = useQueryClient();
   const previousNotificationCount = useRef<number>(0);
   const [hasNewNotifications, setHasNewNotifications] = useState(false);
-  const originalTitle = useRef<string>("Wrickit");
+  const originalTitle = useRef<string>(document.title || "Wrickit - Student Social Platform");
   const titleInterval = useRef<NodeJS.Timeout | null>(null);
 
   const { data: notifications = [], isLoading } = useQuery<Notification[]>({
@@ -82,7 +82,7 @@ export function useNotifications() {
         titleInterval.current = setInterval(() => {
           document.title = showCount 
             ? `(${count}) Wrickit - New notifications!`
-            : "Wrickit";
+            : originalTitle.current;
           showCount = !showCount;
         }, 1500);
       }
