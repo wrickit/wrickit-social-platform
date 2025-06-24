@@ -179,6 +179,7 @@ export default function Messages() {
   const [, setLocation] = useLocation();
   
   const [selectedConversation, setSelectedConversation] = useState<number | null>(null);
+  const [newConversationUser, setNewConversationUser] = useState<User | null>(null);
   const [newMessage, setNewMessage] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [showNewChat, setShowNewChat] = useState(false);
@@ -371,6 +372,7 @@ export default function Messages() {
 
   const startNewConversation = (targetUser: User) => {
     setSelectedConversation(targetUser.id);
+    setNewConversationUser(targetUser);
     setShowNewChat(false);
     setSearchQuery("");
     // Refresh conversations to update read status
@@ -622,7 +624,10 @@ export default function Messages() {
                   return (
                     <div
                       key={`${conversation.fromUserId}-${conversation.toUserId}`}
-                      onClick={() => setSelectedConversation(partner.id)}
+                      onClick={() => {
+                        setSelectedConversation(partner.id);
+                        setNewConversationUser(null);
+                      }}
                       className={`flex items-center space-x-3 p-3 rounded-lg cursor-pointer transition-colors ${
                         isSelected 
                           ? 'bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700' 
@@ -681,16 +686,21 @@ export default function Messages() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => setSelectedConversation(null)}
+                    onClick={() => {
+                      setSelectedConversation(null);
+                      setNewConversationUser(null);
+                    }}
                   >
                     <ArrowLeft className="w-4 h-4" />
                   </Button>
                 )}
                 <div className="relative">
                   <Avatar className="w-10 h-10">
-                    <AvatarImage src={selectedUser ? getConversationPartner(selectedUser).profileImageUrl : undefined} />
+                    <AvatarImage src={selectedUser ? getConversationPartner(selectedUser).profileImageUrl : 
+                                     newConversationUser ? newConversationUser.profileImageUrl : undefined} />
                     <AvatarFallback>
-                      {selectedUser ? getConversationPartner(selectedUser).name.charAt(0) : "?"}
+                      {selectedUser ? getConversationPartner(selectedUser).name.charAt(0) : 
+                       newConversationUser ? newConversationUser.name.charAt(0) : "?"}
                     </AvatarFallback>
                   </Avatar>
                   {onlineStatus?.isOnline && (
@@ -699,10 +709,13 @@ export default function Messages() {
                 </div>
                 <div>
                   <p className="font-medium app-text">
-                    {selectedUser ? getConversationPartner(selectedUser).name : "Select a conversation"}
+                    {selectedUser ? getConversationPartner(selectedUser).name : 
+                     newConversationUser ? newConversationUser.name : 
+                     "Select a conversation"}
                   </p>
                   <p className="text-sm app-text-light">
-                    {onlineStatus?.isOnline ? "Active now" : selectedUser ? "Offline" : ""}
+                    {onlineStatus?.isOnline ? "Active now" : 
+                     (selectedUser || newConversationUser) ? "Offline" : ""}
                   </p>
                 </div>
               </div>
@@ -712,8 +725,8 @@ export default function Messages() {
                   variant="ghost" 
                   size="sm"
                   onClick={() => {
-                    if (selectedUser) {
-                      const partner = getConversationPartner(selectedUser);
+                    const partner = selectedUser ? getConversationPartner(selectedUser) : newConversationUser;
+                    if (partner) {
                       startVoiceCall({
                         id: partner.id,
                         name: partner.name,
