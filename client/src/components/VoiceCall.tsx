@@ -145,6 +145,15 @@ export default function VoiceCall({
             });
             handleCallEnded();
             break;
+          case 'call-error':
+            if (data.targetUserId !== targetUser.id) return;
+            toast({
+              title: "Call Failed",
+              description: data.error || "Unable to connect to user",
+              variant: "destructive",
+            });
+            handleCallEnded();
+            break;
         }
       } catch (error) {
         console.error('Error parsing WebSocket message:', error);
@@ -224,6 +233,11 @@ export default function VoiceCall({
         if (state === 'connected') {
           setIsConnected(true);
           setCallStatus('connected');
+          toast({
+            title: "Call Connected",
+            description: "Voice call is now active",
+            variant: "default",
+          });
         } else if (state === 'disconnected' || state === 'failed' || state === 'closed') {
           if (isConnected) {
             toast({
@@ -258,22 +272,18 @@ export default function VoiceCall({
       await peerConnectionRef.current.setLocalDescription(offer);
       
       // Wait for WebSocket to be ready before sending
-      if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-        wsRef.current.send(JSON.stringify({
-          type: 'call-offer',
-          offer: offer,
-          targetUserId: targetUser.id
-        }));
-      } else {
-        // Wait for WebSocket to open
-        wsRef.current?.addEventListener('open', () => {
-          wsRef.current?.send(JSON.stringify({
+      const sendOffer = () => {
+        if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+          wsRef.current.send(JSON.stringify({
             type: 'call-offer',
             offer: offer,
             targetUserId: targetUser.id
           }));
-        });
-      }
+        } else {
+          setTimeout(sendOffer, 100); // Retry after 100ms
+        }
+      };
+      sendOffer();
 
       setCallStatus('calling');
       
@@ -403,22 +413,29 @@ export default function VoiceCall({
 
   const acceptCall = async () => {
     try {
+      setCallStatus('connecting');
+      
       if (!wsRef.current) {
         initializeWebSocket();
+        // Wait for WebSocket to connect
+        await new Promise((resolve) => {
+          const checkConnection = () => {
+            if (wsRef.current?.readyState === WebSocket.OPEN) {
+              resolve(void 0);
+            } else {
+              setTimeout(checkConnection, 100);
+            }
+          };
+          checkConnection();
+        });
       }
       
-      // Get user media first before accepting
-      const constraints = createAudioConstraints();
-      const stream = await navigator.mediaDevices.getUserMedia(constraints);
-      
-      localStreamRef.current = stream;
       onAccept?.();
-      setCallStatus('connecting');
     } catch (error) {
       console.error('Error accepting call:', error);
       toast({
         title: "Call Failed",
-        description: "Unable to access microphone. Please check your browser permissions.",
+        description: "Unable to establish connection. Please try again.",
         variant: "destructive",
       });
       cleanup();
