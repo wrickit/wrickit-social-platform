@@ -58,6 +58,13 @@ const requireAuth = async (req: any, res: Response, next: any) => {
 };
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Add headers for proper social media crawling
+  app.use((_req, res, next) => {
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    next();
+  });
   app.use(sessionConfig);
 
   // Registration disabled - users must be created manually after ID verification
