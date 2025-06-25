@@ -84,12 +84,12 @@ export default function NotificationDropdown() {
 
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
-      <PopoverTrigger asChild>
-        <TooltipWrapper 
-          content={unreadCount > 0 ? `You have ${unreadCount} new notifications` : "View your notifications"}
-          mobileContent={unreadCount > 0 ? `${unreadCount} new` : "Notifications"}
-          side="bottom"
-        >
+      <TooltipWrapper 
+        content={unreadCount > 0 ? `You have ${unreadCount} new notifications` : "View your notifications"}
+        mobileContent={unreadCount > 0 ? `${unreadCount} new` : "Notifications"}
+        side="bottom"
+      >
+        <PopoverTrigger asChild>
           <Button 
             variant="ghost" 
             size="sm" 
@@ -108,8 +108,8 @@ export default function NotificationDropdown() {
               </Badge>
             )}
           </Button>
-        </TooltipWrapper>
-      </PopoverTrigger>
+        </PopoverTrigger>
+      </TooltipWrapper>
       <PopoverContent className="w-80 p-0 glass-effect teen-shadow sparkle-border" align="end">
         <div className="flex items-center justify-between p-4 border-b border-purple-200 gradient-bg text-white">
           <h3 className="font-semibold">✨ What's Happening</h3>
