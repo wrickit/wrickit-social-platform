@@ -207,6 +207,9 @@ The application is configured for deployment on Replit with the following setup:
 - ✓ Created complete PostgreSQL database setup with all 26 required tables
 - ✓ Successfully established database connection and verified table structure
 - ✓ Removed Squad navigation link from header for cleaner interface
+- ✓ Fixed message sending error 500 by separating regular and group message mutations
+- ✓ Resolved message display issue where new messages didn't appear in group chats
+- ✓ Updated message rendering to correctly show group messages vs direct messages
 
 ## Changelog
 

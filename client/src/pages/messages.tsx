@@ -982,7 +982,7 @@ export default function Messages() {
           {/* Messages */}
           <div className="flex-1 overflow-hidden flex flex-col">
             <div className="flex-1 overflow-y-auto p-4" style={{ scrollBehavior: 'smooth' }}>
-              {messagesLoading ? (
+              {(selectedGroupChat ? groupMessagesLoading : messagesLoading) ? (
                 <div className="space-y-4">
                   {[...Array(5)].map((_, i) => (
                     <div key={i} className={`flex ${i % 2 === 0 ? 'justify-end' : 'justify-start'}`}>
@@ -992,7 +992,7 @@ export default function Messages() {
                 </div>
               ) : (
                 <div className="space-y-4 min-h-full flex flex-col justify-end">
-                  {messages.map((message: any) => {
+                  {(selectedGroupChat ? groupMessages : messages).map((message: any) => {
                     const isOwnMessage = message.fromUserId === (user as any)?.id;
                     
                     return (
