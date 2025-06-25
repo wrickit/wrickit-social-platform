@@ -440,14 +440,29 @@ export default function Messages() {
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
-    if ((!newMessage.trim() && !voiceMessage) || !selectedConversation) return;
+    if ((!newMessage.trim() && !voiceMessage)) return;
+    if (!selectedConversation && !newConversationUser && !selectedGroupChat) return;
     
-    sendMessageMutation.mutate({
-      toUserId: selectedConversation,
-      content: newMessage.trim() || "",
-      voiceMessageUrl: voiceMessage?.url,
-      voiceMessageDuration: voiceMessage?.duration,
-    });
+    if (selectedGroupChat) {
+      // Send group message
+      sendMessageMutation.mutate({
+        groupId: selectedGroupChat,
+        content: newMessage.trim() || "",
+        voiceMessageUrl: voiceMessage?.url,
+        voiceMessageDuration: voiceMessage?.duration,
+      });
+    } else {
+      // Send regular message
+      const targetUserId = selectedConversation || newConversationUser?.id;
+      if (targetUserId) {
+        sendMessageMutation.mutate({
+          toUserId: targetUserId,
+          content: newMessage.trim() || "",
+          voiceMessageUrl: voiceMessage?.url,
+          voiceMessageDuration: voiceMessage?.duration,
+        });
+      }
+    }
   };
 
   const handleVoiceMessage = (audioUrl: string, duration: number) => {
@@ -455,14 +470,29 @@ export default function Messages() {
   };
 
   const handleSendVoiceMessage = () => {
-    if (!voiceMessage || !selectedConversation) return;
+    if (!voiceMessage) return;
+    if (!selectedConversation && !newConversationUser && !selectedGroupChat) return;
     
-    sendMessageMutation.mutate({
-      toUserId: selectedConversation,
-      content: "",
-      voiceMessageUrl: voiceMessage.url,
-      voiceMessageDuration: voiceMessage.duration,
-    });
+    if (selectedGroupChat) {
+      // Send group voice message
+      sendMessageMutation.mutate({
+        groupId: selectedGroupChat,
+        content: "",
+        voiceMessageUrl: voiceMessage.url,
+        voiceMessageDuration: voiceMessage.duration,
+      });
+    } else {
+      // Send regular voice message
+      const targetUserId = selectedConversation || newConversationUser?.id;
+      if (targetUserId) {
+        sendMessageMutation.mutate({
+          toUserId: targetUserId,
+          content: "",
+          voiceMessageUrl: voiceMessage.url,
+          voiceMessageDuration: voiceMessage.duration,
+        });
+      }
+    }
   };
 
   const startNewConversation = (targetUser: User) => {
@@ -621,8 +651,8 @@ export default function Messages() {
   });
 
   // Mobile: Show conversation list or chat view
-  const showConversationList = isMobile ? !selectedConversation : true;
-  const showChatView = isMobile ? !!selectedConversation : !!selectedConversation;
+  const showConversationList = isMobile ? (!selectedConversation && !selectedGroupChat) : true;
+  const showChatView = selectedConversation || newConversationUser || selectedGroupChat;
 
   return (
     <div className="h-screen flex bg-gray-50 dark:bg-gray-900">
@@ -704,7 +734,7 @@ export default function Messages() {
                   </div>
                 ))}
               </div>
-            ) : conversations.length === 0 ? (
+            ) : conversations.length === 0 && friendGroups.length === 0 ? (
               <div className="p-4 text-center">
                 <MessageCircle className="w-12 h-12 text-gray-400 mx-auto mb-3" />
                 <p className="app-text-light">No conversations yet</p>
@@ -712,59 +742,106 @@ export default function Messages() {
               </div>
             ) : (
               <div className="p-2">
-                {conversations.map((conversation: Conversation) => {
-                  const partner = getConversationPartner(conversation);
-                  const isSelected = partner.id === selectedConversation;
-                  
-                  return (
-                    <div
-                      key={`${conversation.fromUserId}-${conversation.toUserId}`}
-                      onClick={() => {
-                        setSelectedConversation(partner.id);
-                        setNewConversationUser(null);
-                        setSelectedGroupChat(null);
-                      }}
-                      className={`flex items-center space-x-3 p-3 rounded-lg cursor-pointer transition-colors ${
-                        isSelected 
-                          ? 'bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700' 
-                          : 'hover:bg-gray-50 dark:hover:bg-gray-700'
-                      }`}
-                    >
-                      <div className="relative">
-                        <Avatar className="w-12 h-12">
-                          <AvatarImage src={partner.profileImageUrl} />
-                          <AvatarFallback>{partner.name.charAt(0)}</AvatarFallback>
-                        </Avatar>
-                        {allOnlineStatuses[partner.id] && (
-                          <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white dark:border-gray-800 rounded-full"></div>
-                        )}
-                      </div>
+                {/* Friend Groups */}
+                {friendGroups.length > 0 && (
+                  <div className="mb-4">
+                    <h3 className="text-sm font-medium app-text-light px-3 mb-2">Friend Groups</h3>
+                    {friendGroups.map((group: FriendGroup) => {
+                      const isSelected = group.id === selectedGroupChat;
                       
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between">
-                          <p className="font-medium app-text truncate">{partner.name}</p>
-                          <span className="text-xs app-text-light">{formatTime(conversation.createdAt)}</span>
+                      return (
+                        <div
+                          key={`group-${group.id}`}
+                          onClick={() => {
+                            setSelectedGroupChat(group.id);
+                            setSelectedConversation(null);
+                            setNewConversationUser(null);
+                          }}
+                          className={`flex items-center space-x-3 p-3 rounded-lg cursor-pointer transition-colors ${
+                            isSelected 
+                              ? 'bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700' 
+                              : 'hover:bg-gray-50 dark:hover:bg-gray-700'
+                          }`}
+                        >
+                          <div className="relative">
+                            <div className="w-12 h-12 rounded-full bg-purple-500 flex items-center justify-center">
+                              <Users className="w-6 h-6 text-white" />
+                            </div>
+                          </div>
+                          
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between">
+                              <p className="font-medium app-text truncate">{group.name}</p>
+                            </div>
+                            <p className="text-sm app-text-light truncate">
+                              {group.members?.length || 0} members
+                            </p>
+                          </div>
                         </div>
-                        <div className="flex items-center justify-between">
-                          <p className="text-sm app-text-light truncate">
-                            {conversation.fromUserId === (user as any)?.id ? "You: " : ""}
-                            {conversation.voiceMessageUrl ? (
-                              <span className="flex items-center">
-                                <Mic className="w-3 h-3 mr-1" />
-                                Voice message
-                              </span>
-                            ) : (
-                              conversation.content
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Direct Messages */}
+                {conversations.length > 0 && (
+                  <div>
+                    <h3 className="text-sm font-medium app-text-light px-3 mb-2">Direct Messages</h3>
+                    {conversations.map((conversation: Conversation) => {
+                      const partner = getConversationPartner(conversation);
+                      const isSelected = partner.id === selectedConversation;
+                      
+                      return (
+                        <div
+                          key={`${conversation.fromUserId}-${conversation.toUserId}`}
+                          onClick={() => {
+                            setSelectedConversation(partner.id);
+                            setNewConversationUser(null);
+                            setSelectedGroupChat(null);
+                          }}
+                          className={`flex items-center space-x-3 p-3 rounded-lg cursor-pointer transition-colors ${
+                            isSelected 
+                              ? 'bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700' 
+                              : 'hover:bg-gray-50 dark:hover:bg-gray-700'
+                          }`}
+                        >
+                          <div className="relative">
+                            <Avatar className="w-12 h-12">
+                              <AvatarImage src={partner.profileImageUrl} />
+                              <AvatarFallback>{partner.name.charAt(0)}</AvatarFallback>
+                            </Avatar>
+                            {allOnlineStatuses[partner.id] && (
+                              <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white dark:border-gray-800 rounded-full"></div>
                             )}
-                          </p>
-                          {!conversation.isRead && conversation.toUserId === (user as any)?.id && (
-                            <Badge className="bg-blue-500 text-white text-xs">new</Badge>
-                          )}
+                          </div>
+                          
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between">
+                              <p className="font-medium app-text truncate">{partner.name}</p>
+                              <span className="text-xs app-text-light">{formatTime(conversation.createdAt)}</span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <p className="text-sm app-text-light truncate">
+                                {conversation.fromUserId === (user as any)?.id ? "You: " : ""}
+                                {conversation.voiceMessageUrl ? (
+                                  <span className="flex items-center">
+                                    <Mic className="w-3 h-3 mr-1" />
+                                    Voice message
+                                  </span>
+                                ) : (
+                                  conversation.content
+                                )}
+                              </p>
+                              {!conversation.isRead && conversation.toUserId === (user as any)?.id && (
+                                <Badge className="bg-blue-500 text-white text-xs">new</Badge>
+                              )}
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    </div>
-                  );
-                })}
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             )}
           </ScrollArea>

@@ -91,6 +91,10 @@ export interface IStorage {
   getFriendGroupsByUserId(userId: number): Promise<(FriendGroup & { members: (typeof friendGroupMembers.$inferSelect & { user: User })[] })[]>;
   detectFriendGroups(userId: number): Promise<void>;
   
+  // Group message operations
+  createGroupMessage(fromUserId: number, groupId: number, content: string, voiceMessageUrl?: string, voiceMessageDuration?: number): Promise<GroupMessage>;
+  getGroupMessagesByGroupId(groupId: number): Promise<(GroupMessage & { fromUser: User })[]>;
+  
   // Notification operations
   createNotification(userId: number, type: string, message: string, relatedUserId?: number): Promise<Notification>;
   getNotificationsByUserId(userId: number): Promise<Notification[]>;
@@ -636,7 +640,7 @@ export class DatabaseStorage implements IStorage {
     return message;
   }
 
-  async getGroupMessages(groupId: number): Promise<(GroupMessage & { fromUser: User })[]> {
+  async getGroupMessagesByGroupId(groupId: number): Promise<(GroupMessage & { fromUser: User })[]> {
     const messages = await db
       .select()
       .from(groupMessages)

@@ -549,6 +549,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Group message routes
+  app.post("/api/group-messages", requireAuth, async (req: any, res: Response) => {
+    try {
+      const { groupId, content, voiceMessageUrl, voiceMessageDuration } = req.body;
+      
+      if (!groupId || (!content && !voiceMessageUrl)) {
+        return res.status(400).json({ message: "Group ID and content/voice message are required" });
+      }
+      
+      const groupMessage = await storage.createGroupMessage(
+        req.session.userId,
+        groupId,
+        content || "",
+        voiceMessageUrl,
+        voiceMessageDuration
+      );
+      
+      res.json(groupMessage);
+    } catch (error) {
+      console.error("Create group message error:", error);
+      res.status(500).json({ message: "Failed to send group message" });
+    }
+  });
+
+  app.get("/api/group-messages/:groupId", requireAuth, async (req: any, res: Response) => {
+    try {
+      const groupId = parseInt(req.params.groupId);
+      if (isNaN(groupId)) {
+        return res.status(400).json({ message: "Invalid group ID" });
+      }
+      
+      const groupMessages = await storage.getGroupMessagesByGroupId(groupId);
+      res.json(groupMessages);
+    } catch (error) {
+      console.error("Get group messages error:", error);
+      res.status(500).json({ message: "Failed to get group messages" });
+    }
+  });
+
   // Notification routes
   app.get("/api/notifications", requireAuth, async (req: any, res: Response) => {
     try {
