@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "./useAuth";
+import { apiRequest } from "@/lib/queryClient";
 
 interface OnboardingState {
   hasCompletedTutorial: boolean;
@@ -16,67 +17,83 @@ export function useOnboarding() {
     tutorialStep: 0
   });
 
-  // Load onboarding state from localStorage
+  // Load onboarding state from database via user object
   useEffect(() => {
     if (!user?.id) return;
 
-    const storageKey = `wrickit-onboarding-${user.id}`;
-    const stored = localStorage.getItem(storageKey);
+    // Check if user has completed tutorial from server data
+    const hasCompleted = user.hasCompletedTutorial || false;
     
-    if (stored) {
-      try {
-        const state = JSON.parse(stored);
-        setOnboardingState(state);
-      } catch (error) {
-        console.warn("Failed to parse onboarding state:", error);
-      }
-    } else {
-      // First time user - show tutorial
+    setOnboardingState({
+      hasCompletedTutorial: hasCompleted,
+      hasSeenWelcome: hasCompleted,
+      tutorialStep: 0
+    });
+
+    // Show tutorial for first time users
+    if (!hasCompleted) {
       setShowTutorial(true);
     }
-  }, [user?.id]);
+  }, [user?.id, user?.hasCompletedTutorial]);
 
-  // Save onboarding state to localStorage
-  const saveOnboardingState = (newState: Partial<OnboardingState>) => {
+  // Save onboarding state to database
+  const saveOnboardingState = async (newState: Partial<OnboardingState>) => {
     if (!user?.id) return;
 
-    const storageKey = `wrickit-onboarding-${user.id}`;
     const updatedState = { ...onboardingState, ...newState };
-    
     setOnboardingState(updatedState);
-    localStorage.setItem(storageKey, JSON.stringify(updatedState));
+
+    // If tutorial is completed, save to database
+    if (newState.hasCompletedTutorial) {
+      try {
+        await apiRequest("/api/users/complete-tutorial", {
+          method: "POST",
+        });
+      } catch (error) {
+        console.error("Failed to save tutorial completion:", error);
+      }
+    }
   };
 
   const startTutorial = () => {
     setShowTutorial(true);
   };
 
-  const completeTutorial = () => {
+  const completeTutorial = async () => {
     setShowTutorial(false);
-    saveOnboardingState({ 
+    await saveOnboardingState({ 
       hasCompletedTutorial: true, 
       hasSeenWelcome: true 
     });
   };
 
-  const skipTutorial = () => {
+  const skipTutorial = async () => {
     setShowTutorial(false);
-    saveOnboardingState({ 
+    await saveOnboardingState({ 
       hasCompletedTutorial: true, 
       hasSeenWelcome: true 
     });
   };
 
-  const resetOnboarding = () => {
+  const resetOnboarding = async () => {
     if (!user?.id) return;
     
-    const storageKey = `wrickit-onboarding-${user.id}`;
-    localStorage.removeItem(storageKey);
-    setOnboardingState({
-      hasCompletedTutorial: false,
-      hasSeenWelcome: false,
-      tutorialStep: 0
-    });
+    // Reset tutorial status in database
+    try {
+      await apiRequest(`/api/users/${user.id}`, {
+        method: "PUT",
+        body: JSON.stringify({ hasCompletedTutorial: false }),
+        headers: { "Content-Type": "application/json" }
+      });
+      
+      setOnboardingState({
+        hasCompletedTutorial: false,
+        hasSeenWelcome: false,
+        tutorialStep: 0
+      });
+    } catch (error) {
+      console.error("Failed to reset tutorial:", error);
+    }
   };
 
   return {

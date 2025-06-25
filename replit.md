@@ -223,6 +223,11 @@ The application is configured for deployment on Replit with the following setup:
 - ✓ Implemented comprehensive notification system for all social events
 - ✓ Added notifications for new messages, posts, mutual crushes, relationships, and group activities
 - ✓ Enhanced notification icons and messaging for different event types
+- ✓ Implemented database-backed tutorial tracking system to prevent tutorial replay across devices
+- ✓ Added hasCompletedTutorial field to user schema for persistent tutorial state
+- ✓ Updated onboarding hook to use server-side tutorial completion status
+- ✓ Added API endpoint for marking tutorial as complete in database
+- ✓ Replaced localStorage-based tutorial tracking with cross-device database storage
 
 ## Changelog
 

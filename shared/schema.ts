@@ -16,6 +16,7 @@ export const users = pgTable("users", {
   bio: text("bio"),
   securityQuestion: text("security_question"),
   securityAnswer: text("security_answer"),
+  hasCompletedTutorial: boolean("has_completed_tutorial").default(false),
   lastActiveAt: timestamp("last_active_at").defaultNow(),
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -522,6 +523,7 @@ export const updateUserSchema = z.object({
   profileImageUrl: z.string().optional(),
   securityQuestion: z.string().optional(),
   securityAnswer: z.string().optional(),
+  hasCompletedTutorial: z.boolean().optional(),
 });
 
 export const securityQuestionSchema = z.object({

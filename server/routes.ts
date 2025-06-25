@@ -318,6 +318,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Complete tutorial endpoint
+  app.post("/api/users/complete-tutorial", requireAuth, async (req: any, res: Response) => {
+    try {
+      await storage.updateUser(req.session.userId, { hasCompletedTutorial: true });
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error("Complete tutorial error:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   // Check if user is online
   app.get("/api/users/:id/online", requireAuth, async (req: Request, res: Response) => {
     try {
