@@ -210,6 +210,8 @@ The application is configured for deployment on Replit with the following setup:
 - ✓ Fixed message sending error 500 by separating regular and group message mutations
 - ✓ Resolved message display issue where new messages didn't appear in group chats
 - ✓ Updated message rendering to correctly show group messages vs direct messages
+- ✓ Fixed status display to show online status for DMs and member count only for group chats
+- ✓ Added new conversation users to sidebar so they appear immediately when starting new chats
 
 ## Changelog
 

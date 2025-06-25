@@ -841,12 +841,51 @@ export default function Messages() {
                 )}
 
                 {/* Direct Messages */}
-                {conversations.length > 0 && (
+                {(conversations.length > 0 || newConversationUser) && (
                   <div>
                     <h3 className="text-sm font-medium app-text-light px-3 mb-2">Direct Messages</h3>
+                    
+                    {/* New conversation user */}
+                    {newConversationUser && (
+                      <div
+                        key={`new-${newConversationUser.id}`}
+                        onClick={() => {
+                          setSelectedConversation(newConversationUser.id);
+                          setSelectedGroupChat(null);
+                        }}
+                        className={`flex items-center space-x-3 p-3 rounded-lg cursor-pointer transition-colors ${
+                          selectedConversation === newConversationUser.id && !selectedGroupChat
+                            ? 'bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700' 
+                            : 'hover:bg-gray-50 dark:hover:bg-gray-700'
+                        }`}
+                      >
+                        <div className="relative">
+                          <Avatar className="w-12 h-12">
+                            <AvatarImage src={newConversationUser.profileImageUrl} />
+                            <AvatarFallback>{newConversationUser.name.charAt(0)}</AvatarFallback>
+                          </Avatar>
+                          {allOnlineStatuses[newConversationUser.id] && (
+                            <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white dark:border-gray-800 rounded-full"></div>
+                          )}
+                        </div>
+                        
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between">
+                            <p className="font-medium app-text truncate">{newConversationUser.name}</p>
+                            <span className="text-xs app-text-light">now</span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <p className="text-sm app-text-light truncate">Start a conversation...</p>
+                            <Badge className="bg-green-500 text-white text-xs">new</Badge>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Existing conversations */}
                     {conversations.map((conversation: Conversation) => {
                       const partner = getConversationPartner(conversation);
-                      const isSelected = partner.id === selectedConversation;
+                      const isSelected = partner.id === selectedConversation && !newConversationUser;
                       
                       return (
                         <div
