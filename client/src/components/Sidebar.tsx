@@ -33,15 +33,15 @@ export default function Sidebar({ user, relationships, friendGroups }: SidebarPr
             </div>
           )}
           <div>
-            <h3 className="font-bold text-fb-text">{user.name}</h3>
-            <p className="text-sm text-fb-text-light">Class {user.class}</p>
+            <h3 className="font-ubuntu-heading font-bold text-fb-text">{user.name}</h3>
+            <p className="text-sm font-ubuntu-body text-fb-text-light">Class {user.class}</p>
           </div>
         </div>
       </Card>
 
       {/* Navigation Menu */}
       <Card className="content-box rounded mb-4">
-        <nav className="p-2">
+        <nav className="p-2 font-ubuntu-body">
           <Link href="/">
             <div className={`flex items-center space-x-2 px-3 py-2 rounded cursor-pointer transition-colors ${
               location === "/" ? "discord-purple-bg text-white" : "hover:fb-gray-bg text-fb-text"
@@ -89,7 +89,7 @@ export default function Sidebar({ user, relationships, friendGroups }: SidebarPr
 
       {/* Quick Stats */}
       <Card className="content-box rounded p-4">
-        <h4 className="font-bold text-fb-text mb-2">Quick Stats</h4>
+        <h4 className="font-ubuntu-heading font-bold text-fb-text mb-2">Quick Stats</h4>
         <div className="space-y-2 text-sm text-fb-text-light">
           <div className="flex justify-between">
             <span>Best Friends:</span>

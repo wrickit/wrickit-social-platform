@@ -5,6 +5,11 @@ export default {
   content: ["./client/index.html", "./client/src/**/*.{js,jsx,ts,tsx}"],
   theme: {
     extend: {
+      fontFamily: {
+        'ubuntu': ['Ubuntu', 'system-ui', '-apple-system', 'sans-serif'],
+        'ubuntu-heading': ['Ubuntu', 'system-ui', '-apple-system', 'sans-serif'],
+        'ubuntu-body': ['Ubuntu', 'system-ui', '-apple-system', 'sans-serif'],
+      },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",

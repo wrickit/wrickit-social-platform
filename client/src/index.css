@@ -2,6 +2,21 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Custom font definitions with Ubuntu blending */
+.font-ubuntu-primary {
+  font-family: 'Ubuntu', system-ui, -apple-system, sans-serif;
+}
+
+.font-ubuntu-heading {
+  font-family: 'Ubuntu', system-ui, -apple-system, sans-serif;
+  font-weight: 500;
+}
+
+.font-ubuntu-body {
+  font-family: 'Ubuntu', system-ui, -apple-system, sans-serif;
+  font-weight: 400;
+}
+
 :root {
   --background: hsl(0, 0%, 100%);
   --foreground: hsl(20, 14.3%, 4.1%);

@@ -71,7 +71,7 @@ export default function Dashboard() {
                 <div className="flex items-center space-x-4">
                   <div className="text-4xl pulse-glow">💕</div>
                   <div className="flex-1">
-                    <h3 className="font-bold text-lg rainbow-text">OMG! You have a mutual crush! 🥰</h3>
+                    <h3 className="font-ubuntu-heading font-bold text-lg rainbow-text">OMG! You have a mutual crush! 🥰</h3>
                     <p className="text-sm text-purple-700 mt-1">{notification.message}</p>
                     <button
                       onClick={() => notification.relatedUserId && openChat(notification.relatedUserId)}
@@ -90,7 +90,7 @@ export default function Dashboard() {
             {/* Posts Section with Navigation */}
             <div className="space-y-4">
               <div className="flex items-center justify-between glass-effect rounded-lg p-4 sparkle-border">
-                <h2 className="text-xl font-bold rainbow-text">📝 What's the Tea? ☕</h2>
+                <h2 className="text-xl font-ubuntu-heading font-bold rainbow-text">📝 What's the Tea? ☕</h2>
                 <Link href="/posts">
                   <Button variant="outline" size="sm" className="flex items-center space-x-2 gradient-bg text-white border-none hover:scale-105 transition-transform duration-300 bouncy">
                     <FileText className="w-4 h-4" />

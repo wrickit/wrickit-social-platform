@@ -28,11 +28,11 @@ export default function Header({ user }: HeaderProps) {
           <div className="flex items-center space-x-8">
             <div className="flex items-center space-x-2 cursor-pointer">
               <img src="/favicon-32x32.png" alt="Wrickit Logo" className="w-8 h-8 rounded-full" />
-              <h1 className="text-2xl font-bold rainbow-text wiggle">
+              <h1 className="text-2xl font-ubuntu-heading font-bold rainbow-text wiggle">
                 Wrickit
               </h1>
             </div>
-            <nav className="hidden md:flex space-x-6">
+            <nav className="hidden md:flex space-x-6 font-ubuntu-body">
               {!isOnDashboard && (
                 <a href="/" className="hover:text-yellow-200 flex items-center space-x-1 transition-all duration-300 hover:scale-110">
                   <Home className="w-4 h-4" />
