@@ -242,7 +242,15 @@ export default function Messages() {
 
     try {
       const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-      const wsUrl = `${protocol}//${window.location.host}`;
+      const host = window.location.host || `${window.location.hostname}:${window.location.port || (protocol === "wss:" ? "443" : "80")}`;
+      const wsUrl = `${protocol}//${host}`;
+      
+      // Validate URL before creating WebSocket
+      if (!host || host === "undefined" || host.includes("undefined")) {
+        console.warn("Invalid WebSocket host detected, skipping connection");
+        return;
+      }
+      
       const socket = new WebSocket(wsUrl);
 
       socket.onopen = () => {
