@@ -312,20 +312,41 @@ export class DatabaseStorage implements IStorage {
       relationship = newRelationship;
     }
     
-    // Check for mutual crush
+    // Check for mutual crush and create notifications
     if (type === 'crush') {
       const isMutual = await this.checkMutualCrush(fromUserId, toUserId);
       if (isMutual) {
-        await this.createNotification(
-          fromUserId,
-          'mutual_crush',
-          `You and your classmate have a mutual crush!`,
-          toUserId
-        );
+        const fromUser = await this.getUser(fromUserId);
+        const toUser = await this.getUser(toUserId);
+        
+        if (fromUser && toUser) {
+          await this.createNotification(
+            fromUserId,
+            'mutual_crush',
+            `You and ${toUser.name} have a mutual crush! 💕`,
+            toUserId
+          );
+          await this.createNotification(
+            toUserId,
+            'mutual_crush',
+            `You and ${fromUser.name} have a mutual crush! 💕`,
+            fromUserId
+          );
+        }
+      }
+    } else {
+      // Create notification for regular relationship creation
+      const fromUser = await this.getUser(fromUserId);
+      if (fromUser) {
+        const relationshipText = type === "friend" ? "added you as a friend" :
+                               type === "best_friend" ? "added you as a best friend" :
+                               type === "acquaintance" ? "added you as an acquaintance" :
+                               "connected with you";
+        
         await this.createNotification(
           toUserId,
-          'mutual_crush',
-          `You and your classmate have a mutual crush!`,
+          "relationship",
+          `${fromUser.name} ${relationshipText}`,
           fromUserId
         );
       }
@@ -393,6 +414,43 @@ export class DatabaseStorage implements IStorage {
     // Process hashtags and mentions
     await this.processHashtags(content, post.id);
     await this.processMentions(content, post.id, undefined, authorId);
+    
+    // Create notifications for relevant users based on audience
+    const author = await this.getUser(authorId);
+    if (author) {
+      let targetUsers: User[] = [];
+      
+      if (audience === "grade") {
+        // Notify all users in the same grade
+        targetUsers = await db
+          .select()
+          .from(users)
+          .where(and(
+            eq(users.grade, author.grade || ""),
+            ne(users.id, authorId)
+          ));
+      } else if (audience === "class") {
+        // Notify all users in the same class
+        targetUsers = await db
+          .select()
+          .from(users)
+          .where(and(
+            eq(users.class, author.class || ""),
+            ne(users.id, authorId)
+          ));
+      }
+
+      // Create notifications for target users
+      const postType = voiceMessageUrl ? "voice post" : "post";
+      for (const user of targetUsers) {
+        await this.createNotification(
+          user.id,
+          "post",
+          `${author.name} shared a new ${postType}`,
+          authorId
+        );
+      }
+    }
     
     return post;
   }
@@ -511,6 +569,18 @@ export class DatabaseStorage implements IStorage {
     await this.processHashtags(content, undefined, message.id);
     await this.processMentions(content, undefined, message.id, fromUserId);
     
+    // Create notification for the recipient
+    const sender = await this.getUser(fromUserId);
+    if (sender) {
+      const messageType = voiceMessageUrl ? "voice message" : "message";
+      await this.createNotification(
+        toUserId,
+        "message",
+        `${sender.name} sent you a ${messageType}`,
+        fromUserId
+      );
+    }
+    
     return message;
   }
 
@@ -613,12 +683,13 @@ export class DatabaseStorage implements IStorage {
       `Welcome to ${name}! 🎉`
     );
     
-    // Notify all members
+    // Create notifications for all members about the new group
     for (const memberId of memberIds) {
       await this.createNotification(
         memberId,
-        'friend_group_created',
-        `You've been added to the friend group "${name}"!`
+        'group',
+        `You've been added to the group "${name}"`,
+        null
       );
     }
     
@@ -636,6 +707,34 @@ export class DatabaseStorage implements IStorage {
         voiceMessageDuration,
       })
       .returning();
+
+    // Get group details and notify other members
+    const group = await this.getFriendGroupById(groupId);
+    const sender = await this.getUser(fromUserId);
+    
+    if (group && sender) {
+      // Get all group members except the sender
+      const groupMembers = await db
+        .select({ userId: friendGroupMembers.userId })
+        .from(friendGroupMembers)
+        .where(and(
+          eq(friendGroupMembers.groupId, groupId),
+          ne(friendGroupMembers.userId, fromUserId)
+        ));
+
+      // Create notifications for group members (skip welcome message)
+      if (!content.includes("Welcome to")) {
+        const messageType = voiceMessageUrl ? "voice message" : "message";
+        for (const member of groupMembers) {
+          await this.createNotification(
+            member.userId,
+            "group_message",
+            `${sender.name} sent a ${messageType} in "${group.name}"`,
+            fromUserId
+          );
+        }
+      }
+    }
 
     return message;
   }

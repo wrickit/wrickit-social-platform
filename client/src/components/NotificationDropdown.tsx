@@ -65,7 +65,13 @@ export default function NotificationDropdown() {
         return <span className="text-lg pulse-glow">💕</span>;
       case "message":
         return <span className="text-lg">💬</span>;
+      case "group_message":
+        return <span className="text-lg">💬</span>;
+      case "post":
+        return <span className="text-lg">📝</span>;
       case "relationship":
+        return <span className="text-lg">👥</span>;
+      case "group":
         return <span className="text-lg">👥</span>;
       case "disciplinary":
         return <span className="text-lg">⚠️</span>;
