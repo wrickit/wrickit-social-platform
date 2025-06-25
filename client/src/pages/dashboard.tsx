@@ -12,15 +12,12 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { FileText } from "lucide-react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import ErrorBoundary from "@/components/ErrorBoundary";
 
 export default function Dashboard() {
   const { user } = useAuth();
-  const [chatOpen, setChatOpen] = useState(false);
-  const [chatUserId, setChatUserId] = useState<number | null>(null);
-  const [groupChatOpen, setGroupChatOpen] = useState(false);
-  const [groupChatId, setGroupChatId] = useState<number | null>(null);
+  const [, setLocation] = useLocation();
 
   const { data: notifications = [] } = useQuery<any[]>({
     queryKey: ["/api/notifications"],
@@ -35,27 +32,11 @@ export default function Dashboard() {
   });
 
   const openChat = (userId: number) => {
-    setChatUserId(userId);
-    setChatOpen(true);
-    setGroupChatOpen(false);
-    setGroupChatId(null);
-  };
-
-  const closeChat = () => {
-    setChatOpen(false);
-    setChatUserId(null);
+    setLocation(`/messages?user=${userId}`);
   };
 
   const openGroupChat = (groupId: number) => {
-    setGroupChatId(groupId);
-    setGroupChatOpen(true);
-    setChatOpen(false);
-    setChatUserId(null);
-  };
-
-  const closeGroupChat = () => {
-    setGroupChatOpen(false);
-    setGroupChatId(null);
+    setLocation(`/messages?group=${groupId}`);
   };
 
   if (!user) {
@@ -136,8 +117,6 @@ export default function Dashboard() {
               relationships={relationships as any[]}
               friendGroups={friendGroups as any[]}
               notifications={notifications as any[]}
-              onOpenChat={openChat}
-              onOpenGroupChat={openGroupChat}
               user={user}
             />
           </div>
@@ -145,13 +124,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {chatOpen && chatUserId && (
-        <ChatWidget userId={chatUserId} onClose={closeChat} />
-      )}
 
-      {groupChatOpen && groupChatId && (
-        <GroupChatWidget groupId={groupChatId} onClose={closeGroupChat} />
-      )}
     </div>
   );
 }

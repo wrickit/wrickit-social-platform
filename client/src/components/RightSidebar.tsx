@@ -3,13 +3,12 @@ import { Button } from "@/components/ui/button";
 import { Users, MessageCircle, Mic } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
+import { useLocation } from "wouter";
 
 interface RightSidebarProps {
   relationships: any[];
   friendGroups: any[];
   notifications: any[];
-  onOpenChat: (userId: number) => void;
-  onOpenGroupChat: (groupId: number) => void;
   user: any;
 }
 
@@ -36,10 +35,9 @@ export default function RightSidebar({
   relationships, 
   friendGroups, 
   notifications, 
-  onOpenChat,
-  onOpenGroupChat,
   user 
 }: RightSidebarProps) {
+  const [, setLocation] = useLocation();
   // Filter relationships by type with null checks
   const bestFriends = (relationships || []).filter(r => r.type === 'best_friend').slice(0, 3);
   const friends = (relationships || []).filter(r => r.type === 'friend').slice(0, 3);
@@ -154,7 +152,7 @@ export default function RightSidebar({
                   variant="link"
                   size="sm"
                   className="text-xs text-blue-600 hover:underline p-0 h-auto"
-                  onClick={() => onOpenGroupChat(group.id)}
+                  onClick={() => setLocation(`/messages?group=${group.id}`)}
                 >
                   Open Chat
                 </Button>
@@ -165,12 +163,13 @@ export default function RightSidebar({
       )}
 
       {/* Recent Messages */}
-      <RecentMessages user={user} onOpenChat={onOpenChat} />
+      <RecentMessages user={user} />
     </aside>
   );
 }
 
-function RecentMessages({ user, onOpenChat }: { user: any; onOpenChat: (userId: number) => void }) {
+function RecentMessages({ user }: { user: any }) {
+  const [, setLocation] = useLocation();
   // Fetch recent conversations
   const { data: conversations = [], isLoading } = useQuery<Conversation[]>({
     queryKey: ["/api/messages"],
@@ -218,7 +217,7 @@ function RecentMessages({ user, onOpenChat }: { user: any; onOpenChat: (userId: 
                 <div
                   key={`${conversation.fromUserId}-${conversation.toUserId}-${index}`}
                   className="flex items-center space-x-3 cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors"
-                  onClick={() => onOpenChat(partner.id)}
+                  onClick={() => setLocation(`/messages?user=${partner.id}`)}
                 >
                   {partner.profileImageUrl ? (
                     <img

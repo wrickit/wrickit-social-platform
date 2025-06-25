@@ -180,6 +180,27 @@ export default function Messages() {
   
   const [selectedConversation, setSelectedConversation] = useState<number | null>(null);
   const [newConversationUser, setNewConversationUser] = useState<User | null>(null);
+  
+  // Handle URL parameters for auto-opening chats
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const userId = urlParams.get('user');
+    const groupId = urlParams.get('group');
+    
+    if (userId) {
+      const userIdNum = parseInt(userId, 10);
+      if (!isNaN(userIdNum)) {
+        setSelectedConversation(userIdNum);
+        setNewConversationUser(null);
+        // Clear URL parameters after handling
+        window.history.replaceState({}, document.title, '/messages');
+      }
+    } else if (groupId) {
+      // For group chats, we'd need to implement group chat handling here
+      // For now, just clear the URL parameters
+      window.history.replaceState({}, document.title, '/messages');
+    }
+  }, []);
   const [newMessage, setNewMessage] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [showNewChat, setShowNewChat] = useState(false);
