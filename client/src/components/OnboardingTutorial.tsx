@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { X, ArrowLeft, ArrowRight, Check, MessageCircle, Users, Heart, Settings } from "lucide-react";
 import { useLocation } from "wouter";
 
@@ -237,9 +238,25 @@ export default function OnboardingTutorial({ isOpen, onComplete, onSkip }: Onboa
               
               <div className="flex space-x-2">
                 {step.id !== "complete" && (
-                  <Button variant="ghost" size="sm" onClick={skipTutorial}>
-                    Skip Tutorial
-                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="ghost" size="sm">
+                        Skip Tutorial
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Skip Tutorial?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Are you sure you want to skip the tutorial? You won't be able to see this guided tour again. You can still explore the features on your own.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Continue Tutorial</AlertDialogCancel>
+                        <AlertDialogAction onClick={skipTutorial}>Skip Tutorial</AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 )}
                 
                 <Button size="sm" onClick={nextStep}>

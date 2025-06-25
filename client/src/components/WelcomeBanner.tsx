@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { X, Play, SkipForward } from "lucide-react";
 import { useOnboarding } from "@/hooks/useOnboarding";
 
@@ -56,15 +57,30 @@ export default function WelcomeBanner({ user }: WelcomeBannerProps) {
                 Start Tutorial
               </Button>
               
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={handleSkip}
-                className="border-purple-300 text-purple-700 hover:bg-purple-50 dark:border-purple-600 dark:text-purple-300"
-              >
-                <SkipForward className="w-4 h-4 mr-1" />
-                Skip for Now
-              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="border-purple-300 text-purple-700 hover:bg-purple-50 dark:border-purple-600 dark:text-purple-300"
+                  >
+                    <SkipForward className="w-4 h-4 mr-1" />
+                    Skip for Now
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Skip Tutorial?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Are you sure you want to skip the tutorial? You won't be able to see this guided tour again. You can still explore the features on your own.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Continue Tutorial</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleSkip}>Skip Tutorial</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
           </div>
           
