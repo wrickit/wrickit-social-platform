@@ -845,8 +845,10 @@ export default function Messages() {
                   <div>
                     <h3 className="text-sm font-medium app-text-light px-3 mb-2">Direct Messages</h3>
                     
-                    {/* New conversation user */}
-                    {newConversationUser && (
+                    {/* New conversation user - only show if not already in conversations */}
+                    {newConversationUser && !conversations.find(conv => 
+                      getConversationPartner(conv).id === newConversationUser.id
+                    ) && (
                       <div
                         key={`new-${newConversationUser.id}`}
                         onClick={() => {
@@ -876,7 +878,6 @@ export default function Messages() {
                           </div>
                           <div className="flex items-center justify-between">
                             <p className="text-sm app-text-light truncate">Start a conversation...</p>
-                            <Badge className="bg-green-500 text-white text-xs">new</Badge>
                           </div>
                         </div>
                       </div>
