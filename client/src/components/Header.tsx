@@ -42,12 +42,7 @@ export default function Header({ user }: HeaderProps) {
                   </a>
                 </TooltipWrapper>
               )}
-              <TooltipWrapper content="View your friend groups and relationships">
-                <a href="#" className="hover:text-pink-200 flex items-center space-x-1 transition-all duration-300 hover:scale-110">
-                  <Users className="w-4 h-4" />
-                  <span>👥 Squad</span>
-                </a>
-              </TooltipWrapper>
+
               <TooltipWrapper content="Chat with your friends and classmates">
                 <Link href="/messages" className="hover:text-blue-200 flex items-center space-x-1 transition-all duration-300 hover:scale-110">
                   <MessageCircle className="w-4 h-4" />
