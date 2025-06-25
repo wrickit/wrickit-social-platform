@@ -6,6 +6,7 @@ export default {
   theme: {
     extend: {
       fontFamily: {
+        'sans': ['Ubuntu', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
         'ubuntu': ['Ubuntu', 'system-ui', '-apple-system', 'sans-serif'],
         'ubuntu-heading': ['Ubuntu', 'system-ui', '-apple-system', 'sans-serif'],
         'ubuntu-body': ['Ubuntu', 'system-ui', '-apple-system', 'sans-serif'],
