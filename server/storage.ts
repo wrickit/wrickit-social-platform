@@ -45,7 +45,7 @@ import {
   type PublicUser
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, or, desc, sql, inArray, count, gt, lt, asc, ilike } from "drizzle-orm";
+import { eq, and, or, desc, sql, inArray, count, gt, lt, asc, ilike, like, ne } from "drizzle-orm";
 import bcrypt from "bcrypt";
 
 export interface IStorage {
@@ -422,11 +422,13 @@ export class DatabaseStorage implements IStorage {
       
       if (audience === "grade") {
         // Notify all users in the same grade
+        // For grade-level posts, notify all users in the same class prefix (e.g., 9A, 9B -> grade 9)
+        const gradeNumber = author.class ? author.class.substring(0, author.class.length - 1) : "";
         targetUsers = await db
           .select()
           .from(users)
           .where(and(
-            eq(users.grade, author.grade || ""),
+            like(users.class, `${gradeNumber}%`),
             ne(users.id, authorId)
           ));
       } else if (audience === "class") {
@@ -689,7 +691,7 @@ export class DatabaseStorage implements IStorage {
         memberId,
         'group',
         `You've been added to the group "${name}"`,
-        null
+        undefined
       );
     }
     
@@ -709,7 +711,10 @@ export class DatabaseStorage implements IStorage {
       .returning();
 
     // Get group details and notify other members
-    const group = await this.getFriendGroupById(groupId);
+    const [group] = await db
+      .select()
+      .from(friendGroups)
+      .where(eq(friendGroups.id, groupId));
     const sender = await this.getUser(fromUserId);
     
     if (group && sender) {
