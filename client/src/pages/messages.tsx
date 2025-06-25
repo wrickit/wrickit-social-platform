@@ -397,7 +397,7 @@ export default function Messages() {
     enabled: searchQuery.length > 2,
   });
 
-  // Send message mutation
+  // Send regular message mutation
   const sendMessageMutation = useMutation({
     mutationFn: async ({ 
       toUserId, 
@@ -443,6 +443,42 @@ export default function Messages() {
     },
   });
 
+  // Send group message mutation
+  const sendGroupMessageMutation = useMutation({
+    mutationFn: async ({ 
+      groupId, 
+      content, 
+      voiceMessageUrl, 
+      voiceMessageDuration 
+    }: { 
+      groupId: number; 
+      content: string; 
+      voiceMessageUrl?: string; 
+      voiceMessageDuration?: number; 
+    }) => {
+      await apiRequest("POST", "/api/group-messages", { 
+        groupId, 
+        content, 
+        voiceMessageUrl, 
+        voiceMessageDuration 
+      });
+    },
+    onSuccess: () => {
+      if (selectedGroupChat) {
+        queryClient.invalidateQueries({ queryKey: ["/api/group-messages", selectedGroupChat] });
+      }
+      setNewMessage("");
+      setVoiceMessage(null);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to send group message",
+        variant: "destructive",
+      });
+    },
+  });
+
   // Auto-scroll to bottom of messages
   useEffect(() => {
     if (messagesEndRef.current) {
@@ -466,7 +502,7 @@ export default function Messages() {
     
     if (selectedGroupChat) {
       // Send group message
-      sendMessageMutation.mutate({
+      sendGroupMessageMutation.mutate({
         groupId: selectedGroupChat,
         content: newMessage.trim() || "",
         voiceMessageUrl: voiceMessage?.url,
@@ -496,7 +532,7 @@ export default function Messages() {
     
     if (selectedGroupChat) {
       // Send group voice message
-      sendMessageMutation.mutate({
+      sendGroupMessageMutation.mutate({
         groupId: selectedGroupChat,
         content: "",
         voiceMessageUrl: voiceMessage.url,
@@ -1007,7 +1043,7 @@ export default function Messages() {
                   onRecordingComplete={handleVoiceMessage}
                   onSend={handleSendVoiceMessage}
                   onCancel={() => setVoiceMessage(null)}
-                  disabled={sendMessageMutation.isPending}
+                  disabled={selectedGroupChat ? sendGroupMessageMutation.isPending : sendMessageMutation.isPending}
                 />
               ) : (
                 <form onSubmit={handleSendMessage} className="flex items-center space-x-2">
@@ -1016,14 +1052,14 @@ export default function Messages() {
                     onChange={(e) => setNewMessage(e.target.value)}
                     placeholder="Type a message..."
                     className="flex-1"
-                    disabled={sendMessageMutation.isPending}
+                    disabled={selectedGroupChat ? sendGroupMessageMutation.isPending : sendMessageMutation.isPending}
                   />
                   <Button
                     type="button"
                     variant="ghost"
                     size="sm"
                     onClick={() => setVoiceMessage({ url: "", duration: 0 })}
-                    disabled={sendMessageMutation.isPending}
+                    disabled={selectedGroupChat ? sendGroupMessageMutation.isPending : sendMessageMutation.isPending}
                     className="h-9 w-9 p-0"
                     title="Record voice message"
                   >
@@ -1031,7 +1067,7 @@ export default function Messages() {
                   </Button>
                   <Button
                     type="submit"
-                    disabled={!newMessage.trim() || sendMessageMutation.isPending}
+                    disabled={!newMessage.trim() || (selectedGroupChat ? sendGroupMessageMutation.isPending : sendMessageMutation.isPending)}
                     className="discord-purple-bg hover:bg-purple-700 text-white"
                   >
                     <Send className="w-4 h-4" />
