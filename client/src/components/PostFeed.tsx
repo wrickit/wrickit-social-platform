@@ -316,25 +316,35 @@ export default function PostFeed({ showAll = false, maxPosts = 5, sortBy = "rece
             )}
             
             <div className="flex items-center space-x-4 text-sm app-text-light">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => likePostMutation.mutate(post.id)}
-                disabled={likePostMutation.isPending}
-                className={`p-0 h-auto ${post.isLikedByUser ? 'text-purple-600' : 'hover:text-purple-600'}`}
+              <TooltipWrapper 
+                content={post.isLikedByUser ? "Unlike this post" : "Like this post"} 
+                mobileContent={post.isLikedByUser ? "Unlike" : "Like"}
               >
-                <ThumbsUp className={`w-4 h-4 mr-1 ${post.isLikedByUser ? 'fill-current' : ''}`} />
-                <span>{post.likesCount || 0}</span>
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => toggleComments(post.id)}
-                className="hover:text-purple-600 p-0 h-auto"
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => likePostMutation.mutate(post.id)}
+                  disabled={likePostMutation.isPending}
+                  className={`p-0 h-auto ${post.isLikedByUser ? 'text-purple-600' : 'hover:text-purple-600'}`}
+                >
+                  <ThumbsUp className={`w-4 h-4 mr-1 ${post.isLikedByUser ? 'fill-current' : ''}`} />
+                  <span>{post.likesCount || 0}</span>
+                </Button>
+              </TooltipWrapper>
+              <TooltipWrapper 
+                content={`View and add comments (${post.comments?.length || 0} comments)`} 
+                mobileContent="Comments"
               >
-                <MessageCircle className="w-4 h-4 mr-1" />
-                <span>{post.comments?.length || 0} Comments</span>
-              </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => toggleComments(post.id)}
+                  className="hover:text-purple-600 p-0 h-auto"
+                >
+                  <MessageCircle className="w-4 h-4 mr-1" />
+                  <span>{post.comments?.length || 0} Comments</span>
+                </Button>
+              </TooltipWrapper>
             </div>
 
             {/* Comments Section */}

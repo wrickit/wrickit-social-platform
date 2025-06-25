@@ -1,6 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Link, useLocation } from "wouter";
 import { Home, Heart, Users, MessageCircle, Scale } from "lucide-react";
+import { TooltipWrapper } from "./TooltipWrapper";
 
 interface SidebarProps {
   user: any;
@@ -42,47 +43,56 @@ export default function Sidebar({ user, relationships, friendGroups }: SidebarPr
       {/* Navigation Menu */}
       <Card className="content-box rounded mb-4">
         <nav className="p-2 font-ubuntu-body">
-          <Link href="/">
-            <div className={`flex items-center space-x-2 px-3 py-2 rounded cursor-pointer transition-colors ${
-              location === "/" ? "discord-purple-bg text-white" : "hover:fb-gray-bg text-fb-text"
-            }`}>
-              <Home className="w-4 h-4 text-blue-600" />
-              <span>Dashboard</span>
-            </div>
-          </Link>
+          <TooltipWrapper content="View your main dashboard with posts and activities" side="right">
+            <Link href="/">
+              <div className={`flex items-center space-x-2 px-3 py-2 rounded cursor-pointer transition-colors ${
+                location === "/" ? "discord-purple-bg text-white" : "hover:fb-gray-bg text-fb-text"
+              }`}>
+                <Home className="w-4 h-4 text-blue-600" />
+                <span>Dashboard</span>
+              </div>
+            </Link>
+          </TooltipWrapper>
           
-          <Link href="/messages">
-            <div className={`flex items-center space-x-2 px-3 py-2 rounded cursor-pointer transition-colors ${
-              location === "/messages" ? "discord-purple-bg text-white" : "hover:fb-gray-bg text-fb-text"
-            }`}>
-              <MessageCircle className="w-4 h-4 text-green-500" />
-              <span>Messages</span>
-            </div>
-          </Link>
-          
+          <TooltipWrapper content="Chat with friends and classmates" side="right">
+            <Link href="/messages">
+              <div className={`flex items-center space-x-2 px-3 py-2 rounded cursor-pointer transition-colors ${
+                location === "/messages" ? "discord-purple-bg text-white" : "hover:fb-gray-bg text-fb-text"
+              }`}>
+                <MessageCircle className="w-4 h-4 text-green-500" />
+                <span>Messages</span>
+              </div>
+            </Link>
+          </TooltipWrapper>
 
-
-          <Link href="/disciplinary">
-            <div className={`flex items-center space-x-2 px-3 py-2 rounded cursor-pointer transition-colors ${
-              location === "/disciplinary" ? "discord-purple-bg text-white" : "hover:fb-gray-bg text-fb-text"
-            }`}>
-              <Scale className="w-4 h-4 text-orange-500" />
-              <span>Disciplinary</span>
-            </div>
-          </Link>
+          <TooltipWrapper content="Report disciplinary issues and vote on community matters" side="right">
+            <Link href="/disciplinary">
+              <div className={`flex items-center space-x-2 px-3 py-2 rounded cursor-pointer transition-colors ${
+                location === "/disciplinary" ? "discord-purple-bg text-white" : "hover:fb-gray-bg text-fb-text"
+              }`}>
+                <Scale className="w-4 h-4 text-orange-500" />
+                <span>Disciplinary</span>
+              </div>
+            </Link>
+          </TooltipWrapper>
           
-          <Link href="/relationships">
-            <div className={`flex items-center space-x-2 px-3 py-2 rounded cursor-pointer transition-colors ${
-              location === "/relationships" ? "discord-purple-bg text-white" : "hover:fb-gray-bg text-fb-text"
-            }`}>
-              <Heart className="w-4 h-4 text-red-500" />
-              <span>My Relationships</span>
+          <TooltipWrapper content="Manage your friendships, crushes, and relationships" side="right">
+            <Link href="/relationships">
+              <div className={`flex items-center space-x-2 px-3 py-2 rounded cursor-pointer transition-colors ${
+                location === "/relationships" ? "discord-purple-bg text-white" : "hover:fb-gray-bg text-fb-text"
+              }`}>
+                <Heart className="w-4 h-4 text-red-500" />
+                <span>My Relationships</span>
+              </div>
+            </Link>
+          </TooltipWrapper>
+          
+          <TooltipWrapper content="View and manage your friend groups" side="right">
+            <div className="flex items-center space-x-2 px-3 py-2 rounded text-fb-text">
+              <Users className="w-4 h-4 text-blue-600" />
+              <span>Friend Groups</span>
             </div>
-          </Link>
-          <div className="flex items-center space-x-2 px-3 py-2 rounded text-fb-text">
-            <Users className="w-4 h-4 text-blue-600" />
-            <span>Friend Groups</span>
-          </div>
+          </TooltipWrapper>
 
         </nav>
       </Card>

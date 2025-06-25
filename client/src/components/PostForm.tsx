@@ -11,6 +11,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Image, Video, Link, X, Plus, Mic } from "lucide-react";
 import VoiceRecorder from "./VoiceRecorder";
+import { TooltipWrapper } from "./TooltipWrapper";
 
 
 // Image compression utility
@@ -323,36 +324,42 @@ export default function PostForm() {
           {/* Media Upload Controls */}
           <div className="flex items-center justify-between flex-wrap gap-2">
             <div className="flex space-x-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => fileInputRef.current?.click()}
-                className="border-purple-300 text-purple-700 hover:bg-purple-50"
-              >
-                <Image className="w-4 h-4 mr-1" />
-                Photo/Video
-              </Button>
+              <TooltipWrapper content="Upload photos or videos from your device" mobileContent="Add media">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="border-purple-300 text-purple-700 hover:bg-purple-50"
+                >
+                  <Image className="w-4 h-4 mr-1" />
+                  Photo/Video
+                </Button>
+              </TooltipWrapper>
               
               {!voiceMessage && (
-                <VoiceRecorder
-                  onVoiceMessage={handleVoiceMessage}
-                  size="sm"
-                  className="border-purple-300 text-purple-700 hover:bg-purple-50"
-                />
+                <TooltipWrapper content="Record a voice message for your post" mobileContent="Voice note">
+                  <VoiceRecorder
+                    onVoiceMessage={handleVoiceMessage}
+                    size="sm"
+                    className="border-purple-300 text-purple-700 hover:bg-purple-50"
+                  />
+                </TooltipWrapper>
               )}
 
               <Dialog open={showUrlDialog} onOpenChange={setShowUrlDialog}>
                 <DialogTrigger asChild>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="border-purple-300 text-purple-700 hover:bg-purple-50"
-                  >
-                    <Link className="w-4 h-4 mr-1" />
-                    URL
-                  </Button>
+                  <TooltipWrapper content="Add media from a web URL (images, YouTube, etc.)" mobileContent="Web link">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="border-purple-300 text-purple-700 hover:bg-purple-50"
+                    >
+                      <Link className="w-4 h-4 mr-1" />
+                      URL
+                    </Button>
+                  </TooltipWrapper>
                 </DialogTrigger>
                 <DialogContent>
                   <DialogHeader>
@@ -402,18 +409,22 @@ export default function PostForm() {
               onValueChange={setAudience}
               className="flex space-x-4"
             >
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="class" id="class" />
-                <Label htmlFor="class" className="text-sm text-purple-700 font-medium">
-                  🏫 My Class Only
-                </Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="grade" id="grade" />
-                <Label htmlFor="grade" className="text-sm text-purple-700 font-medium">
-                  🌍 Everyone at School
-                </Label>
-              </div>
+              <TooltipWrapper content="Only your classmates will see this post" mobileContent="Class only">
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="class" id="class" />
+                  <Label htmlFor="class" className="text-sm text-purple-700 font-medium">
+                    🏫 My Class Only
+                  </Label>
+                </div>
+              </TooltipWrapper>
+              <TooltipWrapper content="Everyone at your school can see this post" mobileContent="School wide">
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="grade" id="grade" />
+                  <Label htmlFor="grade" className="text-sm text-purple-700 font-medium">
+                    🌍 Everyone at School
+                  </Label>
+                </div>
+              </TooltipWrapper>
             </RadioGroup>
             
             <Button

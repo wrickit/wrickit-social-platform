@@ -8,6 +8,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { formatDistanceToNow } from "date-fns";
 import { Bell, Heart, MessageCircle, UserPlus, AlertTriangle, Volume2 } from "lucide-react";
 import { useNotifications } from "@/hooks/useNotifications";
+import { TooltipWrapper } from "./TooltipWrapper";
 
 interface Notification {
   id: number;
@@ -84,24 +85,30 @@ export default function NotificationDropdown() {
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          className={`relative p-2 hover:scale-110 transition-transform duration-300 ${
-            unreadCount > 0 || hasNewNotifications ? 'pulse-glow' : ''
-          } ${hasNewNotifications ? 'animate-bounce' : ''}`}
+        <TooltipWrapper 
+          content={unreadCount > 0 ? `You have ${unreadCount} new notifications` : "View your notifications"}
+          mobileContent={unreadCount > 0 ? `${unreadCount} new` : "Notifications"}
+          side="bottom"
         >
-          <span className={`text-xl ${hasNewNotifications ? 'animate-pulse' : 'wiggle'}`}>🔔</span>
-          {unreadCount > 0 && (
-            <Badge 
-              className={`absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs gradient-accent-bg text-white ${
-                hasNewNotifications ? 'animate-ping' : 'pulse-glow'
-              }`}
-            >
-              {unreadCount > 99 ? "99+" : unreadCount}
-            </Badge>
-          )}
-        </Button>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className={`relative p-2 hover:scale-110 transition-transform duration-300 ${
+              unreadCount > 0 || hasNewNotifications ? 'pulse-glow' : ''
+            } ${hasNewNotifications ? 'animate-bounce' : ''}`}
+          >
+            <span className={`text-xl ${hasNewNotifications ? 'animate-pulse' : 'wiggle'}`}>🔔</span>
+            {unreadCount > 0 && (
+              <Badge 
+                className={`absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs gradient-accent-bg text-white ${
+                  hasNewNotifications ? 'animate-ping' : 'pulse-glow'
+                }`}
+              >
+                {unreadCount > 99 ? "99+" : unreadCount}
+              </Badge>
+            )}
+          </Button>
+        </TooltipWrapper>
       </PopoverTrigger>
       <PopoverContent className="w-80 p-0 glass-effect teen-shadow sparkle-border" align="end">
         <div className="flex items-center justify-between p-4 border-b border-purple-200 gradient-bg text-white">
@@ -112,18 +119,19 @@ export default function NotificationDropdown() {
                 {unreadCount} new
               </Badge>
             )}
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-white hover:bg-white/20 p-1 h-6 w-6"
-              onClick={(e) => {
-                e.stopPropagation();
-                playNotificationSound();
-              }}
-              title="Test notification sound"
-            >
-              <Volume2 className="h-3 w-3" />
-            </Button>
+            <TooltipWrapper content="Test notification sound" mobileContent="Test sound" side="bottom">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-white hover:bg-white/20 p-1 h-6 w-6"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  playNotificationSound();
+                }}
+              >
+                <Volume2 className="h-3 w-3" />
+              </Button>
+            </TooltipWrapper>
           </div>
         </div>
 
