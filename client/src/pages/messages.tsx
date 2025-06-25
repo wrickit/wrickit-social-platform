@@ -737,9 +737,7 @@ export default function Messages() {
                 >
                   <Phone className="w-4 h-4" />
                 </Button>
-                <Button variant="ghost" size="sm">
-                  <Video className="w-4 h-4" />
-                </Button>
+
                 <Button variant="ghost" size="sm">
                   <MoreVertical className="w-4 h-4" />
                 </Button>
