@@ -180,27 +180,6 @@ export default function Messages() {
   
   const [selectedConversation, setSelectedConversation] = useState<number | null>(null);
   const [newConversationUser, setNewConversationUser] = useState<User | null>(null);
-  
-  // Handle URL parameters for auto-opening chats
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const userId = urlParams.get('user');
-    const groupId = urlParams.get('group');
-    
-    if (userId) {
-      const userIdNum = parseInt(userId, 10);
-      if (!isNaN(userIdNum)) {
-        setSelectedConversation(userIdNum);
-        setNewConversationUser(null);
-        // Clear URL parameters after handling
-        window.history.replaceState({}, document.title, '/messages');
-      }
-    } else if (groupId) {
-      // For group chats, we'd need to implement group chat handling here
-      // For now, just clear the URL parameters
-      window.history.replaceState({}, document.title, '/messages');
-    }
-  }, []);
   const [newMessage, setNewMessage] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [showNewChat, setShowNewChat] = useState(false);
@@ -276,6 +255,46 @@ export default function Messages() {
     queryKey: ["/api/messages"],
     refetchInterval: 5000, // Refresh every 5 seconds
   });
+
+  // Handle URL parameters for auto-opening chats
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const userId = urlParams.get('user');
+    const groupId = urlParams.get('group');
+    
+    if (userId) {
+      const userIdNum = parseInt(userId, 10);
+      if (!isNaN(userIdNum) && user) {
+        // Check if conversation exists, if not create new conversation
+        const existingConversation = conversations.find(conv => 
+          (conv.fromUserId === user.id && conv.toUserId === userIdNum) ||
+          (conv.fromUserId === userIdNum && conv.toUserId === user.id)
+        );
+        
+        if (existingConversation) {
+          // Open existing conversation
+          setSelectedConversation(userIdNum);
+          setNewConversationUser(null);
+        } else {
+          // Create new conversation by fetching user info and setting as new conversation
+          fetch(`/api/users/${userIdNum}`)
+            .then(response => response.json())
+            .then(userData => {
+              setNewConversationUser(userData);
+              setSelectedConversation(null);
+            })
+            .catch(console.error);
+        }
+        
+        // Clear URL parameters after handling
+        window.history.replaceState({}, document.title, '/messages');
+      }
+    } else if (groupId) {
+      // For group chats, we'd need to implement group chat handling here
+      // For now, just clear the URL parameters
+      window.history.replaceState({}, document.title, '/messages');
+    }
+  }, [conversations, user]);
 
   // Fetch messages for selected conversation
   const { data: messages = [], isLoading: messagesLoading } = useQuery<any[]>({

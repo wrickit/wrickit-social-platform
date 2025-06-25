@@ -199,7 +199,11 @@ The application is configured for deployment on Replit with the following setup:
 - ✓ Fixed notification bell dropdown by restructuring PopoverTrigger hierarchy
 - ✓ Implemented functional Recent Messages section showing 3 most recent conversations
 - ✓ Added real conversation data with partner info, timestamps, and unread indicators
-- ✓ Created clickable recent message items that open chat widgets
+- ✓ Fixed missing database tables and group chat functionality
+- ✓ Removed dashboard chat widgets in favor of dedicated messages page navigation
+- ✓ Updated all "Slide into DMs" and "Open Chat" buttons to redirect to messages page
+- ✓ Implemented automatic new conversation creation for first-time messaging
+- ✓ Added URL parameter handling to auto-open specific chats when navigating from dashboard
 
 ## Changelog
 
