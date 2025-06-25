@@ -890,6 +890,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Track active WebSocket connections by user ID
   const activeConnections = new Map<number, Set<WebSocket>>();
+  
+  // Periodic cleanup of stale connections every 30 seconds
+  setInterval(() => {
+    activeConnections.forEach((connections, userId) => {
+      const activeWs = new Set<WebSocket>();
+      connections.forEach(ws => {
+        if (ws.readyState === WebSocket.OPEN) {
+          activeWs.add(ws);
+        }
+      });
+      
+      if (activeWs.size > 0) {
+        activeConnections.set(userId, activeWs);
+      } else {
+        activeConnections.delete(userId);
+      }
+    });
+  }, 30000);
 
   // WebSocket server for real-time messaging
   const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
@@ -978,13 +996,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Enhanced isUserOnline check that considers WebSocket connections
   const originalIsUserOnline = storage.isUserOnline.bind(storage);
   storage.isUserOnline = async (userId: number): Promise<boolean> => {
-    // First check if user has active WebSocket connections
-    const hasActiveConnections = activeConnections.has(userId) && activeConnections.get(userId)!.size > 0;
-    
-    if (hasActiveConnections) {
-      // Update their activity since they have an active connection
-      await storage.updateUserActivity(userId);
-      return true;
+    // First clean up any stale connections
+    const userConnections = activeConnections.get(userId);
+    if (userConnections) {
+      const activeWs = new Set<WebSocket>();
+      userConnections.forEach(ws => {
+        if (ws.readyState === WebSocket.OPEN) {
+          activeWs.add(ws);
+        }
+      });
+      
+      if (activeWs.size > 0) {
+        activeConnections.set(userId, activeWs);
+        // Update their activity since they have an active connection
+        await storage.updateUserActivity(userId);
+        return true;
+      } else {
+        // No active connections, remove from map
+        activeConnections.delete(userId);
+      }
     }
     
     // Fall back to time-based check

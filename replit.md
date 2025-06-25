@@ -217,6 +217,9 @@ The application is configured for deployment on Replit with the following setup:
 - ✓ Fixed voice message duration showing "infinity NaN" with comprehensive validation
 - ✓ Improved voice message slider functionality with proper invalid value handling
 - ✓ Fixed voice message duration to use actual recording time instead of unreliable audio metadata
+- ✓ Fixed online status system to accurately detect user activity with proper WebSocket cleanup
+- ✓ Implemented strict 30-second activity window and periodic connection cleanup
+- ✓ Enhanced user activity tracking to only update for meaningful interactions, not background polling
 
 ## Changelog
 

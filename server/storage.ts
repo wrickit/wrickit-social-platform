@@ -274,9 +274,9 @@ export class DatabaseStorage implements IStorage {
     
     if (!user.length || !user[0].lastActiveAt) return false;
     
-    // Consider user online if they were active within the last 2 minutes (more strict)
-    const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000);
-    return user[0].lastActiveAt > twoMinutesAgo;
+    // Consider user online if they were active within the last 30 seconds (very strict)
+    const thirtySecondsAgo = new Date(Date.now() - 30 * 1000);
+    return user[0].lastActiveAt > thirtySecondsAgo;
   }
 
   async createRelationship(fromUserId: number, toUserId: number, type: string): Promise<Relationship> {
