@@ -21,16 +21,24 @@ export function useNotifications() {
   const { data: notifications = [], isLoading } = useQuery<Notification[]>({
     queryKey: ["/api/notifications"],
     queryFn: getQueryFn({ on401: "returnNull" }),
-    refetchInterval: 10000, // Check every 10 seconds for new notifications
+    refetchInterval: 30000, // Check every 30 seconds for new notifications (reduced frequency)
+    staleTime: 15000, // Keep data fresh for 15 seconds
   });
 
   const unreadCount = notifications.filter((n: Notification) => !n.isRead).length;
 
-  // Play notification sound
+  // Audio context reference for cleanup
+  const audioContextRef = useRef<AudioContext | null>(null);
+
+  // Play notification sound with proper cleanup
   const playNotificationSound = () => {
     try {
-      // Create a notification sound using Web Audio API for a pleasant tone
-      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      // Reuse existing audio context or create new one
+      if (!audioContextRef.current || audioContextRef.current.state === 'closed') {
+        audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+      }
+      
+      const audioContext = audioContextRef.current;
       
       // Create a pleasant notification chime
       const oscillator = audioContext.createOscillator();
@@ -52,6 +60,17 @@ export function useNotifications() {
       
       oscillator.start(audioContext.currentTime);
       oscillator.stop(audioContext.currentTime + 0.4);
+      
+      // Clean up oscillator after use
+      setTimeout(() => {
+        try {
+          oscillator.disconnect();
+          gainNode.disconnect();
+        } catch (e) {
+          // Ignore cleanup errors
+        }
+      }, 500);
+      
     } catch (error) {
       console.log("Web Audio API not available, using fallback");
       // Fallback to HTML5 audio
@@ -154,7 +173,10 @@ export function useNotifications() {
         }
         
         // Clear the new notification flag after a delay
-        setTimeout(() => setHasNewNotifications(false), 3000);
+        const timer = setTimeout(() => setHasNewNotifications(false), 3000);
+        
+        // Store timer for cleanup
+        return () => clearTimeout(timer);
       }
       
       previousNotificationCount.current = currentUnreadCount;
@@ -170,6 +192,10 @@ export function useNotifications() {
       if (titleInterval.current) {
         clearInterval(titleInterval.current);
         titleInterval.current = null;
+      }
+      if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+        audioContextRef.current.close();
+        audioContextRef.current = null;
       }
       document.title = originalTitle.current;
     };

@@ -26,7 +26,8 @@ export default function PostFeed({ showAll = false, maxPosts = 5, sortBy = "rece
   
   const { data: allPosts = [], isLoading } = useQuery({
     queryKey: ["/api/posts"],
-    refetchInterval: 5000, // Refetch every 5 seconds for real-time updates
+    refetchInterval: 30000, // Refetch every 30 seconds (reduced frequency)
+    staleTime: 15000, // Keep data fresh for 15 seconds
   });
 
   // Get friend and crush user IDs for filtering

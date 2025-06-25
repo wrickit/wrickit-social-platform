@@ -33,27 +33,46 @@ export default function EasterEggs() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  // Mouse trail effect
+  // Mouse trail effect with proper cleanup
   useEffect(() => {
+    const sparkles = new Set<HTMLElement>();
+    let lastSparkleTime = 0;
+    
     const handleMouseMove = (e: MouseEvent) => {
       setMousePosition({ x: e.clientX, y: e.clientY });
       
-      // Create sparkle effect on mouse move
-      if (Math.random() > 0.95) {
+      // Throttle sparkle creation and limit total count
+      const now = Date.now();
+      if (now - lastSparkleTime > 100 && Math.random() > 0.98 && sparkles.size < 10) {
         const sparkle = document.createElement('div');
         sparkle.className = 'mouse-sparkle';
         sparkle.style.left = e.clientX + 'px';
         sparkle.style.top = e.clientY + 'px';
         document.body.appendChild(sparkle);
+        sparkles.add(sparkle);
+        lastSparkleTime = now;
         
         setTimeout(() => {
-          sparkle.remove();
+          if (sparkle.parentNode) {
+            sparkle.remove();
+          }
+          sparkles.delete(sparkle);
         }, 1000);
       }
     };
 
     window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
+    
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      // Clean up any remaining sparkles
+      sparkles.forEach(sparkle => {
+        if (sparkle.parentNode) {
+          sparkle.remove();
+        }
+      });
+      sparkles.clear();
+    };
   }, []);
 
   // Random compliments
@@ -68,6 +87,9 @@ export default function EasterEggs() {
   ];
 
   const showRandomCompliment = () => {
+    // Check if there's already a compliment toast to prevent spam
+    if (document.querySelector('.compliment-toast')) return;
+    
     const compliment = compliments[Math.floor(Math.random() * compliments.length)];
     const toast = document.createElement('div');
     toast.className = 'compliment-toast';
@@ -75,7 +97,9 @@ export default function EasterEggs() {
     document.body.appendChild(toast);
     
     setTimeout(() => {
-      toast.remove();
+      if (toast.parentNode) {
+        toast.remove();
+      }
     }, 3000);
   };
 
