@@ -137,6 +137,8 @@ export default function Dashboard() {
               friendGroups={friendGroups as any[]}
               notifications={notifications as any[]}
               onOpenChat={openChat}
+              onOpenGroupChat={openGroupChat}
+              user={user}
             />
           </div>
           </div>
@@ -145,6 +147,10 @@ export default function Dashboard() {
 
       {chatOpen && chatUserId && (
         <ChatWidget userId={chatUserId} onClose={closeChat} />
+      )}
+
+      {groupChatOpen && groupChatId && (
+        <GroupChatWidget groupId={groupChatId} onClose={closeGroupChat} />
       )}
     </div>
   );
