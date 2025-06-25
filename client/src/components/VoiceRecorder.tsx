@@ -109,7 +109,33 @@ const VoiceRecorder = forwardRef<HTMLDivElement, VoiceRecorderProps>(({
 
     } catch (error) {
       console.error('Error accessing microphone:', error);
-      // Silently fail instead of showing alert - user only sees error when they explicitly try to record
+      
+      // Show user-friendly error message
+      let errorMessage = "Microphone access denied.";
+      
+      if (window.location.protocol === 'http:') {
+        if (window.location.hostname.includes('replit') || window.location.hostname.includes('repl.co')) {
+          errorMessage = "Voice recording requires HTTPS. Try using the deployment URL or enable HTTPS in your browser settings for this site.";
+        } else {
+          errorMessage = "Voice recording requires HTTPS. Please access the site via a secure connection.";
+        }
+      } else if (error instanceof DOMException) {
+        switch (error.name) {
+          case 'NotAllowedError':
+            errorMessage = "Microphone permission denied. Please allow microphone access in your browser settings.";
+            break;
+          case 'NotFoundError':
+            errorMessage = "No microphone found. Please connect a microphone and try again.";
+            break;
+          case 'NotSupportedError':
+            errorMessage = "Voice recording is not supported in this browser.";
+            break;
+          default:
+            errorMessage = `Microphone error: ${error.message}`;
+        }
+      }
+      
+      alert(errorMessage);
     }
   };
 
