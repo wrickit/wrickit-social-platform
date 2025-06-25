@@ -980,7 +980,7 @@ export default function Messages() {
           </div>
 
           {/* Message Input */}
-          {selectedConversation && (
+          {(selectedConversation || newConversationUser || selectedGroupChat) && (
             <div className="p-4 border-t border-gray-200 dark:border-gray-700">
               {voiceMessage ? (
                 <VoiceRecorder
