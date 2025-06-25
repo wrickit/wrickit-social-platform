@@ -28,7 +28,20 @@ export default function VoicePlayer({
     if (!audio) return;
 
     const handleLoadedMetadata = () => {
-      const actualDuration = duration > 0 ? duration : Math.ceil(audio.duration);
+      let actualDuration = duration;
+      
+      // If no duration provided or invalid, try to get from audio element
+      if (!actualDuration || actualDuration <= 0 || !isFinite(actualDuration)) {
+        actualDuration = audio.duration;
+      }
+      
+      // Final fallback if audio duration is also invalid
+      if (!actualDuration || actualDuration <= 0 || !isFinite(actualDuration)) {
+        actualDuration = 0;
+      } else {
+        actualDuration = Math.ceil(actualDuration);
+      }
+      
       setAudioDuration(actualDuration);
       setIsLoading(false);
     };
@@ -86,11 +99,13 @@ export default function VoicePlayer({
 
   const handleProgressClick = (e: React.MouseEvent<HTMLDivElement>) => {
     const audio = audioRef.current;
-    if (!audio || audioDuration === 0) return;
+    if (!audio || !audioDuration || audioDuration <= 0 || !isFinite(audioDuration)) return;
 
     const rect = e.currentTarget.getBoundingClientRect();
     const percent = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
     const newTime = percent * audioDuration;
+    
+    if (!isFinite(newTime) || newTime < 0) return;
     
     try {
       audio.currentTime = newTime;

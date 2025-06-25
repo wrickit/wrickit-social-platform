@@ -61,7 +61,19 @@ const VoiceRecorder = forwardRef<HTMLDivElement, VoiceRecorderProps>(({
         // Create audio element to get actual duration
         const tempAudio = new Audio(url);
         tempAudio.onloadedmetadata = () => {
-          const actualDuration = Math.ceil(tempAudio.duration) || recordingTime;
+          let actualDuration = tempAudio.duration;
+          
+          // Validate duration and use fallback if invalid
+          if (!actualDuration || actualDuration <= 0 || !isFinite(actualDuration) || isNaN(actualDuration)) {
+            actualDuration = recordingTime;
+          }
+          
+          // Final safety check - ensure we have a valid duration
+          if (!actualDuration || actualDuration <= 0 || !isFinite(actualDuration) || isNaN(actualDuration)) {
+            actualDuration = 1; // 1 second minimum fallback
+          }
+          
+          actualDuration = Math.ceil(actualDuration);
           setDuration(actualDuration);
           
           // Convert blob to base64 for storage
@@ -78,7 +90,14 @@ const VoiceRecorder = forwardRef<HTMLDivElement, VoiceRecorderProps>(({
         
         // Fallback if metadata doesn't load
         tempAudio.onerror = () => {
-          const fallbackDuration = recordingTime;
+          let fallbackDuration = recordingTime;
+          
+          // Validate fallback duration
+          if (!fallbackDuration || fallbackDuration <= 0 || !isFinite(fallbackDuration) || isNaN(fallbackDuration)) {
+            fallbackDuration = 1; // 1 second minimum fallback
+          }
+          
+          fallbackDuration = Math.ceil(fallbackDuration);
           setDuration(fallbackDuration);
           
           const reader = new FileReader();

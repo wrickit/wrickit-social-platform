@@ -212,6 +212,10 @@ The application is configured for deployment on Replit with the following setup:
 - ✓ Updated message rendering to correctly show group messages vs direct messages
 - ✓ Fixed status display to show online status for DMs and member count only for group chats
 - ✓ Added new conversation users to sidebar so they appear immediately when starting new chats
+- ✓ Fixed voice recorder button preventing form submission by adding explicit button types
+- ✓ Enhanced microphone access error handling with user-friendly messages for HTTPS requirements
+- ✓ Fixed voice message duration showing "infinity NaN" with comprehensive validation
+- ✓ Improved voice message slider functionality with proper invalid value handling
 
 ## Changelog
 
