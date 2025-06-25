@@ -599,6 +599,13 @@ export class DatabaseStorage implements IStorage {
     
     await db.insert(friendGroupMembers).values(memberInserts);
     
+    // Send welcome message to the group
+    await this.createGroupMessage(
+      memberIds[0], // Creator sends welcome message
+      group.id,
+      `Welcome to ${name}! 🎉`
+    );
+    
     // Notify all members
     for (const memberId of memberIds) {
       await this.createNotification(
@@ -609,6 +616,42 @@ export class DatabaseStorage implements IStorage {
     }
     
     return group;
+  }
+
+  async createGroupMessage(fromUserId: number, groupId: number, content: string, voiceMessageUrl?: string, voiceMessageDuration?: number): Promise<GroupMessage> {
+    const [message] = await db
+      .insert(groupMessages)
+      .values({
+        fromUserId,
+        groupId,
+        content,
+        voiceMessageUrl,
+        voiceMessageDuration,
+      })
+      .returning();
+
+    return message;
+  }
+
+  async getGroupMessages(groupId: number): Promise<(GroupMessage & { fromUser: User })[]> {
+    const messages = await db
+      .select()
+      .from(groupMessages)
+      .leftJoin(users, eq(groupMessages.fromUserId, users.id))
+      .where(eq(groupMessages.groupId, groupId))
+      .orderBy(groupMessages.createdAt);
+
+    return messages.map(row => ({
+      ...row.group_messages!,
+      fromUser: row.users!,
+    }));
+  }
+
+  async markGroupMessageAsRead(messageId: number, userId: number): Promise<void> {
+    await db
+      .insert(groupMessageReads)
+      .values({ messageId, userId })
+      .onConflictDoNothing();
   }
 
   async getFriendGroupsByUserId(userId: number): Promise<(FriendGroup & { members: (typeof friendGroupMembers.$inferSelect & { user: User })[] })[]> {

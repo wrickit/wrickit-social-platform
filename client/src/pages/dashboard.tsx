@@ -6,6 +6,7 @@ import PostForm from "@/components/PostForm";
 import PostFeed from "@/components/PostFeed";
 import RelationshipForm from "@/components/RelationshipForm";
 import ChatWidget from "@/components/ChatWidget";
+import GroupChatWidget from "@/components/GroupChatWidget";
 import WelcomeBanner from "@/components/WelcomeBanner";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
@@ -18,6 +19,8 @@ export default function Dashboard() {
   const { user } = useAuth();
   const [chatOpen, setChatOpen] = useState(false);
   const [chatUserId, setChatUserId] = useState<number | null>(null);
+  const [groupChatOpen, setGroupChatOpen] = useState(false);
+  const [groupChatId, setGroupChatId] = useState<number | null>(null);
 
   const { data: notifications = [] } = useQuery<any[]>({
     queryKey: ["/api/notifications"],
@@ -34,11 +37,25 @@ export default function Dashboard() {
   const openChat = (userId: number) => {
     setChatUserId(userId);
     setChatOpen(true);
+    setGroupChatOpen(false);
+    setGroupChatId(null);
   };
 
   const closeChat = () => {
     setChatOpen(false);
     setChatUserId(null);
+  };
+
+  const openGroupChat = (groupId: number) => {
+    setGroupChatId(groupId);
+    setGroupChatOpen(true);
+    setChatOpen(false);
+    setChatUserId(null);
+  };
+
+  const closeGroupChat = () => {
+    setGroupChatOpen(false);
+    setGroupChatId(null);
   };
 
   if (!user) {

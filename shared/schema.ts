@@ -53,6 +53,16 @@ export const messages = pgTable("messages", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const groupMessages = pgTable("group_messages", {
+  id: serial("id").primaryKey(),
+  fromUserId: integer("from_user_id").notNull().references(() => users.id),
+  groupId: integer("group_id").notNull().references(() => friendGroups.id),
+  content: text("content").notNull(),
+  voiceMessageUrl: text("voice_message_url"), // Voice message audio URL
+  voiceMessageDuration: integer("voice_message_duration"), // Duration in seconds
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 export const friendGroups = pgTable("friend_groups", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
@@ -79,6 +89,13 @@ export const friendGroupMembers = pgTable("friend_group_members", {
   groupId: integer("group_id").notNull().references(() => friendGroups.id),
   userId: integer("user_id").notNull().references(() => users.id),
   joinedAt: timestamp("joined_at").defaultNow(),
+});
+
+export const groupMessageReads = pgTable("group_message_reads", {
+  id: serial("id").primaryKey(),
+  messageId: integer("message_id").notNull().references(() => groupMessages.id),
+  userId: integer("user_id").notNull().references(() => users.id),
+  readAt: timestamp("read_at").defaultNow(),
 });
 
 export const notifications = pgTable("notifications", {
@@ -281,6 +298,7 @@ export const messagesRelations = relations(messages, ({ one }) => ({
 
 export const friendGroupsRelations = relations(friendGroups, ({ many }) => ({
   members: many(friendGroupMembers),
+  messages: many(groupMessages),
 }));
 
 export const friendGroupMembersRelations = relations(friendGroupMembers, ({ one }) => ({
@@ -290,6 +308,29 @@ export const friendGroupMembersRelations = relations(friendGroupMembers, ({ one 
   }),
   user: one(users, {
     fields: [friendGroupMembers.userId],
+    references: [users.id],
+  }),
+}));
+
+export const groupMessagesRelations = relations(groupMessages, ({ one, many }) => ({
+  fromUser: one(users, {
+    fields: [groupMessages.fromUserId],
+    references: [users.id],
+  }),
+  group: one(friendGroups, {
+    fields: [groupMessages.groupId],
+    references: [friendGroups.id],
+  }),
+  reads: many(groupMessageReads),
+}));
+
+export const groupMessageReadsRelations = relations(groupMessageReads, ({ one }) => ({
+  message: one(groupMessages, {
+    fields: [groupMessageReads.messageId],
+    references: [groupMessages.id],
+  }),
+  user: one(users, {
+    fields: [groupMessageReads.userId],
     references: [users.id],
   }),
 }));
@@ -523,6 +564,13 @@ export const insertMessageSchema = createInsertSchema(messages).pick({
   voiceMessageDuration: true,
 });
 
+export const insertGroupMessageSchema = createInsertSchema(groupMessages).pick({
+  groupId: true,
+  content: true,
+  voiceMessageUrl: true,
+  voiceMessageDuration: true,
+});
+
 export const insertLoopSchema = createInsertSchema(loops).pick({
   videoUrl: true,
   thumbnailUrl: true,
@@ -552,6 +600,9 @@ export type Relationship = typeof relationships.$inferSelect;
 export type Post = typeof posts.$inferSelect;
 export type Comment = typeof comments.$inferSelect;
 export type Message = typeof messages.$inferSelect;
+export type GroupMessage = typeof groupMessages.$inferSelect;
+export type InsertMessage = z.infer<typeof insertMessageSchema>;
+export type InsertGroupMessage = z.infer<typeof insertGroupMessageSchema>;
 export type FriendGroup = typeof friendGroups.$inferSelect;
 export type Notification = typeof notifications.$inferSelect;
 export type LoginData = z.infer<typeof loginSchema>;

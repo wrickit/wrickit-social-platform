@@ -9,6 +9,7 @@ interface RightSidebarProps {
   friendGroups: any[];
   notifications: any[];
   onOpenChat: (userId: number) => void;
+  onOpenGroupChat: (groupId: number) => void;
   user: any;
 }
 
@@ -36,6 +37,7 @@ export default function RightSidebar({
   friendGroups, 
   notifications, 
   onOpenChat,
+  onOpenGroupChat,
   user 
 }: RightSidebarProps) {
   // Filter relationships by type with null checks
@@ -152,6 +154,7 @@ export default function RightSidebar({
                   variant="link"
                   size="sm"
                   className="text-xs text-blue-600 hover:underline p-0 h-auto"
+                  onClick={() => onOpenGroupChat(group.id)}
                 >
                   Open Chat
                 </Button>
