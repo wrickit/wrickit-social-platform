@@ -196,6 +196,10 @@ The application is configured for deployment on Replit with the following setup:
 - ✓ Fixed React ref forwarding errors in TooltipWrapper, VoiceRecorder, HamburgerMenu, and ProfilePictureDialog
 - ✓ Added proper forwardRef implementation to prevent console warnings
 - ✓ Disabled automatic polling to prevent memory exhaustion and crashes
+- ✓ Fixed notification bell dropdown by restructuring PopoverTrigger hierarchy
+- ✓ Implemented functional Recent Messages section showing 3 most recent conversations
+- ✓ Added real conversation data with partner info, timestamps, and unread indicators
+- ✓ Created clickable recent message items that open chat widgets
 
 ## Changelog
 
