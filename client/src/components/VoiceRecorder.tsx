@@ -214,6 +214,7 @@ const VoiceRecorder = forwardRef<HTMLDivElement, VoiceRecorderProps>(({
         <audio ref={audioRef} src={audioUrl} />
         
         <Button
+          type="button"
           variant="ghost"
           size="sm"
           onClick={togglePlayback}
@@ -241,6 +242,7 @@ const VoiceRecorder = forwardRef<HTMLDivElement, VoiceRecorderProps>(({
         </div>
 
         <Button
+          type="button"
           variant="ghost"
           size="sm"
           onClick={deleteRecording}
@@ -251,6 +253,7 @@ const VoiceRecorder = forwardRef<HTMLDivElement, VoiceRecorderProps>(({
 
         {onSend && (
           <Button
+            type="button"
             size="sm"
             onClick={onSend}
             disabled={disabled}
@@ -273,6 +276,7 @@ const VoiceRecorder = forwardRef<HTMLDivElement, VoiceRecorderProps>(({
             Recording • {formatTime(recordingTime)}
           </span>
           <Button
+            type="button"
             variant="ghost"
             size="sm"
             onClick={stopRecording}
@@ -283,6 +287,7 @@ const VoiceRecorder = forwardRef<HTMLDivElement, VoiceRecorderProps>(({
         </div>
       ) : (
         <Button
+          type="button"
           variant="ghost"
           size="sm"
           onClick={startRecording}
