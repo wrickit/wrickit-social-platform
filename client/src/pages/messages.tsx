@@ -21,7 +21,8 @@ import {
   ArrowLeft,
   Play,
   Pause,
-  Mic
+  Mic,
+  Users
 } from "lucide-react";
 import VoiceRecorder from "@/components/VoiceRecorder";
 import ReadReceipt from "@/components/ReadReceipt";
