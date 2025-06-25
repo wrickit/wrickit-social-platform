@@ -12,6 +12,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { FileText } from "lucide-react";
 import { Link } from "wouter";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -64,43 +65,52 @@ export default function Dashboard() {
             </div>
             
             <main className="flex-1 min-w-0 space-y-4 sm:space-y-6 dashboard-content">
-            <WelcomeBanner user={user} />
+            <ErrorBoundary>
+              <WelcomeBanner user={user} />
+            </ErrorBoundary>
+            
             {/* Mutual Crush Notifications */}
-            {mutualCrushNotifications.map((notification: any) => (
-              <div key={notification.id} className="glass-effect rounded-xl p-6 sparkle-border slide-in-up teen-shadow">
-                <div className="flex items-center space-x-4">
-                  <div className="text-4xl pulse-glow">💕</div>
-                  <div className="flex-1">
-                    <h3 className="font-ubuntu-heading font-bold text-lg rainbow-text">OMG! You have a mutual crush! 🥰</h3>
-                    <p className="text-sm text-purple-700 mt-1">{notification.message}</p>
-                    <button
-                      onClick={() => notification.relatedUserId && openChat(notification.relatedUserId)}
-                      className="mt-3 gradient-accent-bg text-white px-6 py-2 rounded-full text-sm hover:scale-105 transition-transform duration-300 bouncy teen-shadow"
-                    >
-                      💌 Slide into DMs
-                    </button>
+            <ErrorBoundary>
+              {mutualCrushNotifications.map((notification: any) => (
+                <div key={notification.id} className="glass-effect rounded-xl p-6 sparkle-border slide-in-up teen-shadow">
+                  <div className="flex items-center space-x-4">
+                    <div className="text-4xl pulse-glow">💕</div>
+                    <div className="flex-1">
+                      <h3 className="font-ubuntu-heading font-bold text-lg rainbow-text">OMG! You have a mutual crush! 🥰</h3>
+                      <p className="text-sm text-purple-700 mt-1">{notification.message}</p>
+                      <button
+                        onClick={() => notification.relatedUserId && openChat(notification.relatedUserId)}
+                        className="mt-3 gradient-accent-bg text-white px-6 py-2 rounded-full text-sm hover:scale-105 transition-transform duration-300 bouncy teen-shadow"
+                      >
+                        💌 Slide into DMs
+                      </button>
+                    </div>
+                    <div className="text-2xl wiggle">✨</div>
                   </div>
-                  <div className="text-2xl wiggle">✨</div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </ErrorBoundary>
 
-            <RelationshipForm />
+            <ErrorBoundary>
+              <RelationshipForm />
+            </ErrorBoundary>
             
             {/* Posts Section with Navigation */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-between glass-effect rounded-lg p-4 sparkle-border">
-                <h2 className="text-xl font-ubuntu-heading font-bold rainbow-text">📝 What's the Tea? ☕</h2>
-                <Link href="/posts">
-                  <Button variant="outline" size="sm" className="flex items-center space-x-2 gradient-bg text-white border-none hover:scale-105 transition-transform duration-300 bouncy">
-                    <FileText className="w-4 h-4" />
-                    <span>✨ See All Drama</span>
-                  </Button>
-                </Link>
+            <ErrorBoundary>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between glass-effect rounded-lg p-4 sparkle-border">
+                  <h2 className="text-xl font-ubuntu-heading font-bold rainbow-text">📝 What's the Tea? ☕</h2>
+                  <Link href="/posts">
+                    <Button variant="outline" size="sm" className="flex items-center space-x-2 gradient-bg text-white border-none hover:scale-105 transition-transform duration-300 bouncy">
+                      <FileText className="w-4 h-4" />
+                      <span>✨ See All Drama</span>
+                    </Button>
+                  </Link>
+                </div>
+                <PostForm />
+                <PostFeed maxPosts={10} relationships={relationships as any[]} />
               </div>
-              <PostForm />
-              <PostFeed maxPosts={10} relationships={relationships as any[]} />
-            </div>
+            </ErrorBoundary>
           </main>
           
           {/* Right sidebar - hidden on mobile and tablet */}

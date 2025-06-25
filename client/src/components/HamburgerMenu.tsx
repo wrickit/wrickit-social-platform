@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, forwardRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
@@ -15,7 +15,7 @@ interface HamburgerMenuProps {
   friendGroups?: any[];
 }
 
-export default function HamburgerMenu({ user, relationships = [], friendGroups = [] }: HamburgerMenuProps) {
+const HamburgerMenu = forwardRef<HTMLDivElement, HamburgerMenuProps>(({ user, relationships = [], friendGroups = [] }, ref) => {
   const [isOpen, setIsOpen] = useState(false);
   const [showProfileSettings, setShowProfileSettings] = useState(false);
   const { logout } = useAuth();
@@ -49,7 +49,7 @@ export default function HamburgerMenu({ user, relationships = [], friendGroups =
   };
 
   return (
-    <>
+    <div ref={ref}>
       <Sheet open={isOpen} onOpenChange={setIsOpen}>
         <SheetTrigger asChild>
           <Button variant="ghost" size="sm" className="p-2">
@@ -321,6 +321,10 @@ export default function HamburgerMenu({ user, relationships = [], friendGroups =
           <ProfileSettings user={user} />
         </DialogContent>
       </Dialog>
-    </>
+    </div>
   );
-}
+});
+
+HamburgerMenu.displayName = "HamburgerMenu";
+
+export default HamburgerMenu;

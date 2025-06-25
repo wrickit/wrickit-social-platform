@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, forwardRef } from 'react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface TooltipWrapperProps {
@@ -10,14 +10,14 @@ interface TooltipWrapperProps {
   mobileContent?: string;
 }
 
-export function TooltipWrapper({ 
+export const TooltipWrapper = forwardRef<HTMLDivElement, TooltipWrapperProps>(({ 
   children, 
   content, 
   side = "top", 
   delayDuration = 300,
   disabled = false,
   mobileContent 
-}: TooltipWrapperProps) {
+}, ref) => {
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -31,7 +31,7 @@ export function TooltipWrapper({
   }, []);
 
   if (disabled || !content) {
-    return <>{children}</>;
+    return <div ref={ref}>{children}</div>;
   }
 
   const tooltipContent = mobileContent || content;
@@ -42,7 +42,7 @@ export function TooltipWrapper({
     <TooltipProvider delayDuration={mobileDelay}>
       <Tooltip>
         <TooltipTrigger asChild>
-          {children}
+          <div ref={ref}>{children}</div>
         </TooltipTrigger>
         <TooltipContent 
           side={mobileSide} 
@@ -54,4 +54,6 @@ export function TooltipWrapper({
       </Tooltip>
     </TooltipProvider>
   );
-}
+});
+
+TooltipWrapper.displayName = "TooltipWrapper";

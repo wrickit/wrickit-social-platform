@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, forwardRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Mic, MicOff, Play, Pause, Trash2, Send } from "lucide-react";
 import { getSupportedMimeType, formatTime, createAudioConstraints } from "@/utils/audioUtils";
@@ -13,13 +13,13 @@ interface VoiceRecorderProps {
   className?: string;
 }
 
-export default function VoiceRecorder({ 
+const VoiceRecorder = forwardRef<HTMLDivElement, VoiceRecorderProps>(({ 
   onRecordingComplete, 
   onVoiceMessage,
   onSend, 
   onCancel, 
   disabled 
-}: VoiceRecorderProps) {
+}, ref) => {
   const [isRecording, setIsRecording] = useState(false);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [duration, setDuration] = useState(0);
@@ -210,7 +210,7 @@ export default function VoiceRecorder({
   // If we have a recording, show playback controls
   if (audioUrl) {
     return (
-      <div className="flex items-center space-x-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+      <div ref={ref} className="flex items-center space-x-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
         <audio ref={audioRef} src={audioUrl} />
         
         <Button
@@ -265,7 +265,7 @@ export default function VoiceRecorder({
 
   // Recording interface
   return (
-    <div className="flex items-center space-x-2">
+    <div ref={ref} className="flex items-center space-x-2">
       {isRecording ? (
         <div className="flex items-center space-x-2 p-2 bg-red-50 dark:bg-red-900/20 rounded-lg">
           <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
@@ -295,4 +295,8 @@ export default function VoiceRecorder({
       )}
     </div>
   );
-}
+});
+
+VoiceRecorder.displayName = "VoiceRecorder";
+
+export default VoiceRecorder;

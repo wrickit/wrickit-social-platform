@@ -21,8 +21,8 @@ export function useNotifications() {
   const { data: notifications = [], isLoading } = useQuery<Notification[]>({
     queryKey: ["/api/notifications"],
     queryFn: getQueryFn({ on401: "returnNull" }),
-    refetchInterval: 30000, // Check every 30 seconds for new notifications (reduced frequency)
-    staleTime: 15000, // Keep data fresh for 15 seconds
+    refetchInterval: false, // Disable automatic refetching  
+    staleTime: 60000, // Keep data fresh for 1 minute
   });
 
   const unreadCount = notifications.filter((n: Notification) => !n.isRead).length;
@@ -173,10 +173,7 @@ export function useNotifications() {
         }
         
         // Clear the new notification flag after a delay
-        const timer = setTimeout(() => setHasNewNotifications(false), 3000);
-        
-        // Store timer for cleanup
-        return () => clearTimeout(timer);
+        setTimeout(() => setHasNewNotifications(false), 3000);
       }
       
       previousNotificationCount.current = currentUnreadCount;

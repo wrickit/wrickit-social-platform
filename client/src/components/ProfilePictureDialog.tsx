@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, forwardRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,7 +15,7 @@ interface ProfilePictureDialogProps {
   currentImageUrl?: string;
 }
 
-export default function ProfilePictureDialog({ trigger, userId, currentImageUrl }: ProfilePictureDialogProps) {
+const ProfilePictureDialog = forwardRef<HTMLDivElement, ProfilePictureDialogProps>(({ trigger, userId, currentImageUrl }, ref) => {
   const [open, setOpen] = useState(false);
   const [imageUrl, setImageUrl] = useState(currentImageUrl || "");
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
@@ -150,10 +150,11 @@ export default function ProfilePictureDialog({ trigger, userId, currentImageUrl 
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        {trigger}
-      </DialogTrigger>
+    <div ref={ref}>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogTrigger asChild>
+          {trigger}
+        </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center space-x-2">
@@ -261,5 +262,10 @@ export default function ProfilePictureDialog({ trigger, userId, currentImageUrl 
         </div>
       </DialogContent>
     </Dialog>
+    </div>
   );
-}
+});
+
+ProfilePictureDialog.displayName = "ProfilePictureDialog";
+
+export default ProfilePictureDialog;

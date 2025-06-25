@@ -8,7 +8,7 @@ import { formatDistanceToNow } from "date-fns";
 import { useState } from "react";
 import VoicePlayer from "./VoicePlayer";
 import ContentRenderer from "./ContentRenderer";
-
+import { TooltipWrapper } from "./TooltipWrapper";
 import { Link } from "wouter";
 
 interface PostFeedProps {
@@ -26,8 +26,8 @@ export default function PostFeed({ showAll = false, maxPosts = 5, sortBy = "rece
   
   const { data: allPosts = [], isLoading } = useQuery({
     queryKey: ["/api/posts"],
-    refetchInterval: 30000, // Refetch every 30 seconds (reduced frequency)
-    staleTime: 15000, // Keep data fresh for 15 seconds
+    refetchInterval: false, // Disable automatic refetching
+    staleTime: 60000, // Keep data fresh for 1 minute
   });
 
   // Get friend and crush user IDs for filtering
