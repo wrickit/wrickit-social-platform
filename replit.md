@@ -216,6 +216,7 @@ The application is configured for deployment on Replit with the following setup:
 - ✓ Enhanced microphone access error handling with user-friendly messages for HTTPS requirements
 - ✓ Fixed voice message duration showing "infinity NaN" with comprehensive validation
 - ✓ Improved voice message slider functionality with proper invalid value handling
+- ✓ Fixed voice message duration to use actual recording time instead of unreliable audio metadata
 
 ## Changelog
 

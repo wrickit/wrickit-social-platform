@@ -58,58 +58,26 @@ const VoiceRecorder = forwardRef<HTMLDivElement, VoiceRecorderProps>(({
         const url = URL.createObjectURL(blob);
         setAudioUrl(url);
         
-        // Create audio element to get actual duration
-        const tempAudio = new Audio(url);
-        tempAudio.onloadedmetadata = () => {
-          let actualDuration = tempAudio.duration;
-          
-          // Validate duration and use fallback if invalid
-          if (!actualDuration || actualDuration <= 0 || !isFinite(actualDuration) || isNaN(actualDuration)) {
-            actualDuration = recordingTime;
-          }
-          
-          // Final safety check - ensure we have a valid duration
-          if (!actualDuration || actualDuration <= 0 || !isFinite(actualDuration) || isNaN(actualDuration)) {
-            actualDuration = 1; // 1 second minimum fallback
-          }
-          
-          actualDuration = Math.ceil(actualDuration);
-          setDuration(actualDuration);
-          
-          // Convert blob to base64 for storage
-          const reader = new FileReader();
-          reader.onloadend = () => {
-            const base64 = reader.result as string;
-            const callback = onRecordingComplete || onVoiceMessage;
-            if (callback) {
-              callback(base64, actualDuration);
-            }
-          };
-          reader.readAsDataURL(blob);
-        };
+        // Use the recording time directly - it's more reliable than audio metadata for blob URLs
+        let actualDuration = recordingTime;
         
-        // Fallback if metadata doesn't load
-        tempAudio.onerror = () => {
-          let fallbackDuration = recordingTime;
-          
-          // Validate fallback duration
-          if (!fallbackDuration || fallbackDuration <= 0 || !isFinite(fallbackDuration) || isNaN(fallbackDuration)) {
-            fallbackDuration = 1; // 1 second minimum fallback
+        // Ensure we have a valid duration (minimum 1 second)
+        if (!actualDuration || actualDuration <= 0) {
+          actualDuration = 1;
+        }
+        
+        setDuration(actualDuration);
+        
+        // Convert blob to base64 for storage
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const base64 = reader.result as string;
+          const callback = onRecordingComplete || onVoiceMessage;
+          if (callback) {
+            callback(base64, actualDuration);
           }
-          
-          fallbackDuration = Math.ceil(fallbackDuration);
-          setDuration(fallbackDuration);
-          
-          const reader = new FileReader();
-          reader.onloadend = () => {
-            const base64 = reader.result as string;
-            const callback = onRecordingComplete || onVoiceMessage;
-            if (callback) {
-              callback(base64, fallbackDuration);
-            }
-          };
-          reader.readAsDataURL(blob);
         };
+        reader.readAsDataURL(blob);
 
         // Stop all tracks
         stream.getTracks().forEach(track => track.stop());
