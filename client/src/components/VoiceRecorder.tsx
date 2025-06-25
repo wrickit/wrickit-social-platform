@@ -58,15 +58,10 @@ const VoiceRecorder = forwardRef<HTMLDivElement, VoiceRecorderProps>(({
         const url = URL.createObjectURL(blob);
         setAudioUrl(url);
         
-        // Use the recording time directly - it's more reliable than audio metadata for blob URLs
-        let actualDuration = recordingTime;
+        // Calculate exact duration from start time to now
+        const exactDuration = Math.max(1, Math.floor((Date.now() - startTimeRef.current) / 1000));
         
-        // Ensure we have a valid duration (minimum 1 second)
-        if (!actualDuration || actualDuration <= 0) {
-          actualDuration = 1;
-        }
-        
-        setDuration(actualDuration);
+        setDuration(exactDuration);
         
         // Convert blob to base64 for storage
         const reader = new FileReader();
@@ -74,7 +69,7 @@ const VoiceRecorder = forwardRef<HTMLDivElement, VoiceRecorderProps>(({
           const base64 = reader.result as string;
           const callback = onRecordingComplete || onVoiceMessage;
           if (callback) {
-            callback(base64, actualDuration);
+            callback(base64, exactDuration);
           }
         };
         reader.readAsDataURL(blob);
@@ -128,6 +123,10 @@ const VoiceRecorder = forwardRef<HTMLDivElement, VoiceRecorderProps>(({
 
   const stopRecording = () => {
     if (mediaRecorderRef.current && isRecording) {
+      // Calculate the exact recording duration
+      const exactDuration = Math.floor((Date.now() - startTimeRef.current) / 1000);
+      setRecordingTime(exactDuration);
+      
       mediaRecorderRef.current.stop();
       setIsRecording(false);
       
