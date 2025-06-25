@@ -58,7 +58,7 @@ function Router() {
             <Route path="/dev" component={DevPage} />
           </>
         )}
-        <Route component={NotFound} />
+        <Route path="/:rest*" component={NotFound} />
       </Switch>
       
       {isAuthenticated && (
