@@ -50,6 +50,33 @@ interface Conversation {
   };
 }
 
+interface GroupMessage {
+  id: number;
+  fromUserId: number;
+  groupId: number;
+  content: string;
+  voiceMessageUrl?: string;
+  voiceMessageDuration?: number;
+  createdAt: string;
+  fromUser: {
+    id: number;
+    name: string;
+    profileImageUrl?: string;
+  };
+}
+
+interface FriendGroup {
+  id: number;
+  name: string;
+  members: Array<{
+    user: {
+      id: number;
+      name: string;
+      profileImageUrl?: string;
+    };
+  }>;
+}
+
 interface User {
   id: number;
   name: string;
@@ -180,6 +207,7 @@ export default function Messages() {
   
   const [selectedConversation, setSelectedConversation] = useState<number | null>(null);
   const [newConversationUser, setNewConversationUser] = useState<User | null>(null);
+  const [selectedGroupChat, setSelectedGroupChat] = useState<number | null>(null);
   const [newMessage, setNewMessage] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [showNewChat, setShowNewChat] = useState(false);
@@ -282,6 +310,7 @@ export default function Messages() {
             .then(userData => {
               setNewConversationUser(userData);
               setSelectedConversation(null);
+              setSelectedGroupChat(null);
             })
             .catch(console.error);
         }
@@ -290,9 +319,14 @@ export default function Messages() {
         window.history.replaceState({}, document.title, '/messages');
       }
     } else if (groupId) {
-      // For group chats, we'd need to implement group chat handling here
-      // For now, just clear the URL parameters
-      window.history.replaceState({}, document.title, '/messages');
+      const groupIdNum = parseInt(groupId, 10);
+      if (!isNaN(groupIdNum)) {
+        setSelectedGroupChat(groupIdNum);
+        setSelectedConversation(null);
+        setNewConversationUser(null);
+        // Clear URL parameters after handling
+        window.history.replaceState({}, document.title, '/messages');
+      }
     }
   }, [conversations, user]);
 
@@ -308,6 +342,27 @@ export default function Messages() {
     enabled: !!selectedConversation,
     refetchInterval: 2000, // Refresh every 2 seconds
   });
+
+  // Fetch friend groups
+  const { data: friendGroups = [] } = useQuery<FriendGroup[]>({
+    queryKey: ["/api/friend-groups"],
+  });
+
+  // Fetch group messages for selected group chat
+  const { data: groupMessages = [], isLoading: groupMessagesLoading } = useQuery<GroupMessage[]>({
+    queryKey: ["/api/group-messages", selectedGroupChat],
+    queryFn: async () => {
+      if (!selectedGroupChat) return [];
+      const response = await fetch(`/api/group-messages/${selectedGroupChat}`);
+      if (!response.ok) return [];
+      return response.json();
+    },
+    enabled: !!selectedGroupChat,
+    refetchInterval: 2000, // Refresh every 2 seconds
+  });
+
+  // Get selected group info
+  const selectedGroup = selectedGroupChat ? friendGroups.find(g => g.id === selectedGroupChat) : null;
 
   // Search users for new conversations
   const { data: searchResults = [] } = useQuery<User[]>({
@@ -667,6 +722,7 @@ export default function Messages() {
                       onClick={() => {
                         setSelectedConversation(partner.id);
                         setNewConversationUser(null);
+                        setSelectedGroupChat(null);
                       }}
                       className={`flex items-center space-x-3 p-3 rounded-lg cursor-pointer transition-colors ${
                         isSelected 
@@ -729,6 +785,7 @@ export default function Messages() {
                     onClick={() => {
                       setSelectedConversation(null);
                       setNewConversationUser(null);
+                      setSelectedGroupChat(null);
                     }}
                   >
                     <ArrowLeft className="w-4 h-4" />
@@ -740,7 +797,8 @@ export default function Messages() {
                                      newConversationUser ? newConversationUser.profileImageUrl : undefined} />
                     <AvatarFallback>
                       {selectedUser ? getConversationPartner(selectedUser).name.charAt(0) : 
-                       newConversationUser ? newConversationUser.name.charAt(0) : "?"}
+                       newConversationUser ? newConversationUser.name.charAt(0) :
+                       selectedGroup ? selectedGroup.name.charAt(0) : "?"}
                     </AvatarFallback>
                   </Avatar>
                   {onlineStatus?.isOnline && (
@@ -750,11 +808,13 @@ export default function Messages() {
                 <div>
                   <p className="font-medium app-text">
                     {selectedUser ? getConversationPartner(selectedUser).name : 
-                     newConversationUser ? newConversationUser.name : 
+                     newConversationUser ? newConversationUser.name :
+                     selectedGroup ? selectedGroup.name :
                      "Select a conversation"}
                   </p>
                   <p className="text-sm app-text-light">
-                    {onlineStatus?.isOnline ? "Active now" : 
+                    {selectedGroup ? `${selectedGroup.members?.length || 0} members` :
+                     onlineStatus?.isOnline ? "Active now" : 
                      (selectedUser || newConversationUser) ? "Offline" : ""}
                   </p>
                 </div>
