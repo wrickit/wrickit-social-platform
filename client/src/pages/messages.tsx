@@ -240,13 +240,14 @@ export default function Messages() {
   useEffect(() => {
     if (!user) return;
 
-    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    const wsUrl = `${protocol}//${window.location.host}/ws`;
-    const socket = new WebSocket(wsUrl);
+    try {
+      const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+      const wsUrl = `${protocol}//${window.location.host}`;
+      const socket = new WebSocket(wsUrl);
 
-    socket.onopen = () => {
-      console.log("WebSocket connected");
-      setWs(socket);
+      socket.onopen = () => {
+        console.log("WebSocket connected");
+        setWs(socket);
       
       // Authenticate user with WebSocket server
       socket.send(JSON.stringify({
@@ -269,15 +270,26 @@ export default function Messages() {
       }
     };
 
-    socket.onclose = () => {
-      console.log("WebSocket disconnected");
-      setWs(null);
-    };
+      socket.onerror = (error) => {
+        console.warn("WebSocket error:", error);
+        setWs(null);
+      };
 
-    return () => {
-      socket.close();
-    };
-  }, [user, queryClient, selectedConversation]);
+      socket.onclose = () => {
+        console.log("WebSocket disconnected");
+        setWs(null);
+      };
+
+      return () => {
+        if (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING) {
+          socket.close();
+        }
+      };
+    } catch (error) {
+      console.error("Failed to create WebSocket:", error);
+      setWs(null);
+    }
+  }, [user, queryClient, selectedConversation, selectedGroupChat]);
 
   // Fetch recent conversations
   const { data: conversations = [], isLoading: conversationsLoading } = useQuery<Conversation[]>({
