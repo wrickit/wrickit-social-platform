@@ -947,7 +947,7 @@ export default function Messages() {
                      "Select a conversation"}
                   </p>
                   <p className="text-sm app-text-light">
-                    {selectedGroup ? `${selectedGroup.members?.length || 0} members` :
+                    {selectedGroupChat && selectedGroup ? `${selectedGroup.members?.length || 0} members` :
                      onlineStatus?.isOnline ? "Active now" : 
                      (selectedUser || newConversationUser) ? "Offline" : ""}
                   </p>
