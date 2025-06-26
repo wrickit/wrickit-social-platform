@@ -1,0 +1,54 @@
+{
+  "name": "wrickit",
+  "description": "Wrickit - Social platform for students to connect with classmates",
+  "keywords": ["nodejs", "react", "social", "messaging", "students"],
+  "website": "https://github.com/yourusername/wrickit",
+  "repository": "https://github.com/yourusername/wrickit",
+  "logo": "https://your-app.back4app.io/favicon-32x32.png",
+  "success_url": "/",
+  "stack": "container",
+  "formation": {
+    "web": {
+      "quantity": 1,
+      "size": "basic"
+    }
+  },
+  "buildpacks": [
+    {
+      "url": "heroku/nodejs"
+    }
+  ],
+  "env": {
+    "NODE_ENV": {
+      "description": "Node.js environment",
+      "value": "production"
+    },
+    "DATABASE_URL": {
+      "description": "PostgreSQL database connection string",
+      "required": true
+    },
+    "PGHOST": {
+      "description": "PostgreSQL host",
+      "required": true
+    },
+    "PGPORT": {
+      "description": "PostgreSQL port",
+      "value": "5432"
+    },
+    "PGDATABASE": {
+      "description": "PostgreSQL database name",
+      "required": true
+    },
+    "PGUSER": {
+      "description": "PostgreSQL username",
+      "required": true
+    },
+    "PGPASSWORD": {
+      "description": "PostgreSQL password",
+      "required": true
+    }
+  },
+  "scripts": {
+    "postdeploy": "npm run db:push"
+  }
+}
