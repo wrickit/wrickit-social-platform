@@ -57,7 +57,7 @@ export default function Landing() {
             </p>
             <div className="bg-white rounded-md p-3 border">
               <p className="text-gray-600 text-sm font-mono">
-                Email: [Contact admin for email address]
+                Email: wrickit@atomicmail.io
               </p>
             </div>
           </div>

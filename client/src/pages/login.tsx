@@ -126,7 +126,7 @@ export default function Login() {
                   <div className="flex items-center gap-2 bg-white rounded-md p-2 border">
                     <Mail className="w-4 h-4 text-gray-500" />
                     <span className="text-gray-600 text-sm font-mono">
-                      [Contact admin for email address]
+                      wrickit@atomicmail.io
                     </span>
                   </div>
                 </div>

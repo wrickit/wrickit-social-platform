@@ -231,6 +231,7 @@ The application is configured for deployment on Replit with the following setup:
 - ✓ Added confirmation dialog for skipping tutorial to prevent accidental dismissal
 - ✓ Enhanced skip tutorial functionality with permanent warning message
 - ✓ Ensured tutorial completion status persists across all devices and browsers
+- ✓ Updated contact information throughout the platform from "contact admin for email address" to "wrickit@atomicmail.io"
 
 ## Changelog
 
