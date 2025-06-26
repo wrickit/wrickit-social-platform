@@ -38,7 +38,6 @@ export default function Landing() {
           </div>
         </div>
       </header>
-
       {/* Main Content */}
       <main className="max-w-6xl mx-auto px-4 py-12">
         <div className="text-center mb-12">
@@ -149,13 +148,10 @@ export default function Landing() {
           </div>
         </section>
       </main>
-
       {/* Footer */}
       <footer className="bg-gray-100 py-8 mt-12">
         <div className="max-w-6xl mx-auto px-4 text-center">
-          <p className="text-fb-text-light">
-            © 2024 Wrickit - Connecting Students, One Friendship at a Time
-          </p>
+          <p className="text-fb-text-light">© 2025 Wrickit - Connecting Students, One Friendship at a Time</p>
         </div>
       </footer>
     </div>
