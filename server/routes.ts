@@ -930,6 +930,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   }, 30000);
 
+  // Set up notification broadcasting for storage
+  storage.broadcastNotification = (userId: number, notification: any) => {
+    const userConnections = activeConnections.get(userId);
+    if (userConnections) {
+      const notificationMessage = JSON.stringify({
+        type: 'notification',
+        notification
+      });
+      
+      userConnections.forEach(ws => {
+        if (ws.readyState === WebSocket.OPEN) {
+          ws.send(notificationMessage);
+        }
+      });
+    }
+  };
+
   // WebSocket server for real-time messaging
   const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
   

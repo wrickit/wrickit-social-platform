@@ -844,8 +844,17 @@ export class DatabaseStorage implements IStorage {
       .insert(notifications)
       .values({ userId, type, message, relatedUserId })
       .returning();
+    
+    // Broadcast notification via WebSocket if available
+    if (this.broadcastNotification) {
+      this.broadcastNotification(userId, notification);
+    }
+    
     return notification;
   }
+
+  // WebSocket broadcast function - will be set by routes.ts
+  broadcastNotification?: (userId: number, notification: Notification) => void;
 
   async getNotificationsByUserId(userId: number): Promise<Notification[]> {
     return await db

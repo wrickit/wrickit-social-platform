@@ -397,7 +397,7 @@ export default function Messages() {
     enabled: searchQuery.length > 2,
   });
 
-  // Send regular message mutation
+  // Send regular message mutation with optimistic updates
   const sendMessageMutation = useMutation({
     mutationFn: async ({ 
       toUserId, 
@@ -417,7 +417,57 @@ export default function Messages() {
         voiceMessageDuration 
       });
     },
+    onMutate: async ({ toUserId, content, voiceMessageUrl, voiceMessageDuration }) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ["/api/messages", toUserId] });
+      
+      // Snapshot previous value
+      const previousMessages = queryClient.getQueryData(["/api/messages", toUserId]);
+      
+      // Optimistically update to the new value
+      const optimisticMessage = {
+        id: Date.now(), // Temporary ID
+        fromUserId: user?.id,
+        toUserId: toUserId,
+        content,
+        voiceMessageUrl,
+        voiceMessageDuration,
+        createdAt: new Date().toISOString(),
+        isRead: false,
+        fromUser: {
+          id: user?.id,
+          name: user?.name || "You",
+          admissionNumber: user?.admissionNumber || "",
+          profileImageUrl: user?.profileImageUrl
+        },
+        toUser: {
+          id: toUserId,
+          name: "Loading...",
+          admissionNumber: "",
+          profileImageUrl: ""
+        },
+        _isOptimistic: true // Flag to identify optimistic messages
+      };
+      
+      queryClient.setQueryData(["/api/messages", toUserId], (old: any) => {
+        return old ? [...old, optimisticMessage] : [optimisticMessage];
+      });
+      
+      return { previousMessages };
+    },
+    onError: (err, variables, context) => {
+      // Rollback on error
+      if (context?.previousMessages) {
+        queryClient.setQueryData(["/api/messages", variables.toUserId], context.previousMessages);
+      }
+      toast({
+        title: "Error",
+        description: "Failed to send message",
+        variant: "destructive",
+      });
+    },
     onSuccess: () => {
+      // Invalidate and refetch to get the real message from server
       queryClient.invalidateQueries({ queryKey: ["/api/messages"] });
       if (selectedConversation) {
         queryClient.invalidateQueries({ queryKey: ["/api/messages", selectedConversation] });
@@ -434,16 +484,9 @@ export default function Messages() {
         }));
       }
     },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to send message",
-        variant: "destructive",
-      });
-    },
   });
 
-  // Send group message mutation
+  // Send group message mutation with optimistic updates
   const sendGroupMessageMutation = useMutation({
     mutationFn: async ({ 
       groupId, 
@@ -463,19 +506,53 @@ export default function Messages() {
         voiceMessageDuration 
       });
     },
+    onMutate: async ({ groupId, content, voiceMessageUrl, voiceMessageDuration }) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ["/api/group-messages", groupId] });
+      
+      // Snapshot previous value
+      const previousMessages = queryClient.getQueryData(["/api/group-messages", groupId]);
+      
+      // Optimistically update to the new value
+      const optimisticMessage = {
+        id: Date.now(), // Temporary ID
+        fromUserId: user?.id,
+        groupId: groupId,
+        content,
+        voiceMessageUrl,
+        voiceMessageDuration,
+        createdAt: new Date().toISOString(),
+        fromUser: {
+          id: user?.id,
+          name: user?.name || "You",
+          profileImageUrl: user?.profileImageUrl
+        },
+        _isOptimistic: true // Flag to identify optimistic messages
+      };
+      
+      queryClient.setQueryData(["/api/group-messages", groupId], (old: any) => {
+        return old ? [...old, optimisticMessage] : [optimisticMessage];
+      });
+      
+      return { previousMessages };
+    },
+    onError: (err, variables, context) => {
+      // Rollback on error
+      if (context?.previousMessages) {
+        queryClient.setQueryData(["/api/group-messages", variables.groupId], context.previousMessages);
+      }
+      toast({
+        title: "Error",
+        description: "Failed to send group message",
+        variant: "destructive",
+      });
+    },
     onSuccess: () => {
       if (selectedGroupChat) {
         queryClient.invalidateQueries({ queryKey: ["/api/group-messages", selectedGroupChat] });
       }
       setNewMessage("");
       setVoiceMessage(null);
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to send group message",
-        variant: "destructive",
-      });
     },
   });
 

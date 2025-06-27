@@ -25,6 +25,47 @@ export function useNotifications() {
     staleTime: 60000, // Keep data fresh for 1 minute
   });
 
+  // WebSocket connection for real-time notifications
+  useEffect(() => {
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const ws = new WebSocket(`${protocol}//${window.location.host}/ws`);
+    
+    ws.onopen = () => {
+      // Authenticate with current user
+      const currentUser = queryClient.getQueryData(["/api/user"]) as any;
+      if (currentUser?.id) {
+        ws.send(JSON.stringify({ type: 'auth', userId: currentUser.id }));
+      }
+    };
+    
+    ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.type === 'notification') {
+          // Invalidate notifications query to refresh the list
+          queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
+          
+          // Play notification sound
+          playNotificationSound();
+          
+          // Show browser notification if permission granted
+          if (Notification.permission === 'granted') {
+            new Notification(data.notification.message, {
+              icon: '/favicon.ico',
+              tag: 'wrickit-notification'
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Error parsing WebSocket message:', error);
+      }
+    };
+    
+    return () => {
+      ws.close();
+    };
+  }, [queryClient]);
+
   const unreadCount = notifications.filter((n: Notification) => !n.isRead).length;
 
   // Audio context reference for cleanup
