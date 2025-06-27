@@ -22,6 +22,7 @@ interface Notification {
 export default function NotificationDropdown() {
   const [isOpen, setIsOpen] = useState(false);
   const [showPermissionPrompt, setShowPermissionPrompt] = useState(false);
+  const [hasBeenOpened, setHasBeenOpened] = useState(false);
   const queryClient = useQueryClient();
 
   const { 
@@ -88,8 +89,19 @@ export default function NotificationDropdown() {
     }
   };
 
+  // Handle opening the popover - clear animation state
+  const handleOpenChange = (open: boolean) => {
+    setIsOpen(open);
+    if (open && !hasBeenOpened) {
+      setHasBeenOpened(true);
+    }
+  };
+
+  // Show animations only if it hasn't been opened yet
+  const shouldShowAnimations = hasNewNotifications && !hasBeenOpened;
+
   return (
-    <Popover open={isOpen} onOpenChange={setIsOpen}>
+    <Popover open={isOpen} onOpenChange={handleOpenChange}>
       <TooltipWrapper 
         content={unreadCount > 0 ? `You have ${unreadCount} new notifications` : "View your notifications"}
         mobileContent={unreadCount > 0 ? `${unreadCount} new` : "Notifications"}
@@ -100,14 +112,14 @@ export default function NotificationDropdown() {
             variant="ghost" 
             size="sm" 
             className={`relative p-2 hover:scale-110 transition-transform duration-300 ${
-              unreadCount > 0 || hasNewNotifications ? 'pulse-glow' : ''
-            } ${hasNewNotifications ? 'animate-bounce' : ''}`}
+              unreadCount > 0 || shouldShowAnimations ? 'pulse-glow' : ''
+            } ${shouldShowAnimations ? 'animate-bounce' : ''}`}
           >
-            <span className={`text-xl ${hasNewNotifications ? 'animate-pulse' : 'wiggle'}`}>🔔</span>
+            <span className={`text-xl ${shouldShowAnimations ? 'animate-pulse' : 'wiggle'}`}>🔔</span>
             {unreadCount > 0 && (
               <Badge 
                 className={`absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs gradient-accent-bg text-white ${
-                  hasNewNotifications ? 'animate-ping' : 'pulse-glow'
+                  shouldShowAnimations ? 'animate-ping' : 'pulse-glow'
                 }`}
               >
                 {unreadCount > 99 ? "99+" : unreadCount}
