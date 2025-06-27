@@ -34,6 +34,13 @@ export default function NotificationDropdown() {
     playNotificationSound 
   } = useNotifications();
 
+  // Reset hasBeenOpened when all notifications are read
+  useEffect(() => {
+    if (unreadCount === 0) {
+      setHasBeenOpened(false);
+    }
+  }, [unreadCount]);
+
   const markAsReadMutation = useMutation({
     mutationFn: async (notificationId: number) => {
       const response = await apiRequest("POST", `/api/notifications/${notificationId}/read`);
