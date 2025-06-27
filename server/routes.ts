@@ -16,14 +16,24 @@ import {
 import { sendEmail, generateVerificationCode, createVerificationEmail } from "./emailService";
 import session from "express-session";
 import { ValidationError } from "zod-validation-error";
+import ConnectPgSimple from "connect-pg-simple";
+import { pool } from "./db";
 
-// Session configuration
+// Configure PostgreSQL session store
+const PgSession = ConnectPgSimple(session);
+
+// Session configuration with PostgreSQL storage
 const sessionConfig = session({
+  store: new PgSession({
+    pool: pool,
+    tableName: 'session',
+    createTableIfMissing: true,
+  }),
   secret: process.env.SESSION_SECRET || "wrickit-secret-key",
   resave: false,
   saveUninitialized: false,
   cookie: {
-    secure: process.env.NODE_ENV === 'production', // Enable secure cookies in production
+    secure: process.env.NODE_ENV === 'production',
     httpOnly: true,
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
   },
