@@ -19,10 +19,10 @@ export function useOnboarding() {
 
   // Load onboarding state from database via user object
   useEffect(() => {
-    if (!user?.id) return;
+    if (!user || !(user as any)?.id) return;
 
     // Check if user has completed tutorial from server data
-    const hasCompleted = user.hasCompletedTutorial || false;
+    const hasCompleted = (user as any).hasCompletedTutorial || false;
     
     setOnboardingState({
       hasCompletedTutorial: hasCompleted,
@@ -30,15 +30,13 @@ export function useOnboarding() {
       tutorialStep: 0
     });
 
-    // Show tutorial for first time users
-    if (!hasCompleted) {
-      setShowTutorial(true);
-    }
-  }, [user?.id, user?.hasCompletedTutorial]);
+    // Only show tutorial automatically for truly first-time users
+    // Manual tutorial start will be handled by the startTutorial function
+  }, [(user as any)?.id, (user as any)?.hasCompletedTutorial]);
 
   // Save onboarding state to database
   const saveOnboardingState = async (newState: Partial<OnboardingState>) => {
-    if (!user?.id) return;
+    if (!user || !(user as any)?.id) return;
 
     const updatedState = { ...onboardingState, ...newState };
     setOnboardingState(updatedState);
@@ -46,9 +44,7 @@ export function useOnboarding() {
     // If tutorial is completed, save to database
     if (newState.hasCompletedTutorial) {
       try {
-        await apiRequest("/api/users/complete-tutorial", {
-          method: "POST",
-        });
+        await apiRequest("POST", "/api/users/complete-tutorial");
       } catch (error) {
         console.error("Failed to save tutorial completion:", error);
       }
@@ -57,6 +53,10 @@ export function useOnboarding() {
 
   const startTutorial = () => {
     setShowTutorial(true);
+    setOnboardingState(prev => ({
+      ...prev,
+      tutorialStep: 0
+    }));
   };
 
   const completeTutorial = async () => {
@@ -76,15 +76,11 @@ export function useOnboarding() {
   };
 
   const resetOnboarding = async () => {
-    if (!user?.id) return;
+    if (!user || !(user as any)?.id) return;
     
     // Reset tutorial status in database
     try {
-      await apiRequest(`/api/users/${user.id}`, {
-        method: "PUT",
-        body: JSON.stringify({ hasCompletedTutorial: false }),
-        headers: { "Content-Type": "application/json" }
-      });
+      await apiRequest("PUT", `/api/users/${(user as any).id}`, { hasCompletedTutorial: false });
       
       setOnboardingState({
         hasCompletedTutorial: false,

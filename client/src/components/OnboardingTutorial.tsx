@@ -128,6 +128,13 @@ export default function OnboardingTutorial({ isOpen, onComplete, onSkip }: Onboa
   useEffect(() => {
     if (!isOpen) {
       setHighlightedElement(null);
+      setCurrentStep(0); // Reset to first step when closed
+      return;
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) {
       return;
     }
 
