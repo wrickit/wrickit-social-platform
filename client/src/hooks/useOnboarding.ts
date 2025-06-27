@@ -52,11 +52,13 @@ export function useOnboarding() {
   };
 
   const startTutorial = () => {
+    console.log("startTutorial called, setting showTutorial to true");
     setShowTutorial(true);
     setOnboardingState(prev => ({
       ...prev,
       tutorialStep: 0
     }));
+    console.log("Tutorial state updated");
   };
 
   const completeTutorial = async () => {

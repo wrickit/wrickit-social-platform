@@ -184,6 +184,8 @@ export default function OnboardingTutorial({ isOpen, onComplete, onSkip }: Onboa
     onSkip();
   };
 
+  console.log("OnboardingTutorial render - isOpen:", isOpen, "currentStep:", currentStep);
+  
   if (!isOpen) return null;
 
   return (

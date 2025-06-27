@@ -13,13 +13,19 @@ export default function TutorialButton({
   size = "sm", 
   className = "" 
 }: TutorialButtonProps) {
-  const { startTutorial } = useOnboarding();
+  const { startTutorial, showTutorial } = useOnboarding();
+
+  const handleClick = () => {
+    console.log("Tutorial button clicked, current showTutorial:", showTutorial);
+    startTutorial();
+    console.log("Called startTutorial");
+  };
 
   return (
     <Button 
       variant={variant} 
       size={size} 
-      onClick={startTutorial}
+      onClick={handleClick}
       className={className}
     >
       <Play className="w-4 h-4 mr-2" />
